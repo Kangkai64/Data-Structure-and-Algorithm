@@ -1,9 +1,13 @@
 package control;
 
+import dao.AddressDao;
 import entity.Address;
 import java.sql.SQLException;
 
 public class AddressMaintenance {
+
+    private static final AddressDao ADDRESS_DAO = new AddressDao();
+
     /**
      * Retrieves all addresses for a user
      * @param userId The ID of the user

@@ -4,10 +4,8 @@ package entity;
  * @author Lee Yong Kang
  */
 
-import java.util.ArrayList;
+import adt.ArrayList;
 import java.util.Date;
-
-import static utility.PatternChecker.PHONE_PATTERN;
 
 public class Doctor extends Person {
     private String doctorId;
@@ -15,8 +13,9 @@ public class Doctor extends Person {
     private String licenseNumber;
     private int expYears;
     private boolean isAvailable;
-    //private ArrayList<Schedule> schedules;
-    //private ArrayList<Appointment> appointments;
+    private ArrayList<Patient> patients;
+    private ArrayList<Schedule> schedules;
+    private ArrayList<Appointment> appointments;
 
     public Doctor(String fullName, String ICNumber, String email, String phoneNumber,
                   Address address, Date registrationDate, String doctorId, String medicalSpecialty,
@@ -26,10 +25,13 @@ public class Doctor extends Person {
         this.medicalSpecialty = medicalSpecialty;
         this.licenseNumber = licenseNumber;
         this.expYears = expYears;
-        //this.schedules = ;
-        //this.appointments = ;
+        this.isAvailable = true;
+        this.patients = new ArrayList<>();
+        this.schedules = new ArrayList<>();
+        this.appointments = new ArrayList<>();
     }
 
+    // Accessor and mutator method for doctor
     public String getDoctorId() { return  doctorId; }
     public void setDoctorId(String doctorId) { this.doctorId = doctorId; }
 
@@ -44,6 +46,73 @@ public class Doctor extends Person {
 
     public boolean isAvailable() { return  isAvailable; }
     public void setAvailable (boolean available) { isAvailable = available; }
+
+    // Patient Management
+    public boolean addPatient(Patient patient) {
+        return patients.add(patient);
+    }
+
+    public Patient removePatient(int position) {
+        return patients.remove(position);
+    }
+
+    public Patient getPatient(int position) {
+        return patients.getEntry(position);
+    }
+
+    public boolean isPatientExist(Patient patient) {
+        return patients.contains(patient);
+    }
+
+    public int getNumberOfPatients() {
+        return patients.getNumberOfEntries();
+    }
+
+    // Appointment Management
+    public boolean addAppointment(Appointment appointment) {
+        return appointments.add(appointment);
+    }
+
+    public boolean addAppointment(int position, Appointment appointment) {
+        return appointments.add(appointment);
+    }
+
+    public Appointment removeAppointment(int position) {
+        return appointments.remove(position);
+    }
+
+    public Appointment getAppointment(int position) {
+        return appointments.getEntry(position);
+    }
+
+    public boolean isAppointmentExist(Appointment appointment) {
+        return appointments.contains(appointment);
+    }
+
+    public int getNumberOfAppointment() {
+        return appointments.getNumberOfEntries();
+    }
+
+    // Schedule Management
+    public boolean addSchedule(Schedule schedule) {
+        return schedules.add(schedule);
+    }
+
+    public Schedule removeSchedule(int position) {
+        return schedules.remove(position);
+    }
+
+    public Schedule getSchedule(int position) {
+        return schedules.getEntry(position);
+    }
+
+    public boolean isScheduleExist(Schedule schedule) {
+        return schedules.contains(schedule);
+    }
+
+    public int getNumberOfSchedule() {
+        return schedules.getNumberOfEntries();
+    }
 
     @Override
     public String toString() {

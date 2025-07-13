@@ -9,25 +9,6 @@ public class AddressMaintenance {
     private static final AddressDao ADDRESS_DAO = new AddressDao();
 
     /**
-     * Retrieves all addresses for a user
-     * @param userId The ID of the user
-     * @return Array of addresses for the user
-     * @throws IllegalArgumentException if userId is null or empty
-     * @throws SQLException if there is a database error
-     */
-    public static Address[] getAddressesByUser(String userId) throws SQLException {
-        if (userId == null || userId.trim().isEmpty()) {
-            throw new IllegalArgumentException("User ID cannot be null or empty");
-        }
-
-        try {
-            return ADDRESS_DAO.findByUserId(userId.trim());
-        } catch (SQLException e) {
-            throw new SQLException("Failed to retrieve addresses: " + e.getMessage(), e);
-        }
-    }
-
-    /**
      * Retrieves an address by its ID
      * @param addressId The ID of the address to retrieve
      * @return The address if found, null otherwise

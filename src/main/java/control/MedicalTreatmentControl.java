@@ -30,7 +30,7 @@ public class MedicalTreatmentControl {
             
             // Create new treatment
             MedicalTreatment treatment = new MedicalTreatment(treatmentId, patient, doctor, 
-                                                            consultation, diagnosis, treatmentPlan, treatmentCost);
+                                                            consultation, diagnosis, treatmentPlan, new Date(), treatmentCost);
             
             // Add to lists
             treatments.add(treatment);

@@ -13,13 +13,13 @@ public class Schedule {
     private boolean isAvailable;
 
     public Schedule (String scheduleId, String doctorId, DayOfWeek dayOfWeek,
-                     String fromTime, String toTime) {
+                     String fromTime, String toTime, boolean isAvailable) {
         this.scheduleId = scheduleId;
         this.doctorId = doctorId;
         this.dayOfWeek = dayOfWeek;
         this.fromTime = fromTime;
         this.toTime = toTime;
-        this.isAvailable = true;
+        this.isAvailable = isAvailable;
     }
 
     public String getScheduleId() { return  scheduleId; }

@@ -183,25 +183,6 @@ Each module includes at least 2 summary reports:
 - Maven 3.6 or higher
 - MySQL 8.0 or higher
 
-### Database Setup
-1. Import the database schema:
-```bash
-mysql -u your_username -p < database_schema.sql
-```
-
-2. Update database connection settings in `utility/HikariConnectionPool.java`
-
-### Build and Run
-```bash
-# Compile the project
-mvn compile
-
-# Run the main application
-mvn exec:java -Dexec.mainClass="ClinicManagementSystem"
-```
-
-## Usage
-
 ### Main Application
 The `ClinicManagementSystem` class provides a console-based interface for all modules:
 
@@ -211,87 +192,6 @@ The `ClinicManagementSystem` class provides a console-based interface for all mo
 4. **Medical Treatment Management** - Create and track treatments
 5. **Pharmacy Management** - Manage medicines and prescriptions
 6. **Reports** - Generate comprehensive system reports
-
-### Sample Operations
-- Register new patients with complete information
-- Schedule doctor consultations
-- Create medical treatments and prescriptions
-- Manage medicine inventory
-- Generate detailed reports for all modules
-
-## Key Features
-
-### ✅ Complete Implementation
-- All 5 required modules implemented
-- Custom ADT implementations (no java.util.Collection)
-- Comprehensive database schema with triggers
-- Full reporting system
-
-### ✅ Architecture Compliance
-- ECB pattern implementation
-- Layered architecture
-- DAO pattern for data access
-- Proper separation of concerns
-
-### ✅ Data Integrity
-- Foreign key constraints
-- Automatic ID generation
-- Status tracking and validation
-- Comprehensive error handling
-
-### ✅ User Experience
-- Intuitive console interface
-- Comprehensive reporting
-- Sample data for testing
-- Clear documentation
-
-## Custom ADT Demonstrations
-
-### Queue Implementation for Patient Queuing
-```java
-Queue<Patient> patientQueue = new Queue<>();
-patientQueue.enqueue(patient);
-Patient nextPatient = patientQueue.dequeue();
-```
-
-### List Implementation for Collections
-```java
-ArrayList<Patient> patients = new ArrayList<>();
-patients.add(patient);
-Patient found = patients.getEntry(1);
-```
-
-## Database Triggers
-
-### Automatic ID Generation
-```sql
--- Example: Patient ID generation
-CREATE TRIGGER tr_patient_id_generation
-BEFORE INSERT ON patient
-FOR EACH ROW
-BEGIN
-    IF NEW.patientId IS NULL OR NEW.patientId = '' THEN
-        SET NEW.patientId = CONCAT('P', LPAD((SELECT COUNT(*) + 1 FROM patient), 9, '0'));
-    END IF;
-END
-```
-
-### Status Updates
-```sql
--- Example: Medicine status based on stock
-CREATE TRIGGER tr_medicine_status_update
-BEFORE UPDATE ON medicine
-FOR EACH ROW
-BEGIN
-    IF NEW.quantityInStock = 0 THEN
-        SET NEW.status = 'OUT_OF_STOCK';
-    ELSEIF NEW.quantityInStock <= NEW.minimumStockLevel THEN
-        SET NEW.status = 'LOW_STOCK';
-    ELSE
-        SET NEW.status = 'AVAILABLE';
-    END IF;
-END
-```
 
 ## Testing
 

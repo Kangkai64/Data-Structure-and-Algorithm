@@ -13,7 +13,7 @@ public class HikariConnectionPool {
         HikariConfig config = new HikariConfig();
 
         // Database configuration
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/tarumtClinic");
+        config.setJdbcUrl("jdbc:mysql://localhost:3306/clinic_management_system");
         config.setUsername("root");
         config.setPassword("");
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");

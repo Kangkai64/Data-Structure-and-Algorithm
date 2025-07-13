@@ -103,7 +103,7 @@ public class PharmacyManagementControl {
             
             // Create new prescription
             Prescription prescription = new Prescription(prescriptionId, patient, doctor, 
-                                                       consultation, instructions, expiryDate);
+                                                       consultation, new Date(), instructions, expiryDate);
             
             // Add to prescriptions list
             prescriptions.add(prescription);

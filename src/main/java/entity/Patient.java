@@ -11,8 +11,8 @@ public class Patient extends Person {
     private String wardNumber;
     private BloodType bloodType;
     private ArrayList<String> allergies;
-    // private Doctor dischargingDoctor;
-    // private ArrayList<Medication> currentMedication;
+    private Doctor dischargingDoctor;
+    private Prescription currentPrescription;
     private boolean isActive;
     private String emergencyContact;
 
@@ -80,5 +80,21 @@ public class Patient extends Person {
             throw new IllegalArgumentException("Invalid phone number format");
         }
         this.emergencyContact = emergencyContact.trim();
+    }
+
+    public Doctor getDischargingDoctor() {
+        return dischargingDoctor;
+    }
+
+    public void setDischargingDoctor(Doctor dischargingDoctor) {
+        this.dischargingDoctor = dischargingDoctor;
+    }
+
+    public Prescription getCurrentPrescription() {
+        return currentPrescription;
+    }
+
+    public void setCurrentPrescription(Prescription currentPrescription) {
+        this.currentPrescription = currentPrescription;
     }
 }

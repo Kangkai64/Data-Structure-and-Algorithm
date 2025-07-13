@@ -130,7 +130,7 @@ public class PatientDao extends DaoTemplate<Patient> {
     }
 
     @Override
-    public static boolean update(Patient patient) throws SQLException {
+    public boolean update(Patient patient) throws SQLException {
         String sql = "UPDATE patient SET fullName = ?, ICNumber = ?, email = ?, phoneNumber = ?, " +
                 "address = ?, wardNumber = ?, bloodType = ?, allergies = ?, emergencyContact = ?, isActive = ? " +
                 "WHERE patientId = ?";

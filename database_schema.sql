@@ -20,23 +20,15 @@ CREATE TABLE address (
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Person table (base table for Patient and Doctor)
-CREATE TABLE person (
-    personId VARCHAR(20) PRIMARY KEY,
+-- 2. Patient table (with Person fields distributed)
+CREATE TABLE patient (
+    patientId VARCHAR(20) PRIMARY KEY,
     fullName VARCHAR(100) NOT NULL,
     ICNumber VARCHAR(20) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phoneNumber VARCHAR(20) NOT NULL,
     addressId VARCHAR(20),
     registrationDate DATE NOT NULL,
-    createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (addressId) REFERENCES address(addressId) ON DELETE SET NULL
-);
-
--- 3. Patient table
-CREATE TABLE patient (
-    patientId VARCHAR(20) PRIMARY KEY,
-    personId VARCHAR(20) NOT NULL,
     wardNumber VARCHAR(20),
     bloodType ENUM('A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 
                    'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE') NOT NULL,
@@ -44,22 +36,27 @@ CREATE TABLE patient (
     emergencyContact VARCHAR(20) NOT NULL,
     isActive BOOLEAN DEFAULT TRUE,
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (personId) REFERENCES person(personId) ON DELETE CASCADE
+    FOREIGN KEY (addressId) REFERENCES address(addressId) ON DELETE SET NULL
 );
 
--- 4. Doctor table
+-- 3. Doctor table (with Person fields distributed)
 CREATE TABLE doctor (
     doctorId VARCHAR(20) PRIMARY KEY,
-    personId VARCHAR(20) NOT NULL,
+    fullName VARCHAR(100) NOT NULL,
+    ICNumber VARCHAR(20) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phoneNumber VARCHAR(20) NOT NULL,
+    addressId VARCHAR(20),
+    registrationDate DATE NOT NULL,
     medicalSpecialty VARCHAR(100) NOT NULL,
     licenseNumber VARCHAR(50) UNIQUE NOT NULL,
     expYears INT NOT NULL,
     isAvailable BOOLEAN DEFAULT TRUE,
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (personId) REFERENCES person(personId) ON DELETE CASCADE
+    FOREIGN KEY (addressId) REFERENCES address(addressId) ON DELETE SET NULL
 );
 
--- 5. Schedule table
+-- 4. Schedule table
 CREATE TABLE schedule (
     scheduleId VARCHAR(20) PRIMARY KEY,
     doctorId VARCHAR(20) NOT NULL,
@@ -71,7 +68,7 @@ CREATE TABLE schedule (
     FOREIGN KEY (doctorId) REFERENCES doctor(doctorId) ON DELETE CASCADE
 );
 
--- 6. Consultation table
+-- 5. Consultation table
 CREATE TABLE consultation (
     consultationId VARCHAR(20) PRIMARY KEY,
     patientId VARCHAR(20) NOT NULL,
@@ -89,7 +86,7 @@ CREATE TABLE consultation (
     FOREIGN KEY (doctorId) REFERENCES doctor(doctorId) ON DELETE CASCADE
 );
 
--- 7. Medical Treatment table
+-- 6. Medical Treatment table
 CREATE TABLE medical_treatment (
     treatmentId VARCHAR(20) PRIMARY KEY,
     patientId VARCHAR(20) NOT NULL,
@@ -109,7 +106,7 @@ CREATE TABLE medical_treatment (
     FOREIGN KEY (consultationId) REFERENCES consultation(consultationId) ON DELETE SET NULL
 );
 
--- 8. Medicine table
+-- 7. Medicine table
 CREATE TABLE medicine (
     medicineId VARCHAR(20) PRIMARY KEY,
     medicineName VARCHAR(100) NOT NULL,
@@ -128,7 +125,7 @@ CREATE TABLE medicine (
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 9. Prescription table
+-- 8. Prescription table
 CREATE TABLE prescription (
     prescriptionId VARCHAR(20) PRIMARY KEY,
     patientId VARCHAR(20) NOT NULL,
@@ -145,7 +142,7 @@ CREATE TABLE prescription (
     FOREIGN KEY (consultationId) REFERENCES consultation(consultationId) ON DELETE SET NULL
 );
 
--- 10. Prescribed Medicine table (junction table for prescription and medicine)
+-- 9. Prescribed Medicine table (junction table for prescription and medicine)
 CREATE TABLE prescribed_medicine (
     prescribedMedicineId VARCHAR(20) PRIMARY KEY,
     prescriptionId VARCHAR(20) NOT NULL,
@@ -162,8 +159,12 @@ CREATE TABLE prescribed_medicine (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_patient_person ON patient(personId);
-CREATE INDEX idx_doctor_person ON doctor(personId);
+CREATE INDEX idx_patient_address ON patient(addressId);
+CREATE INDEX idx_patient_ic ON patient(ICNumber);
+CREATE INDEX idx_patient_email ON patient(email);
+CREATE INDEX idx_doctor_address ON doctor(addressId);
+CREATE INDEX idx_doctor_ic ON doctor(ICNumber);
+CREATE INDEX idx_doctor_email ON doctor(email);
 CREATE INDEX idx_consultation_patient ON consultation(patientId);
 CREATE INDEX idx_consultation_doctor ON consultation(doctorId);
 CREATE INDEX idx_treatment_patient ON medical_treatment(patientId);
@@ -184,18 +185,6 @@ FOR EACH ROW
 BEGIN
     IF NEW.addressId IS NULL OR NEW.addressId = '' THEN
         SET NEW.addressId = CONCAT('A', LPAD((SELECT COUNT(*) + 1 FROM address), 9, '0'));
-    END IF;
-END//
-DELIMITER ;
-
--- Trigger for Person ID generation
-DELIMITER //
-CREATE TRIGGER tr_person_id_generation
-BEFORE INSERT ON person
-FOR EACH ROW
-BEGIN
-    IF NEW.personId IS NULL OR NEW.personId = '' THEN
-        SET NEW.personId = CONCAT('PER', LPAD((SELECT COUNT(*) + 1 FROM person), 7, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -368,35 +357,33 @@ DELIMITER ;
 CREATE VIEW v_active_patients AS
 SELECT 
     p.patientId,
-    per.fullName,
-    per.ICNumber,
-    per.email,
-    per.phoneNumber,
+    p.fullName,
+    p.ICNumber,
+    p.email,
+    p.phoneNumber,
     p.wardNumber,
     p.bloodType,
     p.allergies,
     p.emergencyContact,
-    per.registrationDate
+    p.registrationDate
 FROM patient p
-JOIN person per ON p.personId = per.personId
 WHERE p.isActive = TRUE;
 
 -- View for available doctors with their schedules
 CREATE VIEW v_available_doctors AS
 SELECT 
     d.doctorId,
-    per.fullName,
-    per.email,
-    per.phoneNumber,
+    d.fullName,
+    d.email,
+    d.phoneNumber,
     d.medicalSpecialty,
     d.licenseNumber,
     d.expYears,
     COUNT(s.scheduleId) as scheduleCount
 FROM doctor d
-JOIN person per ON d.personId = per.personId
 LEFT JOIN schedule s ON d.doctorId = s.doctorId AND s.isAvailable = TRUE
 WHERE d.isAvailable = TRUE
-GROUP BY d.doctorId, per.fullName, per.email, per.phoneNumber, d.medicalSpecialty, d.licenseNumber, d.expYears;
+GROUP BY d.doctorId, d.fullName, d.email, d.phoneNumber, d.medicalSpecialty, d.licenseNumber, d.expYears;
 
 -- View for medicine stock status
 CREATE VIEW v_medicine_stock_status AS
@@ -430,10 +417,8 @@ SELECT
     c.diagnosis,
     c.nextVisitDate
 FROM consultation c
-JOIN patient pat ON c.patientId = pat.patientId
-JOIN person p ON pat.personId = p.personId
-JOIN doctor doc ON c.doctorId = doc.doctorId
-JOIN person d ON doc.personId = d.personId;
+JOIN patient p ON c.patientId = p.patientId
+JOIN doctor d ON c.doctorId = d.doctorId;
 
 -- Insert sample data for testing
 
@@ -445,24 +430,16 @@ INSERT INTO address (addressId, street, city, state, postalCode) VALUES
 ('A000000004', '321 Taman Universiti', 'Skudai', 'Johor', '81300'),
 ('A000000005', '654 Jalan Hospital', 'Kuala Lumpur', 'WP Kuala Lumpur', '50586');
 
--- Sample Persons
-INSERT INTO person (personId, fullName, ICNumber, email, phoneNumber, addressId, registrationDate) VALUES
-('PER0000001', 'Ahmad bin Abdullah', '900101015432', 'ahmad.abdullah@email.com', '0123456789', 'A000000001', '2024-01-15'),
-('PER0000002', 'Siti binti Mohamed', '920202025678', 'siti.mohamed@email.com', '0123456790', 'A000000002', '2024-01-16'),
-('PER0000003', 'Dr. Lim Wei Chen', '850303036789', 'dr.lim@clinic.com', '0123456791', 'A000000003', '2024-01-10'),
-('PER0000004', 'Dr. Sarah Johnson', '880404047890', 'dr.sarah@clinic.com', '0123456792', 'A000000004', '2024-01-12'),
-('PER0000005', 'Mohammed bin Ali', '940505058901', 'mohammed.ali@email.com', '0123456793', 'A000000005', '2024-01-18');
+-- Sample Patients (with Person fields distributed)
+INSERT INTO patient (patientId, fullName, ICNumber, email, phoneNumber, addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact) VALUES
+('P000000001', 'Ahmad bin Abdullah', '900101015432', 'ahmad.abdullah@email.com', '0123456789', 'A000000001', '2024-01-15', 'W001', 'A_POSITIVE', 'Penicillin,Peanuts', '0198765432'),
+('P000000002', 'Siti binti Mohamed', '920202025678', 'siti.mohamed@email.com', '0123456790', 'A000000002', '2024-01-16', 'W002', 'O_POSITIVE', 'Shellfish', '0198765433'),
+('P000000003', 'Mohammed bin Ali', '940505058901', 'mohammed.ali@email.com', '0123456793', 'A000000005', '2024-01-18', 'W003', 'B_POSITIVE', 'None', '0198765434');
 
--- Sample Patients
-INSERT INTO patient (patientId, personId, wardNumber, bloodType, allergies, emergencyContact) VALUES
-('P000000001', 'PER0000001', 'W001', 'A_POSITIVE', 'Penicillin,Peanuts', '0198765432'),
-('P000000002', 'PER0000002', 'W002', 'O_POSITIVE', 'Shellfish', '0198765433'),
-('P000000003', 'PER0000005', 'W003', 'B_POSITIVE', 'None', '0198765434');
-
--- Sample Doctors
-INSERT INTO doctor (doctorId, personId, medicalSpecialty, licenseNumber, expYears) VALUES
-('D000000001', 'PER0000003', 'General Medicine', 'MD001234', 8),
-('D000000002', 'PER0000004', 'Cardiology', 'MD001235', 12);
+-- Sample Doctors (with Person fields distributed)
+INSERT INTO doctor (doctorId, fullName, ICNumber, email, phoneNumber, addressId, registrationDate, medicalSpecialty, licenseNumber, expYears) VALUES
+('D000000001', 'Dr. Lim Wei Chen', '850303036789', 'dr.lim@clinic.com', '0123456791', 'A000000003', '2024-01-10', 'General Medicine', 'MD001234', 8),
+('D000000002', 'Dr. Sarah Johnson', '880404047890', 'dr.sarah@clinic.com', '0123456792', 'A000000004', '2024-01-12', 'Cardiology', 'MD001235', 12);
 
 -- Sample Schedules
 INSERT INTO schedule (scheduleId, doctorId, dayOfWeek, fromTime, toTime) VALUES

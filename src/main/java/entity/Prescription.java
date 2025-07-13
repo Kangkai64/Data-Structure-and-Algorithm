@@ -20,12 +20,12 @@ public class Prescription {
     }
 
     public Prescription(String prescriptionId, Patient patient, Doctor doctor, 
-                       Consultation consultation, String instructions, Date expiryDate) {
+                       Consultation consultation, Date prescriptionDate, String instructions, Date expiryDate) {
         this.prescriptionId = prescriptionId;
         this.patient = patient;
         this.doctor = doctor;
         this.consultation = consultation;
-        this.prescriptionDate = new Date();
+        this.prescriptionDate = prescriptionDate;
         this.instructions = instructions;
         this.expiryDate = expiryDate;
         this.prescribedMedicines = new ArrayList<>();

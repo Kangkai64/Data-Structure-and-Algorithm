@@ -22,7 +22,7 @@ public class MedicalTreatment {
 
     public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor, 
                            Consultation consultation, String diagnosis, 
-                           String treatmentPlan, double treatmentCost) {
+                           String treatmentPlan, Date treatmentDate, double treatmentCost) {
         this.treatmentId = treatmentId;
         this.patient = patient;
         this.doctor = doctor;
@@ -30,7 +30,19 @@ public class MedicalTreatment {
         this.diagnosis = diagnosis;
         this.treatmentPlan = treatmentPlan;
         this.treatmentCost = treatmentCost;
-        this.treatmentDate = new Date();
+        this.treatmentDate = treatmentDate;
+        this.followUpDate = null;
+        this.status = TreatmentStatus.PRESCRIBED;
+    }
+
+    public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor, 
+                           Consultation consultation, String diagnosis, 
+                           String treatmentPlan, String prescribedMedications, 
+                           String treatmentNotes, Date treatmentDate, double treatmentCost) {
+        this(treatmentId, patient, doctor, consultation, diagnosis, treatmentPlan, treatmentDate, treatmentCost);
+        this.prescribedMedications = prescribedMedications;
+        this.treatmentNotes = treatmentNotes;
+        this.followUpDate = null;
         this.status = TreatmentStatus.PRESCRIBED;
     }
 

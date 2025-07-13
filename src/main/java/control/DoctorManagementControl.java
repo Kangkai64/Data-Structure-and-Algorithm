@@ -100,7 +100,7 @@ public class DoctorManagementControl {
             Doctor doctor = doctorDao.findById(doctorId);
             if (doctor != null) {
                 String scheduleId = "SCH" + System.currentTimeMillis();
-                Schedule schedule = new Schedule(scheduleId, doctorId, dayOfWeek, startTime, endTime);
+                Schedule schedule = new Schedule(scheduleId, doctorId, dayOfWeek, startTime, endTime, true);
                 boolean added = doctor.addSchedule(schedule);
                 if (added) {
                     boolean updated = doctorDao.update(doctor);

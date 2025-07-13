@@ -1,6 +1,7 @@
 package boundary;
 
 import control.PharmacyManagementControl;
+import utility.ConsoleUtils;
 import java.util.Date;
 import java.util.Scanner;
 
@@ -30,7 +31,7 @@ public class PharmacyManagementUI {
             System.out.println("8. Back to Main Menu");
             System.out.print("Enter your choice: ");
             
-            int choice = getIntInput();
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
             
             switch (choice) {
                 case 1:
@@ -64,28 +65,17 @@ public class PharmacyManagementUI {
 
     private void addMedicine() {
         System.out.println("\n=== ADD MEDICINE ===");
-        System.out.print("Enter medicine name: ");
-        String medicineName = scanner.nextLine();
-        System.out.print("Enter generic name: ");
-        String genericName = scanner.nextLine();
-        System.out.print("Enter manufacturer: ");
-        String manufacturer = scanner.nextLine();
-        System.out.print("Enter description: ");
-        String description = scanner.nextLine();
-        System.out.print("Enter dosage form: ");
-        String dosageForm = scanner.nextLine();
-        System.out.print("Enter strength: ");
-        String strength = scanner.nextLine();
-        System.out.print("Enter quantity in stock: ");
-        int quantity = getIntInput();
-        System.out.print("Enter minimum stock level: ");
-        int minStock = getIntInput();
-        System.out.print("Enter unit price: ");
-        double price = getDoubleInput();
-        System.out.print("Enter expiry date (YYYY-MM-DD): ");
-        String expiryDateStr = scanner.nextLine();
-        System.out.print("Enter storage location: ");
-        String storageLocation = scanner.nextLine();
+        String medicineName = ConsoleUtils.getStringInput(scanner, "Enter medicine name: ");
+        String genericName = ConsoleUtils.getStringInput(scanner, "Enter generic name: ");
+        String manufacturer = ConsoleUtils.getStringInput(scanner, "Enter manufacturer: ");
+        String description = ConsoleUtils.getStringInput(scanner, "Enter description: ");
+        String dosageForm = ConsoleUtils.getStringInput(scanner, "Enter dosage form: ");
+        String strength = ConsoleUtils.getStringInput(scanner, "Enter strength: ");
+        int quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", 0, 10000);
+        int minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", 0, 1000);
+        double price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", 0.0, 10000.0);
+        String expiryDateStr = ConsoleUtils.getStringInput(scanner, "Enter expiry date (YYYY-MM-DD): ");
+        String storageLocation = ConsoleUtils.getStringInput(scanner, "Enter storage location: ");
         System.out.print("Requires prescription (true/false): ");
         boolean requiresPrescription = getBooleanInput();
         
@@ -102,29 +92,25 @@ public class PharmacyManagementUI {
 
     private void updateMedicineStock() {
         System.out.println("\n=== UPDATE MEDICINE STOCK ===");
-        System.out.print("Enter medicine ID: ");
-        String medicineId = scanner.nextLine();
+        String medicineId = ConsoleUtils.getStringInput(scanner, "Enter medicine ID: ");
         System.out.println("1. Add stock");
         System.out.println("2. Remove stock");
         System.out.println("3. Set new quantity");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
         
         switch (choice) {
             case 1:
-                System.out.print("Enter quantity to add: ");
-                int addQuantity = getIntInput();
+                int addQuantity = ConsoleUtils.getIntInput(scanner, "Enter quantity to add: ", 1, 10000);
                 System.out.println("Add stock - Implementation needed");
                 break;
             case 2:
-                System.out.print("Enter quantity to remove: ");
-                int removeQuantity = getIntInput();
+                int removeQuantity = ConsoleUtils.getIntInput(scanner, "Enter quantity to remove: ", 1, 10000);
                 System.out.println("Remove stock - Implementation needed");
                 break;
             case 3:
-                System.out.print("Enter new quantity: ");
-                int newQuantity = getIntInput();
+                int newQuantity = ConsoleUtils.getIntInput(scanner, "Enter new quantity: ", 0, 10000);
                 System.out.println("Set new quantity - Implementation needed");
                 break;
             default:
@@ -134,16 +120,11 @@ public class PharmacyManagementUI {
 
     private void createPrescription() {
         System.out.println("\n=== CREATE PRESCRIPTION ===");
-        System.out.print("Enter patient ID: ");
-        String patientId = scanner.nextLine();
-        System.out.print("Enter doctor ID: ");
-        String doctorId = scanner.nextLine();
-        System.out.print("Enter consultation ID (optional): ");
-        String consultationId = scanner.nextLine();
-        System.out.print("Enter instructions: ");
-        String instructions = scanner.nextLine();
-        System.out.print("Enter expiry date (YYYY-MM-DD): ");
-        String expiryDateStr = scanner.nextLine();
+        String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
+        String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
+        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID (optional): ");
+        String instructions = ConsoleUtils.getStringInput(scanner, "Enter instructions: ");
+        String expiryDateStr = ConsoleUtils.getStringInput(scanner, "Enter expiry date (YYYY-MM-DD): ");
         
         // For now, just show a placeholder
         System.out.println("Create Prescription - Implementation needed");
@@ -155,18 +136,12 @@ public class PharmacyManagementUI {
 
     private void addMedicineToPrescription() {
         System.out.println("\n=== ADD MEDICINE TO PRESCRIPTION ===");
-        System.out.print("Enter prescription ID: ");
-        String prescriptionId = scanner.nextLine();
-        System.out.print("Enter medicine ID: ");
-        String medicineId = scanner.nextLine();
-        System.out.print("Enter quantity: ");
-        int quantity = getIntInput();
-        System.out.print("Enter dosage: ");
-        String dosage = scanner.nextLine();
-        System.out.print("Enter frequency: ");
-        String frequency = scanner.nextLine();
-        System.out.print("Enter duration (days): ");
-        int duration = getIntInput();
+        String prescriptionId = ConsoleUtils.getStringInput(scanner, "Enter prescription ID: ");
+        String medicineId = ConsoleUtils.getStringInput(scanner, "Enter medicine ID: ");
+        int quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity: ", 1, 100);
+        String dosage = ConsoleUtils.getStringInput(scanner, "Enter dosage: ");
+        String frequency = ConsoleUtils.getStringInput(scanner, "Enter frequency: ");
+        int duration = ConsoleUtils.getIntInput(scanner, "Enter duration (days): ", 1, 365);
         
         // For now, just show a placeholder
         System.out.println("Add Medicine to Prescription - Implementation needed");
@@ -180,8 +155,7 @@ public class PharmacyManagementUI {
 
     private void dispensePrescription() {
         System.out.println("\n=== DISPENSE PRESCRIPTION ===");
-        System.out.print("Enter prescription ID: ");
-        String prescriptionId = scanner.nextLine();
+        String prescriptionId = ConsoleUtils.getStringInput(scanner, "Enter prescription ID: ");
         
         // For now, just show a placeholder
         System.out.println("Dispense Prescription - Implementation needed");
@@ -194,7 +168,7 @@ public class PharmacyManagementUI {
         System.out.println("2. Search Prescriptions");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
         
         switch (choice) {
             case 1:
@@ -217,34 +191,30 @@ public class PharmacyManagementUI {
         System.out.println("5. Search by Status");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
         
         switch (choice) {
             case 1:
-                System.out.print("Enter Medicine ID: ");
-                String medicineId = scanner.nextLine();
+                String medicineId = ConsoleUtils.getStringInput(scanner, "Enter Medicine ID: ");
                 System.out.println("Search by Medicine ID - Implementation needed");
                 break;
             case 2:
-                System.out.print("Enter Medicine Name: ");
-                String medicineName = scanner.nextLine();
+                String medicineName = ConsoleUtils.getStringInput(scanner, "Enter Medicine Name: ");
                 System.out.println("Search by Medicine Name - Implementation needed");
                 break;
             case 3:
-                System.out.print("Enter Generic Name: ");
-                String genericName = scanner.nextLine();
+                String genericName = ConsoleUtils.getStringInput(scanner, "Enter Generic Name: ");
                 System.out.println("Search by Generic Name - Implementation needed");
                 break;
             case 4:
-                System.out.print("Enter Manufacturer: ");
-                String manufacturer = scanner.nextLine();
+                String manufacturer = ConsoleUtils.getStringInput(scanner, "Enter Manufacturer: ");
                 System.out.println("Search by Manufacturer - Implementation needed");
                 break;
             case 5:
                 System.out.println("Select status:");
                 System.out.println("1. AVAILABLE  2. LOW_STOCK  3. OUT_OF_STOCK  4. DISCONTINUED");
                 System.out.print("Enter choice: ");
-                int statusChoice = getIntInput();
+                int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
                 System.out.println("Search by Status - Implementation needed");
                 break;
             default:
@@ -261,36 +231,31 @@ public class PharmacyManagementUI {
         System.out.println("5. Search by Date Range");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
         
         switch (choice) {
             case 1:
-                System.out.print("Enter Prescription ID: ");
-                String prescriptionId = scanner.nextLine();
+                String prescriptionId = ConsoleUtils.getStringInput(scanner, "Enter Prescription ID: ");
                 System.out.println("Search by Prescription ID - Implementation needed");
                 break;
             case 2:
-                System.out.print("Enter Patient ID: ");
-                String patientId = scanner.nextLine();
+                String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
                 System.out.println("Search by Patient ID - Implementation needed");
                 break;
             case 3:
-                System.out.print("Enter Doctor ID: ");
-                String doctorId = scanner.nextLine();
+                String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
                 System.out.println("Search by Doctor ID - Implementation needed");
                 break;
             case 4:
                 System.out.println("Select status:");
                 System.out.println("1. ACTIVE  2. DISPENSED  3. EXPIRED  4. CANCELLED");
                 System.out.print("Enter choice: ");
-                int statusChoice = getIntInput();
+                int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
                 System.out.println("Search by Status - Implementation needed");
                 break;
             case 5:
-                System.out.print("Enter start date (YYYY-MM-DD): ");
-                String startDate = scanner.nextLine();
-                System.out.print("Enter end date (YYYY-MM-DD): ");
-                String endDate = scanner.nextLine();
+                String startDate = ConsoleUtils.getStringInput(scanner, "Enter start date (YYYY-MM-DD): ");
+                String endDate = ConsoleUtils.getStringInput(scanner, "Enter end date (YYYY-MM-DD): ");
                 System.out.println("Search by Date Range - Implementation needed");
                 break;
             default:
@@ -302,26 +267,6 @@ public class PharmacyManagementUI {
         System.out.println("\n=== PHARMACY REPORTS ===");
         System.out.println(pharmacyControl.generateMedicineStockReport());
         System.out.println(pharmacyControl.generatePrescriptionReport());
-    }
-
-    private int getIntInput() {
-        while (true) {
-            try {
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
-        }
-    }
-
-    private double getDoubleInput() {
-        while (true) {
-            try {
-                return Double.parseDouble(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
-        }
     }
 
     private boolean getBooleanInput() {

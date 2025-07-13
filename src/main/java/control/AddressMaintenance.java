@@ -38,9 +38,6 @@ public class AddressMaintenance {
         if (address == null) {
             throw new IllegalArgumentException("Address cannot be null");
         }
-        if (address.getUserId() == null || address.getUserId().trim().isEmpty()) {
-            throw new IllegalArgumentException("User ID cannot be null or empty");
-        }
 
         try {
             return ADDRESS_DAO.insert(address);

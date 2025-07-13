@@ -2,7 +2,6 @@ package utility;
 
 import java.io.IOException;
 import java.util.Scanner;
-import java.io.Console;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 
@@ -66,87 +65,6 @@ public class ConsoleUtils {
 
     public static double getDoubleInput(Scanner scanner, String prompt) {
         return getDoubleInput(scanner, prompt, 0.0, Double.MAX_VALUE);
-    }
-
-    /**
-     * Gets password input from user with masking using asterisks.
-     *
-     * @param prompt The prompt message to display to the user
-     * @return The password entered by the user
-     */
-    public static String getPasswordInput(Scanner scanner, String prompt) {
-        Console console = System.console();
-        if (console != null) {
-            // If console is available, use its readPassword method for secure input
-            char[] passwordChars = console.readPassword("%s", prompt);
-            return new String(passwordChars);
-        } else {
-            // If console is not available (e.g., in IDE), use manual masking
-            return getPasswordWithMasking(scanner, prompt);
-        }
-    }
-
-    /**
-     * Manually implements password masking for environments where console is not available.
-     *
-     * @param prompt The prompt message to display to the user
-     * @return The password entered by the user
-     */
-    private static String getPasswordWithMasking(Scanner scanner, String prompt) {
-        StringBuilder password = new StringBuilder();
-
-        System.out.print(prompt);
-
-        try {
-            // Disable echo in terminal if possible
-            // Note: This may not work in all environments (particularly IDEs)
-            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-                char ch;
-                while ((ch = (char) System.in.read()) != '\n' && ch != '\r') {
-                    if (ch == '\b') {  // Handle backspace
-                        if (password.length() > 0) {
-                            System.out.print("\b \b");
-                            password.deleteCharAt(password.length() - 1);
-                        }
-                    } else {
-                        password.append(ch);
-                        System.out.print("*");
-                    }
-                }
-            } else {
-                // For Unix-like systems, relying on manual input with masking
-                // This is a simplified implementation
-                String input = scanner.nextLine();
-                password.append(input);
-
-                // Print asterisks for each character entered
-                for (int i = 0; i < input.length(); i++) {
-                    System.out.print("\b*");
-                }
-            }
-            System.out.println();  // Add a new line after input
-
-        } catch (Exception e) {
-            System.err.println("Error reading password: " + e.getMessage());
-            // Fallback to regular scanner input
-            password = new StringBuilder(scanner.nextLine());
-        }
-
-        return password.toString();
-    }
-
-    public static void displayLogo() {
-        // The PCHub ASCII art logo
-        String logo = "\n" +
-                "    ____  ________  __      __  \n" +
-                "   / __ \\/ ____/ / / /_  __/ /_ \n" +
-                "  / /_/ / /   / /_/ / / / / __ \\\n" +
-                " / ____/ /___/ __  / /_/ / /_/ /\n" +
-                "/_/    \\____/_/ /_/\\__,_/_.___/ \n" +
-                "                                \n";
-
-        // Set text color to blue, print logo, then reset color
-        System.out.print(BLUE_COLOR + logo + RESET_COLOR);
     }
 
     public static void printHeader(String title) {

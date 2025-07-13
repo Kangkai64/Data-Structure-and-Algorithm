@@ -1,6 +1,7 @@
 package boundary;
 
 import control.*;
+import utility.ConsoleUtils;
 import java.util.Scanner;
 
 /**
@@ -53,7 +54,7 @@ public class ReportGenerationUI {
             System.out.println("7. Back to Main Menu");
             System.out.print("Enter your choice: ");
             
-            int choice = getIntInput();
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
             
             switch (choice) {
                 case 1:
@@ -89,7 +90,7 @@ public class ReportGenerationUI {
         System.out.println("3. Both Reports");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
         
         switch (choice) {
             case 1:
@@ -114,7 +115,7 @@ public class ReportGenerationUI {
         System.out.println("3. Both Reports");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
         
         switch (choice) {
             case 1:
@@ -139,7 +140,7 @@ public class ReportGenerationUI {
         System.out.println("3. Both Reports");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
         
         switch (choice) {
             case 1:
@@ -164,7 +165,7 @@ public class ReportGenerationUI {
         System.out.println("3. Both Reports");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
         
         switch (choice) {
             case 1:
@@ -189,7 +190,7 @@ public class ReportGenerationUI {
         System.out.println("3. Both Reports");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
         
         switch (choice) {
             case 1:
@@ -204,16 +205,6 @@ public class ReportGenerationUI {
                 break;
             default:
                 System.out.println("Invalid choice.");
-        }
-    }
-
-    private int getIntInput() {
-        while (true) {
-            try {
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
         }
     }
 } 

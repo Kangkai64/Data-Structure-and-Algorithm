@@ -2,16 +2,13 @@ package entity;
 
 public class Address {
     private String addressId;
-    private String userId;
     private String street;
     private String city;
     private String state;
     private String zipCode;
     private String country;
 
-    public Address(String addressId, String userId, String street, String city, String state, String zipCode, String country) {
-        this.addressId = addressId;
-        this.userId = userId;
+    public Address(String street, String city, String state, String zipCode, String country) {
         this.street = street;
         this.city = city;
         this.state = state;
@@ -26,14 +23,6 @@ public class Address {
 
     public void setAddressId(String addressId) {
         this.addressId = addressId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
     }
 
     public String getStreet() {

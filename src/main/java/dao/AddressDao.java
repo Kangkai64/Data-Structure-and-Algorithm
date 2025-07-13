@@ -253,8 +253,6 @@ public class AddressDao extends DaoTemplate<Address> {
     protected Address mapResultSet(ResultSet resultSet) throws SQLException {
         try {
             return new Address(
-                    resultSet.getString("addressId"),
-                    null, // userId is not used in the new schema
                     resultSet.getString("street"),
                     resultSet.getString("city"),
                     resultSet.getString("state"),

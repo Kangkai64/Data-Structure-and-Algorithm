@@ -4,6 +4,8 @@ import control.PatientManagementControl;
 import entity.Address;
 import entity.BloodType;
 import adt.ArrayList;
+import utility.ConsoleUtils;
+
 import java.util.Scanner;
 
 /**
@@ -31,8 +33,8 @@ public class PatientManagementUI {
             System.out.println("7. Generate Patient Reports");
             System.out.println("8. Back to Main Menu");
             System.out.print("Enter your choice: ");
-            
-            int choice = getIntInput();
+
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
             
             switch (choice) {
                 case 1:
@@ -66,42 +68,31 @@ public class PatientManagementUI {
 
     private void registerNewPatient() {
         System.out.println("\n=== REGISTER NEW PATIENT ===");
-        System.out.print("Enter full name: ");
-        String fullName = scanner.nextLine();
-        System.out.print("Enter IC number: ");
-        String icNumber = scanner.nextLine();
-        System.out.print("Enter email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter phone number: ");
-        String phoneNumber = scanner.nextLine();
+        String fullName = ConsoleUtils.getStringInput(scanner, "Enter full name: ");
+        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number: ");
+        String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
+        String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter phone number: ");
         
         // Get address details
-        System.out.print("Enter street: ");
-        String street = scanner.nextLine();
-        System.out.print("Enter city: ");
-        String city = scanner.nextLine();
-        System.out.print("Enter state: ");
-        String state = scanner.nextLine();
-        System.out.print("Enter postal code: ");
-        String postalCode = scanner.nextLine();
-        System.out.print("Enter country: ");
-        String country = scanner.nextLine();
+        String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
+        String city = ConsoleUtils.getStringInput(scanner, "Enter city: ");
+        String state = ConsoleUtils.getStringInput(scanner, "Enter state: ");
+        String postalCode = ConsoleUtils.getStringInput(scanner, "Enter postal code: ");
+        String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
         
-        Address address = new Address("", "", street, city, state, postalCode, country);
+        Address address = new Address(street, city, state, postalCode, country);
         
-        System.out.print("Enter ward number: ");
-        String wardNumber = scanner.nextLine();
+        String wardNumber = ConsoleUtils.getStringInput(scanner, "Enter ward number: ");
         
         System.out.println("Select blood type:");
         System.out.println("1. A_POSITIVE  2. A_NEGATIVE  3. B_POSITIVE  4. B_NEGATIVE");
-        System.out.println("5. AB_POSITIVE 6. AB_NEGATIVE 7. O  8. OTHERS");
+        System.out.println("5. AB_POSITIVE 6. AB_NEGATIVE 7. O_POSITIVE  8. O_NEGATIVE  9. OTHERS");
         System.out.print("Enter choice: ");
-        int bloodTypeChoice = getIntInput();
+        int bloodTypeChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 9);
         
         BloodType bloodType = getBloodTypeFromChoice(bloodTypeChoice);
         
-        System.out.print("Enter allergies (comma-separated, or 'None'): ");
-        String allergiesInput = scanner.nextLine();
+        String allergiesInput = ConsoleUtils.getStringInput(scanner, "Enter allergies (comma-separated, or 'None'): ");
         ArrayList<String> allergies = new ArrayList<>();
         if (!allergiesInput.equalsIgnoreCase("None")) {
             String[] allergyArray = allergiesInput.split(",");
@@ -112,8 +103,7 @@ public class PatientManagementUI {
             allergies.add("None");
         }
         
-        System.out.print("Enter emergency contact: ");
-        String emergencyContact = scanner.nextLine();
+        String emergencyContact = ConsoleUtils.getStringInput(scanner, "Enter emergency contact: ");
         
         boolean success = patientControl.registerPatient(fullName, icNumber, email, phoneNumber, 
                                                        address, wardNumber, bloodType, 
@@ -128,8 +118,7 @@ public class PatientManagementUI {
 
     private void updatePatientRecord() {
         System.out.println("\n=== UPDATE PATIENT RECORD ===");
-        System.out.print("Enter patient ID to update: ");
-        String patientId = scanner.nextLine();
+        String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID to update: ");
         
         // For now, just show a placeholder
         System.out.println("Update Patient Record - Implementation needed");
@@ -138,8 +127,7 @@ public class PatientManagementUI {
 
     private void deactivatePatient() {
         System.out.println("\n=== DEACTIVATE PATIENT ===");
-        System.out.print("Enter patient ID to deactivate: ");
-        String patientId = scanner.nextLine();
+        String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID to deactivate: ");
         
         // For now, just show a placeholder
         System.out.println("Deactivate Patient - Implementation needed");
@@ -148,8 +136,7 @@ public class PatientManagementUI {
 
     private void addPatientToQueue() {
         System.out.println("\n=== ADD PATIENT TO QUEUE ===");
-        System.out.print("Enter patient ID to add to queue: ");
-        String patientId = scanner.nextLine();
+        String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID to add to queue: ");
         
         // For now, just show a placeholder
         System.out.println("Add Patient to Queue - Implementation needed");
@@ -171,27 +158,23 @@ public class PatientManagementUI {
         System.out.println("4. Search by IC Number");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         
         switch (choice) {
             case 1:
-                System.out.print("Enter Patient ID: ");
-                String patientId = scanner.nextLine();
+                String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
                 System.out.println("Search by Patient ID - Implementation needed");
                 break;
             case 2:
-                System.out.print("Enter Full Name: ");
-                String fullName = scanner.nextLine();
+                String fullName = ConsoleUtils.getStringInput(scanner, "Enter Full Name: ");
                 System.out.println("Search by Full Name - Implementation needed");
                 break;
             case 3:
-                System.out.print("Enter Email: ");
-                String email = scanner.nextLine();
+                String email = ConsoleUtils.getStringInput(scanner, "Enter Email: ");
                 System.out.println("Search by Email - Implementation needed");
                 break;
             case 4:
-                System.out.print("Enter IC Number: ");
-                String icNumber = scanner.nextLine();
+                String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC Number: ");
                 System.out.println("Search by IC Number - Implementation needed");
                 break;
             default:
@@ -213,19 +196,10 @@ public class PatientManagementUI {
             case 4: return BloodType.B_NEGATIVE;
             case 5: return BloodType.AB_POSITIVE;
             case 6: return BloodType.AB_NEGATIVE;
-            case 7: return BloodType.O;
-            case 8: return BloodType.OTHERS;
+            case 7: return BloodType.O_POSITIVE;
+            case 8: return BloodType.O_NEGATIVE;
+            case 9: return BloodType.OTHERS;
             default: return BloodType.A_POSITIVE;
-        }
-    }
-
-    private int getIntInput() {
-        while (true) {
-            try {
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
         }
     }
 } 

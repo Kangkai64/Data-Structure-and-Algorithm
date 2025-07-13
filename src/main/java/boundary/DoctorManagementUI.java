@@ -2,6 +2,7 @@ package boundary;
 
 import control.DoctorManagementControl;
 import entity.Address;
+import utility.ConsoleUtils;
 import java.util.Scanner;
 
 /**
@@ -29,7 +30,7 @@ public class DoctorManagementUI {
             System.out.println("7. Back to Main Menu");
             System.out.print("Enter your choice: ");
             
-            int choice = getIntInput();
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
             
             switch (choice) {
                 case 1:
@@ -60,34 +61,22 @@ public class DoctorManagementUI {
 
     private void registerNewDoctor() {
         System.out.println("\n=== REGISTER NEW DOCTOR ===");
-        System.out.print("Enter full name: ");
-        String fullName = scanner.nextLine();
-        System.out.print("Enter IC number: ");
-        String icNumber = scanner.nextLine();
-        System.out.print("Enter email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter phone number: ");
-        String phoneNumber = scanner.nextLine();
-        System.out.print("Enter medical specialty: ");
-        String specialty = scanner.nextLine();
-        System.out.print("Enter license number: ");
-        String licenseNumber = scanner.nextLine();
-        System.out.print("Enter experience years: ");
-        int expYears = getIntInput();
+        String fullName = ConsoleUtils.getStringInput(scanner, "Enter full name: ");
+        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number: ");
+        String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
+        String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter phone number: ");
+        String specialty = ConsoleUtils.getStringInput(scanner, "Enter medical specialty: ");
+        String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter license number: ");
+        int expYears = ConsoleUtils.getIntInput(scanner, "Enter experience years: ", 0, 50);
         
         // Get address details
-        System.out.print("Enter street: ");
-        String street = scanner.nextLine();
-        System.out.print("Enter city: ");
-        String city = scanner.nextLine();
-        System.out.print("Enter state: ");
-        String state = scanner.nextLine();
-        System.out.print("Enter postal code: ");
-        String postalCode = scanner.nextLine();
-        System.out.print("Enter country: ");
-        String country = scanner.nextLine();
+        String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
+        String city = ConsoleUtils.getStringInput(scanner, "Enter city: ");
+        String state = ConsoleUtils.getStringInput(scanner, "Enter state: ");
+        String postalCode = ConsoleUtils.getStringInput(scanner, "Enter postal code: ");
+        String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
         
-        Address address = new Address("", "", street, city, state, postalCode, country);
+        Address address = new Address(street, city, state, postalCode, country);
         
         boolean success = doctorControl.registerDoctor(fullName, icNumber, email, phoneNumber, 
                                                      address, specialty, licenseNumber, expYears);
@@ -98,11 +87,10 @@ public class DoctorManagementUI {
             System.out.println("Failed to register doctor.");
         }
     }
-
+    
     private void updateDoctorInfo() {
         System.out.println("\n=== UPDATE DOCTOR INFORMATION ===");
-        System.out.print("Enter doctor ID to update: ");
-        String doctorId = scanner.nextLine();
+        String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID to update: ");
         
         // For now, just show a placeholder
         System.out.println("Update Doctor Info - Implementation needed");
@@ -111,8 +99,7 @@ public class DoctorManagementUI {
 
     private void addDoctorSchedule() {
         System.out.println("\n=== ADD DOCTOR SCHEDULE ===");
-        System.out.print("Enter doctor ID: ");
-        String doctorId = scanner.nextLine();
+        String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
         
         // For now, just show a placeholder
         System.out.println("Add Doctor Schedule - Implementation needed");
@@ -121,8 +108,7 @@ public class DoctorManagementUI {
 
     private void setDoctorAvailability() {
         System.out.println("\n=== SET DOCTOR AVAILABILITY ===");
-        System.out.print("Enter doctor ID: ");
-        String doctorId = scanner.nextLine();
+        String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
         System.out.print("Set availability (true/false): ");
         boolean isAvailable = getBooleanInput();
         
@@ -140,32 +126,27 @@ public class DoctorManagementUI {
         System.out.println("5. Search by Specialty");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
         
         switch (choice) {
             case 1:
-                System.out.print("Enter Doctor ID: ");
-                String doctorId = scanner.nextLine();
+                String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
                 System.out.println("Search by Doctor ID - Implementation needed");
                 break;
             case 2:
-                System.out.print("Enter Full Name: ");
-                String fullName = scanner.nextLine();
+                String fullName = ConsoleUtils.getStringInput(scanner, "Enter Full Name: ");
                 System.out.println("Search by Full Name - Implementation needed");
                 break;
             case 3:
-                System.out.print("Enter Email: ");
-                String email = scanner.nextLine();
+                String email = ConsoleUtils.getStringInput(scanner, "Enter Email: ");
                 System.out.println("Search by Email - Implementation needed");
                 break;
             case 4:
-                System.out.print("Enter License Number: ");
-                String licenseNumber = scanner.nextLine();
+                String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter License Number: ");
                 System.out.println("Search by License Number - Implementation needed");
                 break;
             case 5:
-                System.out.print("Enter Specialty: ");
-                String specialty = scanner.nextLine();
+                String specialty = ConsoleUtils.getStringInput(scanner, "Enter Specialty: ");
                 System.out.println("Search by Specialty - Implementation needed");
                 break;
             default:
@@ -177,16 +158,6 @@ public class DoctorManagementUI {
         System.out.println("\n=== DOCTOR REPORTS ===");
         System.out.println(doctorControl.generateDoctorInformationReport());
         System.out.println(doctorControl.generateScheduleReport());
-    }
-
-    private int getIntInput() {
-        while (true) {
-            try {
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
-        }
     }
 
     private boolean getBooleanInput() {

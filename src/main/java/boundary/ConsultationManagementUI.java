@@ -1,6 +1,7 @@
 package boundary;
 
 import control.ConsultationManagementControl;
+import utility.ConsoleUtils;
 import java.util.Scanner;
 
 /**
@@ -28,7 +29,7 @@ public class ConsultationManagementUI {
             System.out.println("7. Back to Main Menu");
             System.out.print("Enter your choice: ");
             
-            int choice = getIntInput();
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
             
             switch (choice) {
                 case 1:
@@ -59,18 +60,12 @@ public class ConsultationManagementUI {
 
     private void scheduleConsultation() {
         System.out.println("\n=== SCHEDULE CONSULTATION ===");
-        System.out.print("Enter patient ID: ");
-        String patientId = scanner.nextLine();
-        System.out.print("Enter doctor ID: ");
-        String doctorId = scanner.nextLine();
-        System.out.print("Enter consultation date (YYYY-MM-DD): ");
-        String dateStr = scanner.nextLine();
-        System.out.print("Enter consultation time (HH:MM): ");
-        String timeStr = scanner.nextLine();
-        System.out.print("Enter symptoms: ");
-        String symptoms = scanner.nextLine();
-        System.out.print("Enter consultation fee: ");
-        double fee = getDoubleInput();
+        String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
+        String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
+        String dateStr = ConsoleUtils.getStringInput(scanner, "Enter consultation date (YYYY-MM-DD): ");
+        String timeStr = ConsoleUtils.getStringInput(scanner, "Enter consultation time (HH:MM): ");
+        String symptoms = ConsoleUtils.getStringInput(scanner, "Enter symptoms: ");
+        double fee = ConsoleUtils.getDoubleInput(scanner, "Enter consultation fee: ", 0.0, 10000.0);
         
         // For now, just show a placeholder
         System.out.println("Schedule Consultation - Implementation needed");
@@ -81,8 +76,7 @@ public class ConsultationManagementUI {
 
     private void startConsultation() {
         System.out.println("\n=== START CONSULTATION ===");
-        System.out.print("Enter consultation ID: ");
-        String consultationId = scanner.nextLine();
+        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID: ");
         
         // For now, just show a placeholder
         System.out.println("Start Consultation - Implementation needed");
@@ -91,14 +85,10 @@ public class ConsultationManagementUI {
 
     private void completeConsultation() {
         System.out.println("\n=== COMPLETE CONSULTATION ===");
-        System.out.print("Enter consultation ID: ");
-        String consultationId = scanner.nextLine();
-        System.out.print("Enter diagnosis: ");
-        String diagnosis = scanner.nextLine();
-        System.out.print("Enter treatment: ");
-        String treatment = scanner.nextLine();
-        System.out.print("Enter notes: ");
-        String notes = scanner.nextLine();
+        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID: ");
+        String diagnosis = ConsoleUtils.getStringInput(scanner, "Enter diagnosis: ");
+        String treatment = ConsoleUtils.getStringInput(scanner, "Enter treatment: ");
+        String notes = ConsoleUtils.getStringInput(scanner, "Enter notes: ");
         
         // For now, just show a placeholder
         System.out.println("Complete Consultation - Implementation needed");
@@ -110,10 +100,8 @@ public class ConsultationManagementUI {
 
     private void cancelConsultation() {
         System.out.println("\n=== CANCEL CONSULTATION ===");
-        System.out.print("Enter consultation ID: ");
-        String consultationId = scanner.nextLine();
-        System.out.print("Enter cancellation reason: ");
-        String reason = scanner.nextLine();
+        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID: ");
+        String reason = ConsoleUtils.getStringInput(scanner, "Enter cancellation reason: ");
         
         // For now, just show a placeholder
         System.out.println("Cancel Consultation - Implementation needed");
@@ -130,36 +118,31 @@ public class ConsultationManagementUI {
         System.out.println("5. Search by Status");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
         
         switch (choice) {
             case 1:
-                System.out.print("Enter Consultation ID: ");
-                String consultationId = scanner.nextLine();
+                String consultationId = ConsoleUtils.getStringInput(scanner, "Enter Consultation ID: ");
                 System.out.println("Search by Consultation ID - Implementation needed");
                 break;
             case 2:
-                System.out.print("Enter Patient ID: ");
-                String patientId = scanner.nextLine();
+                String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
                 System.out.println("Search by Patient ID - Implementation needed");
                 break;
             case 3:
-                System.out.print("Enter Doctor ID: ");
-                String doctorId = scanner.nextLine();
+                String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
                 System.out.println("Search by Doctor ID - Implementation needed");
                 break;
             case 4:
-                System.out.print("Enter start date (YYYY-MM-DD): ");
-                String startDate = scanner.nextLine();
-                System.out.print("Enter end date (YYYY-MM-DD): ");
-                String endDate = scanner.nextLine();
+                String startDate = ConsoleUtils.getStringInput(scanner, "Enter start date (YYYY-MM-DD): ");
+                String endDate = ConsoleUtils.getStringInput(scanner, "Enter end date (YYYY-MM-DD): ");
                 System.out.println("Search by Date Range - Implementation needed");
                 break;
             case 5:
                 System.out.println("Select status:");
                 System.out.println("1. SCHEDULED  2. IN_PROGRESS  3. COMPLETED  4. CANCELLED");
                 System.out.print("Enter choice: ");
-                int statusChoice = getIntInput();
+                int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
                 System.out.println("Search by Status - Implementation needed");
                 break;
             default:
@@ -171,25 +154,5 @@ public class ConsultationManagementUI {
         System.out.println("\n=== CONSULTATION REPORTS ===");
         System.out.println(consultationControl.generateConsultationReport());
         System.out.println(consultationControl.generateScheduledConsultationsReport());
-    }
-
-    private int getIntInput() {
-        while (true) {
-            try {
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
-        }
-    }
-
-    private double getDoubleInput() {
-        while (true) {
-            try {
-                return Double.parseDouble(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
-        }
     }
 } 

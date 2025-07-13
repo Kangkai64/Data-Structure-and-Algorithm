@@ -101,7 +101,7 @@ public class PatientDao extends DaoTemplate<Patient> {
     @Override
     public boolean insert(Patient patient) throws SQLException {
         String sql = "INSERT INTO patient (patientId, fullName, ICNumber, email, phoneNumber, " +
-                "address, registrationDate, wardNumber, bloodType, allergies, emergencyContact, isActive) " +
+                "addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact, isActive) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -112,7 +112,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setString(3, patient.getICNumber());
             preparedStatement.setString(4, patient.getEmail());
             preparedStatement.setString(5, patient.getPhoneNumber());
-            preparedStatement.setString(6, addressToString(patient.getAddress()));
+            preparedStatement.setString(6, patient.getAddress().getAddressId());
             preparedStatement.setDate(7, new Date(patient.getRegistrationDate().getTime()));
             preparedStatement.setString(8, patient.getWardNumber());
             preparedStatement.setString(9, patient.getBloodType().name());
@@ -132,7 +132,7 @@ public class PatientDao extends DaoTemplate<Patient> {
     @Override
     public boolean update(Patient patient) throws SQLException {
         String sql = "UPDATE patient SET fullName = ?, ICNumber = ?, email = ?, phoneNumber = ?, " +
-                "address = ?, wardNumber = ?, bloodType = ?, allergies = ?, emergencyContact = ?, isActive = ? " +
+                "addressId = ?, wardNumber = ?, bloodType = ?, allergies = ?, emergencyContact = ?, isActive = ? " +
                 "WHERE patientId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -142,7 +142,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setString(2, patient.getICNumber());
             preparedStatement.setString(3, patient.getEmail());
             preparedStatement.setString(4, patient.getPhoneNumber());
-            preparedStatement.setString(5, addressToString(patient.getAddress()));
+            preparedStatement.setString(5, patient.getAddress().getAddressId());
             preparedStatement.setString(6, patient.getWardNumber());
             preparedStatement.setString(7, patient.getBloodType().name());
             preparedStatement.setString(8, allergiesToString(patient.getAllergies()));
@@ -179,7 +179,9 @@ public class PatientDao extends DaoTemplate<Patient> {
     protected Patient mapResultSet(ResultSet resultSet) throws SQLException {
         try {
             // Create Address object
-            Address address = parseAddress(resultSet.getString("address"));
+            String addressId = resultSet.getString("addressId");
+            AddressDao addressDao = new AddressDao();
+            Address address = addressDao.findById(addressId);
 
             // Parse allergies from string to ArrayList
             ArrayList<String> allergies = parseAllergies(resultSet.getString("allergies"));
@@ -238,45 +240,6 @@ public class PatientDao extends DaoTemplate<Patient> {
             }
         }
         return allergies;
-    }
-
-    /**
-     * Helper method to convert Address object to string for database storage
-     * Format: street|city|state|zipCode|country
-     */
-    private String addressToString(Address address) {
-        if (address == null) {
-            return "";
-        }
-
-        return String.join("|",
-                address.getStreet() != null ? address.getStreet() : "",
-                address.getCity() != null ? address.getCity() : "",
-                address.getState() != null ? address.getState() : "",
-                address.getZipCode() != null ? address.getZipCode() : "",
-                address.getCountry() != null ? address.getCountry() : ""
-        );
-    }
-
-    /**
-     * Helper method to parse address string to Address object
-     * Assumes address is stored as: street|city|state|zipCode|country
-     */
-    private Address parseAddress(String addressString) {
-        if (addressString == null || addressString.trim().isEmpty()) {
-            return new Address("", "", "", "", "", "", ""); // Empty address
-        }
-
-        String[] parts = addressString.split("\\|");
-
-        // Handle cases where not all parts are present
-        String street = parts.length > 0 ? parts[0] : "";
-        String city = parts.length > 1 ? parts[1] : "";
-        String state = parts.length > 2 ? parts[2] : "";
-        String zipCode = parts.length > 3 ? parts[3] : "";
-        String country = parts.length > 4 ? parts[4] : "";
-
-        return new Address("", "", street, city, state, zipCode, country);
     }
 
     /**

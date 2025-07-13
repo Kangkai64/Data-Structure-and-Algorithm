@@ -40,7 +40,6 @@ public class MainMenuUI {
             System.out.println("5. Pharmacy Management Module");
             System.out.println("6. Generate All Reports");
             System.out.println("7. Exit");
-            System.out.print("Enter your choice: ");
             
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
             

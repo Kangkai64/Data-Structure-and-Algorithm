@@ -1,6 +1,7 @@
 package boundary;
 
 import control.MedicalTreatmentControl;
+import utility.ConsoleUtils;
 import java.util.Scanner;
 
 /**
@@ -28,7 +29,7 @@ public class MedicalTreatmentUI {
             System.out.println("7. Back to Main Menu");
             System.out.print("Enter your choice: ");
             
-            int choice = getIntInput();
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
             
             switch (choice) {
                 case 1:
@@ -59,22 +60,14 @@ public class MedicalTreatmentUI {
 
     private void createTreatment() {
         System.out.println("\n=== CREATE TREATMENT ===");
-        System.out.print("Enter patient ID: ");
-        String patientId = scanner.nextLine();
-        System.out.print("Enter doctor ID: ");
-        String doctorId = scanner.nextLine();
-        System.out.print("Enter consultation ID (optional): ");
-        String consultationId = scanner.nextLine();
-        System.out.print("Enter diagnosis: ");
-        String diagnosis = scanner.nextLine();
-        System.out.print("Enter treatment plan: ");
-        String treatmentPlan = scanner.nextLine();
-        System.out.print("Enter prescribed medications: ");
-        String medications = scanner.nextLine();
-        System.out.print("Enter treatment notes: ");
-        String notes = scanner.nextLine();
-        System.out.print("Enter treatment cost: ");
-        double cost = getDoubleInput();
+        String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
+        String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
+        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID (optional): ");
+        String diagnosis = ConsoleUtils.getStringInput(scanner, "Enter diagnosis: ");
+        String treatmentPlan = ConsoleUtils.getStringInput(scanner, "Enter treatment plan: ");
+        String medications = ConsoleUtils.getStringInput(scanner, "Enter prescribed medications: ");
+        String notes = ConsoleUtils.getStringInput(scanner, "Enter treatment notes: ");
+        double cost = ConsoleUtils.getDoubleInput(scanner, "Enter treatment cost: ", 0.0, 100000.0);
         
         // For now, just show a placeholder
         System.out.println("Create Treatment - Implementation needed");
@@ -89,8 +82,7 @@ public class MedicalTreatmentUI {
 
     private void updateTreatment() {
         System.out.println("\n=== UPDATE TREATMENT ===");
-        System.out.print("Enter treatment ID: ");
-        String treatmentId = scanner.nextLine();
+        String treatmentId = ConsoleUtils.getStringInput(scanner, "Enter treatment ID: ");
         
         // For now, just show a placeholder
         System.out.println("Update Treatment - Implementation needed");
@@ -99,8 +91,7 @@ public class MedicalTreatmentUI {
 
     private void startTreatment() {
         System.out.println("\n=== START TREATMENT ===");
-        System.out.print("Enter treatment ID: ");
-        String treatmentId = scanner.nextLine();
+        String treatmentId = ConsoleUtils.getStringInput(scanner, "Enter treatment ID: ");
         
         // For now, just show a placeholder
         System.out.println("Start Treatment - Implementation needed");
@@ -109,10 +100,8 @@ public class MedicalTreatmentUI {
 
     private void completeTreatment() {
         System.out.println("\n=== COMPLETE TREATMENT ===");
-        System.out.print("Enter treatment ID: ");
-        String treatmentId = scanner.nextLine();
-        System.out.print("Enter follow-up date (YYYY-MM-DD, optional): ");
-        String followUpDate = scanner.nextLine();
+        String treatmentId = ConsoleUtils.getStringInput(scanner, "Enter treatment ID: ");
+        String followUpDate = ConsoleUtils.getStringInput(scanner, "Enter follow-up date (YYYY-MM-DD, optional): ");
         
         // For now, just show a placeholder
         System.out.println("Complete Treatment - Implementation needed");
@@ -130,41 +119,35 @@ public class MedicalTreatmentUI {
         System.out.println("6. Search by Date Range");
         System.out.print("Enter choice: ");
         
-        int choice = getIntInput();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
         
         switch (choice) {
             case 1:
-                System.out.print("Enter Treatment ID: ");
-                String treatmentId = scanner.nextLine();
+                String treatmentId = ConsoleUtils.getStringInput(scanner, "Enter Treatment ID: ");
                 System.out.println("Search by Treatment ID - Implementation needed");
                 break;
             case 2:
-                System.out.print("Enter Patient ID: ");
-                String patientId = scanner.nextLine();
+                String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
                 System.out.println("Search by Patient ID - Implementation needed");
                 break;
             case 3:
-                System.out.print("Enter Doctor ID: ");
-                String doctorId = scanner.nextLine();
+                String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
                 System.out.println("Search by Doctor ID - Implementation needed");
                 break;
             case 4:
-                System.out.print("Enter Consultation ID: ");
-                String consultationId = scanner.nextLine();
+                String consultationId = ConsoleUtils.getStringInput(scanner, "Enter Consultation ID: ");
                 System.out.println("Search by Consultation ID - Implementation needed");
                 break;
             case 5:
                 System.out.println("Select status:");
                 System.out.println("1. PRESCRIBED  2. IN_PROGRESS  3. COMPLETED  4. CANCELLED");
                 System.out.print("Enter choice: ");
-                int statusChoice = getIntInput();
+                int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
                 System.out.println("Search by Status - Implementation needed");
                 break;
             case 6:
-                System.out.print("Enter start date (YYYY-MM-DD): ");
-                String startDate = scanner.nextLine();
-                System.out.print("Enter end date (YYYY-MM-DD): ");
-                String endDate = scanner.nextLine();
+                String startDate = ConsoleUtils.getStringInput(scanner, "Enter start date (YYYY-MM-DD): ");
+                String endDate = ConsoleUtils.getStringInput(scanner, "Enter end date (YYYY-MM-DD): ");
                 System.out.println("Search by Date Range - Implementation needed");
                 break;
             default:
@@ -176,25 +159,5 @@ public class MedicalTreatmentUI {
         System.out.println("\n=== TREATMENT REPORTS ===");
         System.out.println(treatmentControl.generateTreatmentReport());
         System.out.println(treatmentControl.generateTreatmentHistoryReport());
-    }
-
-    private int getIntInput() {
-        while (true) {
-            try {
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
-        }
-    }
-
-    private double getDoubleInput() {
-        while (true) {
-            try {
-                return Double.parseDouble(scanner.nextLine());
-            } catch (NumberFormatException exception) {
-                System.out.print("Please enter a valid number: ");
-            }
-        }
     }
 } 

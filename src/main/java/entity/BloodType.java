@@ -1,7 +1,8 @@
 package entity;
 
 public enum BloodType {
-    O,
+    O_POSITIVE,
+    O_NEGATIVE,
     A_POSITIVE,
     A_NEGATIVE,
     B_POSITIVE,

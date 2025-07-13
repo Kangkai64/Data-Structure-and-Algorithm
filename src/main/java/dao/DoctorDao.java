@@ -325,8 +325,6 @@ public class DoctorDao extends DaoTemplate<Doctor> {
             Address address = null;
             if (resultSet.getString("addressId") != null) {
                 address = new Address(
-                        resultSet.getString("addressId"),
-                        null, // userId is not used in the new schema
                         resultSet.getString("street"),
                         resultSet.getString("city"),
                         resultSet.getString("state"),

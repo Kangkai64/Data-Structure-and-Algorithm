@@ -32,8 +32,8 @@ public class PatientManagementControl {
                                  BloodType bloodType, ArrayList<String> allergies, 
                                  String emergencyContact) {
         try {
-            // Generate patient ID
-            String patientId = generatePatientId();
+            // Get new patient ID from database
+            String patientId = patientDao.getNewId();
             
             // Create new patient
             Patient patient = new Patient(fullName, icNumber, email, phoneNumber, 
@@ -212,10 +212,6 @@ public class PatientManagementControl {
     }
     
     // Private Helper Methods
-    private String generatePatientId() {
-        int nextNumber = getTotalActivePatients() + 1;
-        return String.format("P%09d", nextNumber);
-    }
     
     private void loadActivePatients() {
         try {

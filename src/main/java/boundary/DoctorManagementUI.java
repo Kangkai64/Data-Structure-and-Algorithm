@@ -62,7 +62,7 @@ public class DoctorManagementUI {
     private void registerNewDoctor() {
         System.out.println("\n=== REGISTER NEW DOCTOR ===");
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter full name: ");
-        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number: ");
+        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number (DDMMYY-XX-XXXX): ");
         String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
         String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter phone number: ");
         String specialty = ConsoleUtils.getStringInput(scanner, "Enter medical specialty: ");

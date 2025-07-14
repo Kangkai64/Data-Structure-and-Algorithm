@@ -237,6 +237,17 @@ public class MedicineDao extends DaoTemplate<Medicine> {
     }
 
     @Override
+    public String getNewId() throws SQLException {
+        String tempInsertSql = "INSERT INTO medicine (medicineId, medicineName, genericName, manufacturer, " +
+                              "description, dosageForm, strength, quantityInStock, minimumStockLevel, unitPrice, " +
+                              "expiryDate, storageLocation, requiresPrescription, status) " +
+                              "VALUES (NULL, 'TEMP', 'TEMP', 'TEMP', 'TEMP', 'TEMP', 'TEMP', 0, 0, 0.0, " +
+                              "DATE_ADD(CURDATE(), INTERVAL 1 YEAR), 'TEMP', false, 'AVAILABLE')";
+        String tempDeleteSql = "DELETE FROM medicine WHERE medicineName = 'TEMP' AND genericName = 'TEMP'";
+        return getNextIdFromDatabase("medicine", "medicineId", tempInsertSql, tempDeleteSql);
+    }
+
+    @Override
     public boolean insert(Medicine medicine) throws SQLException {
         String sql = "INSERT INTO medicine (medicineId, medicineName, genericName, manufacturer, " +
                 "description, dosageForm, strength, quantityInStock, minimumStockLevel, unitPrice, " +

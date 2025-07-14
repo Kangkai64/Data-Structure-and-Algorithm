@@ -239,6 +239,16 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
     }
 
     @Override
+    public String getNewId() throws SQLException {
+        String tempInsertSql = "INSERT INTO prescription (prescriptionId, patientId, doctorId, consultationId, " +
+                              "prescriptionDate, instructions, expiryDate, status, totalCost) " +
+                              "VALUES (NULL, 'P000000001', 'D000000001', NULL, " +
+                              "NOW(), 'TEMP', DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'ACTIVE', 0.0)";
+        String tempDeleteSql = "DELETE FROM prescription WHERE instructions = 'TEMP'";
+        return getNextIdFromDatabase("prescription", "prescriptionId", tempInsertSql, tempDeleteSql);
+    }
+
+    @Override
     public boolean insert(Prescription prescription) throws SQLException {
         String sql = "INSERT INTO prescription (prescriptionId, patientId, doctorId, consultationId, " +
                 "prescriptionDate, instructions, expiryDate, status, totalCost) " +

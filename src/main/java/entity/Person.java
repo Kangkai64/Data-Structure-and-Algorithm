@@ -2,8 +2,7 @@ package entity;
 
 import java.util.Date;
 import java.util.Objects;
-import static utility.PatternChecker.EMAIL_PATTERN;
-import static utility.PatternChecker.PHONE_PATTERN;
+import static utility.PatternChecker.*;
 
 /**
  * Represents a person in the Clinic Management System.
@@ -54,6 +53,8 @@ public abstract class Person {
     public void setICNumber(String ICNumber) {
         if (ICNumber == null || ICNumber.trim().isEmpty()) {
             throw new IllegalArgumentException("ICNumber cannot be null or empty");
+        } else if (!IC_PATTERN.matcher(ICNumber.trim()).matches()) {
+            throw new IllegalArgumentException("Invalid IC number format");
         }
         this.ICNumber = ICNumber.trim();
     }

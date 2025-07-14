@@ -4,6 +4,7 @@ import adt.ArrayList;
 import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
+import dao.ConsultationDao;
 import java.util.Date;
 
 /**
@@ -14,10 +15,12 @@ public class ConsultationManagementControl {
     
     private ArrayList<Consultation> consultations;
     private ArrayList<Consultation> scheduledConsultations;
+    private ConsultationDao consultationDao;
     
     public ConsultationManagementControl() {
         this.consultations = new ArrayList<>();
         this.scheduledConsultations = new ArrayList<>();
+        this.consultationDao = new ConsultationDao();
     }
     
     // Consultation Management Methods
@@ -25,8 +28,8 @@ public class ConsultationManagementControl {
                                       Date consultationDate, String symptoms, 
                                       double consultationFee) {
         try {
-            // Generate consultation ID
-            String consultationId = generateConsultationId();
+            // Get new consultation ID from database
+            String consultationId = consultationDao.getNewId();
             
             // Create new consultation
             Consultation consultation = new Consultation(consultationId, patient, doctor, 
@@ -216,10 +219,6 @@ public class ConsultationManagementControl {
     }
     
     // Private Helper Methods
-    private String generateConsultationId() {
-        int nextNumber = getTotalConsultations() + 1;
-        return String.format("C%09d", nextNumber);
-    }
     
     private void removeFromScheduledConsultations(Consultation consultation) {
         for (int index = 1; index <= scheduledConsultations.getNumberOfEntries(); index++) {

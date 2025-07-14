@@ -432,14 +432,14 @@ INSERT INTO address (addressId, street, city, state, postalCode) VALUES
 
 -- Sample Patients (with Person fields distributed)
 INSERT INTO patient (patientId, fullName, ICNumber, email, phoneNumber, addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact) VALUES
-('P000000001', 'Ahmad bin Abdullah', '900101015432', 'ahmad.abdullah@email.com', '0123456789', 'A000000001', '2024-01-15', 'W001', 'A_POSITIVE', 'Penicillin,Peanuts', '0198765432'),
-('P000000002', 'Siti binti Mohamed', '920202025678', 'siti.mohamed@email.com', '0123456790', 'A000000002', '2024-01-16', 'W002', 'O_POSITIVE', 'Shellfish', '0198765433'),
-('P000000003', 'Mohammed bin Ali', '940505058901', 'mohammed.ali@email.com', '0123456793', 'A000000005', '2024-01-18', 'W003', 'B_POSITIVE', 'None', '0198765434');
+('P000000001', 'Ahmad bin Abdullah', '011130-14-5347', 'ahmad.abdullah@email.com', '012-3456789', 'A000000001', '2024-01-15', 'W001', 'A_POSITIVE', 'Penicillin,Peanuts', '019-8765432'),
+('P000000002', 'Siti binti Mohamed', '920220-06-5678', 'siti.mohamed@email.com', '012-3456790', 'A000000002', '2024-01-16', 'W002', 'O_POSITIVE', 'Shellfish', '019-8765433'),
+('P000000003', 'Mohammed bin Ali', '940503-08-8901', 'mohammed.ali@email.com', '012-3456793', 'A000000005', '2024-01-18', 'W003', 'B_POSITIVE', 'None', '019-8765434');
 
 -- Sample Doctors (with Person fields distributed)
 INSERT INTO doctor (doctorId, fullName, ICNumber, email, phoneNumber, addressId, registrationDate, medicalSpecialty, licenseNumber, expYears) VALUES
-('D000000001', 'Dr. Lim Wei Chen', '850303036789', 'dr.lim@clinic.com', '0123456791', 'A000000003', '2024-01-10', 'General Medicine', 'MD001234', 8),
-('D000000002', 'Dr. Sarah Johnson', '880404047890', 'dr.sarah@clinic.com', '0123456792', 'A000000004', '2024-01-12', 'Cardiology', 'MD001235', 12);
+('D000000001', 'Dr. Lim Wei Chen', '850322-04-6789', 'dr.lim@clinic.com', '012-3456791', 'A000000003', '2024-01-10', 'General Medicine', 'MD001234', 8),
+('D000000002', 'Dr. Sarah Johnson', '880404-04-7890', 'dr.sarah@clinic.com', '012-3456792', 'A000000004', '2024-01-12', 'Cardiology', 'MD001235', 12);
 
 -- Sample Schedules
 INSERT INTO schedule (scheduleId, doctorId, dayOfWeek, fromTime, toTime) VALUES

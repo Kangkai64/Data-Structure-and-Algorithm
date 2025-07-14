@@ -5,6 +5,7 @@ import entity.MedicalTreatment;
 import entity.Patient;
 import entity.Doctor;
 import entity.Consultation;
+import dao.MedicalTreatmentDao;
 import java.util.Date;
 
 /**
@@ -15,18 +16,20 @@ public class MedicalTreatmentControl {
     
     private ArrayList<MedicalTreatment> treatments;
     private ArrayList<MedicalTreatment> activeTreatments;
+    private MedicalTreatmentDao treatmentDao;
     
     public MedicalTreatmentControl() {
         this.treatments = new ArrayList<>();
         this.activeTreatments = new ArrayList<>();
+        this.treatmentDao = new MedicalTreatmentDao();
     }
     
     // Treatment Management Methods
     public boolean createTreatment(Patient patient, Doctor doctor, Consultation consultation,
                                  String diagnosis, String treatmentPlan, double treatmentCost) {
         try {
-            // Generate treatment ID
-            String treatmentId = generateTreatmentId();
+            // Get new treatment ID from database
+            String treatmentId = treatmentDao.getNewId();
             
             // Create new treatment
             MedicalTreatment treatment = new MedicalTreatment(treatmentId, patient, doctor, 
@@ -245,10 +248,6 @@ public class MedicalTreatmentControl {
     }
     
     // Private Helper Methods
-    private String generateTreatmentId() {
-        int nextNumber = getTotalTreatments() + 1;
-        return String.format("T%09d", nextNumber);
-    }
     
     private void removeFromActiveTreatments(MedicalTreatment treatment) {
         for (int index = 1; index <= activeTreatments.getNumberOfEntries(); index++) {

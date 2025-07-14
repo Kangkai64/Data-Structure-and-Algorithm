@@ -163,6 +163,16 @@ public class DoctorDao extends DaoTemplate<Doctor> {
     }
 
     @Override
+    public String getNewId() throws SQLException {
+        String tempInsertSql = "INSERT INTO doctor (doctorId, fullName, ICNumber, email, phoneNumber, " +
+                              "addressId, registrationDate, medicalSpecialty, licenseNumber, expYears, isAvailable) " +
+                              "VALUES (NULL, 'TEMP', '000000-00-0000', 'temp@temp.com', '000-0000000', " +
+                              "'A000000001', CURDATE(), 'TEMP', 'TEMP000', 0, false)";
+        String tempDeleteSql = "DELETE FROM doctor WHERE fullName = 'TEMP' AND ICNumber = '000000-00-0000'";
+        return getNextIdFromDatabase("doctor", "doctorId", tempInsertSql, tempDeleteSql);
+    }
+
+    @Override
     public boolean insert(Doctor doctor) throws SQLException {
         String sql = "INSERT INTO doctor (doctorId, fullName, ICNumber, email, phoneNumber, " +
                 "addressId, registrationDate, medicalSpecialty, licenseNumber, expYears, isAvailable) " +

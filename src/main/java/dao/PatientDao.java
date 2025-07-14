@@ -99,6 +99,16 @@ public class PatientDao extends DaoTemplate<Patient> {
     }
 
     @Override
+    public String getNewId() throws SQLException {
+        String tempInsertSql = "INSERT INTO patient (patientId, fullName, ICNumber, email, phoneNumber, " +
+                              "addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact, isActive) " +
+                              "VALUES (NULL, 'TEMP', '000000-00-0000', 'temp@temp.com', '000-0000000', " +
+                              "'A000000001', CURDATE(), 'TEMP', 'A_POSITIVE', '', '', false)";
+        String tempDeleteSql = "DELETE FROM patient WHERE fullName = 'TEMP' AND ICNumber = '000000-00-0000'";
+        return getNextIdFromDatabase("patient", "patientId", tempInsertSql, tempDeleteSql);
+    }
+
+    @Override
     public boolean insert(Patient patient) throws SQLException {
         String sql = "INSERT INTO patient (patientId, fullName, ICNumber, email, phoneNumber, " +
                 "addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact, isActive) " +

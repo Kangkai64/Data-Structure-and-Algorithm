@@ -216,6 +216,16 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     }
 
     @Override
+    public String getNewId() throws SQLException {
+        String tempInsertSql = "INSERT INTO medical_treatment (treatmentId, patientId, doctorId, consultationId, " +
+                              "diagnosis, treatmentPlan, prescribedMedications, treatmentNotes, treatmentDate, " +
+                              "followUpDate, status, treatmentCost) VALUES (NULL, 'P000000001', 'D000000001', NULL, " +
+                              "'TEMP', 'TEMP', 'TEMP', 'TEMP', NOW(), NULL, 'ACTIVE', 0.0)";
+        String tempDeleteSql = "DELETE FROM medical_treatment WHERE diagnosis = 'TEMP' AND treatmentPlan = 'TEMP'";
+        return getNextIdFromDatabase("medical_treatment", "treatmentId", tempInsertSql, tempDeleteSql);
+    }
+
+    @Override
     public boolean insert(MedicalTreatment treatment) throws SQLException {
         String sql = "INSERT INTO medical_treatment (treatmentId, patientId, doctorId, consultationId, " +
                 "diagnosis, treatmentPlan, prescribedMedications, treatmentNotes, treatmentDate, " +

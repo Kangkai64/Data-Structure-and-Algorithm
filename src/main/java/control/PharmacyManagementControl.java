@@ -6,6 +6,8 @@ import entity.Prescription;
 import entity.Patient;
 import entity.Doctor;
 import entity.Consultation;
+import dao.MedicineDao;
+import dao.PrescriptionDao;
 import java.util.Date;
 
 /**
@@ -17,11 +19,15 @@ public class PharmacyManagementControl {
     private ArrayList<Medicine> medicines;
     private ArrayList<Prescription> prescriptions;
     private ArrayList<Prescription> dispensedPrescriptions;
+    private MedicineDao medicineDao;
+    private PrescriptionDao prescriptionDao;
     
     public PharmacyManagementControl() {
         this.medicines = new ArrayList<>();
         this.prescriptions = new ArrayList<>();
         this.dispensedPrescriptions = new ArrayList<>();
+        this.medicineDao = new MedicineDao();
+        this.prescriptionDao = new PrescriptionDao();
     }
     
     // Medicine Management Methods
@@ -30,8 +36,8 @@ public class PharmacyManagementControl {
                              int quantityInStock, int minimumStockLevel, double unitPrice,
                              Date expiryDate, String storageLocation, boolean requiresPrescription) {
         try {
-            // Generate medicine ID
-            String medicineId = generateMedicineId();
+            // Get new medicine ID from database
+            String medicineId = medicineDao.getNewId();
             
             // Create new medicine
             Medicine medicine = new Medicine(medicineId, medicineName, genericName, manufacturer,
@@ -98,8 +104,8 @@ public class PharmacyManagementControl {
     public boolean createPrescription(Patient patient, Doctor doctor, Consultation consultation,
                                     String instructions, Date expiryDate) {
         try {
-            // Generate prescription ID
-            String prescriptionId = generatePrescriptionId();
+            // Get new prescription ID from database
+            String prescriptionId = prescriptionDao.getNewId();
             
             // Create new prescription
             Prescription prescription = new Prescription(prescriptionId, patient, doctor, 
@@ -325,13 +331,4 @@ public class PharmacyManagementControl {
     }
     
     // Private Helper Methods
-    private String generateMedicineId() {
-        int nextNumber = getTotalMedicines() + 1;
-        return String.format("M%09d", nextNumber);
-    }
-    
-    private String generatePrescriptionId() {
-        int nextNumber = getTotalPrescriptions() + 1;
-        return String.format("PR%08d", nextNumber);
-    }
 } 

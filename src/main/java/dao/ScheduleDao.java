@@ -162,6 +162,14 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
     }
 
     @Override
+    public String getNewId() throws SQLException {
+        String tempInsertSql = "INSERT INTO schedule (scheduleId, doctorId, dayOfWeek, fromTime, toTime, isAvailable) " +
+                              "VALUES (NULL, 'D000000001', 'MONDAY', '09:00:00', '10:00:00', false)";
+        String tempDeleteSql = "DELETE FROM schedule WHERE doctorId = 'D000000001' AND dayOfWeek = 'MONDAY' AND fromTime = '09:00:00'";
+        return getNextIdFromDatabase("schedule", "scheduleId", tempInsertSql, tempDeleteSql);
+    }
+
+    @Override
     public boolean insert(Schedule schedule) throws SQLException {
         String sql = "INSERT INTO schedule (scheduleId, doctorId, dayOfWeek, fromTime, toTime, isAvailable) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";

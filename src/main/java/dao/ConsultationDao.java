@@ -188,6 +188,16 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     }
 
     @Override
+    public String getNewId() throws SQLException {
+        String tempInsertSql = "INSERT INTO consultation (consultationId, patientId, doctorId, consultationDate, " +
+                              "symptoms, diagnosis, treatment, notes, status, nextVisitDate, consultationFee) " +
+                              "VALUES (NULL, 'P000000001', 'D000000001', NOW(), " +
+                              "'TEMP', 'TEMP', 'TEMP', 'TEMP', 'SCHEDULED', NULL, 0.0)";
+        String tempDeleteSql = "DELETE FROM consultation WHERE symptoms = 'TEMP' AND diagnosis = 'TEMP'";
+        return getNextIdFromDatabase("consultation", "consultationId", tempInsertSql, tempDeleteSql);
+    }
+
+    @Override
     public boolean insert(Consultation consultation) throws SQLException {
         String sql = "INSERT INTO consultation (consultationId, patientId, doctorId, consultationDate, " +
                 "symptoms, diagnosis, treatment, notes, status, nextVisitDate, consultationFee) " +

@@ -69,9 +69,9 @@ public class PatientManagementUI {
     private void registerNewPatient() {
         System.out.println("\n=== REGISTER NEW PATIENT ===");
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter full name: ");
-        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number: ");
+        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number (DDMMYY-XX-XXXX): ");
         String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
-        String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter phone number: ");
+        String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
         
         // Get address details
         String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
@@ -103,7 +103,7 @@ public class PatientManagementUI {
             allergies.add("None");
         }
         
-        String emergencyContact = ConsoleUtils.getStringInput(scanner, "Enter emergency contact: ");
+        String emergencyContact = ConsoleUtils.getStringInput(scanner, "Enter emergency contact (0XX-XXXXXXX): ");
         
         boolean success = patientControl.registerPatient(fullName, icNumber, email, phoneNumber, 
                                                        address, wardNumber, bloodType, 

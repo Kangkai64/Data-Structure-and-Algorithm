@@ -28,8 +28,8 @@ public class DoctorManagementControl {
                                 String phoneNumber, Address address, String medicalSpecialty,
                                 String licenseNumber, int expYears) {
         try {
-            // Generate doctor ID
-            String doctorId = generateDoctorId();
+            // Get new doctor ID from database
+            String doctorId = doctorDao.getNewId();
             
             // Create new doctor
             Doctor doctor = new Doctor(fullName, icNumber, email, phoneNumber, 
@@ -273,10 +273,6 @@ public class DoctorManagementControl {
     }
     
     // Private Helper Methods
-    private String generateDoctorId() {
-        int nextNumber = getTotalActiveDoctors() + 1;
-        return String.format("D%09d", nextNumber);
-    }
     
     private void loadActiveDoctors() {
         try {

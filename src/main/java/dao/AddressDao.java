@@ -125,6 +125,14 @@ public class AddressDao extends DaoTemplate<Address> {
     }
 
     @Override
+    public String getNewId() throws SQLException {
+        String tempInsertSql = "INSERT INTO address (addressId, street, city, state, postalCode, country) " +
+                              "VALUES (NULL, 'TEMP', 'TEMP', 'TEMP', '00000', 'TEMP')";
+        String tempDeleteSql = "DELETE FROM address WHERE street = 'TEMP' AND city = 'TEMP'";
+        return getNextIdFromDatabase("address", "addressId", tempInsertSql, tempDeleteSql);
+    }
+
+    @Override
     public boolean insert(Address address) throws SQLException {
         String sql = "INSERT INTO address (addressId, street, city, state, postalCode, country) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";

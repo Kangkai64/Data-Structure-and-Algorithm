@@ -33,75 +33,7 @@ public class AddressDao extends DaoTemplate<Address> {
         return null;
     }
 
-    public Address findByStreetAndCity(String street, String city) throws SQLException {
-        String sql = "SELECT * FROM address WHERE street = ? AND city = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, street);
-            preparedStatement.setString(2, city);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                return mapResultSet(resultSet);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error finding address by street and city: " + e.getMessage());
-            throw e;
-        }
-
-        return null;
-    }
-
-    public ArrayList<Address> findByCity(String city) throws SQLException {
-        ArrayList<Address> addresses = new ArrayList<>();
-        String sql = "SELECT * FROM address WHERE city = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, city);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                Address address = mapResultSet(resultSet);
-                if (address != null) {
-                    addresses.add(address);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error finding addresses by city: " + e.getMessage());
-            throw e;
-        }
-
-        return addresses;
-    }
-
-    public ArrayList<Address> findByState(String state) throws SQLException {
-        ArrayList<Address> addresses = new ArrayList<>();
-        String sql = "SELECT * FROM address WHERE state = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, state);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                Address address = mapResultSet(resultSet);
-                if (address != null) {
-                    addresses.add(address);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error finding addresses by state: " + e.getMessage());
-            throw e;
-        }
-
-        return addresses;
-    }
-
+    @Override
     public ArrayList<Address> findAll() throws SQLException {
         ArrayList<Address> addresses = new ArrayList<>();
         String sql = "SELECT * FROM address ORDER BY city, street";
@@ -194,67 +126,6 @@ public class AddressDao extends DaoTemplate<Address> {
             System.err.println("Error deleting address: " + e.getMessage());
             throw e;
         }
-    }
-
-    public boolean isAddressInUse(String addressId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM patient WHERE addressId = ? UNION ALL " +
-                    "SELECT COUNT(*) FROM doctor WHERE addressId = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, addressId);
-            preparedStatement.setString(2, addressId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            int totalCount = 0;
-            while (resultSet.next()) {
-                totalCount += resultSet.getInt(1);
-            }
-
-            return totalCount > 0;
-        } catch (SQLException e) {
-            System.err.println("Error checking if address is in use: " + e.getMessage());
-            throw e;
-        }
-    }
-
-    public ArrayList<String> getAllCities() throws SQLException {
-        ArrayList<String> cities = new ArrayList<>();
-        String sql = "SELECT DISTINCT city FROM address ORDER BY city";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-
-            while (resultSet.next()) {
-                cities.add(resultSet.getString("city"));
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting all cities: " + e.getMessage());
-            throw e;
-        }
-
-        return cities;
-    }
-
-    public ArrayList<String> getAllStates() throws SQLException {
-        ArrayList<String> states = new ArrayList<>();
-        String sql = "SELECT DISTINCT state FROM address ORDER BY state";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-
-            while (resultSet.next()) {
-                states.add(resultSet.getString("state"));
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting all states: " + e.getMessage());
-            throw e;
-        }
-
-        return states;
     }
 
     @Override

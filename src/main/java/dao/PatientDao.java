@@ -36,46 +36,6 @@ public class PatientDao extends DaoTemplate<Patient> {
         return null;
     }
 
-    public Patient findByFullName(String fullName) throws SQLException {
-        String sql = "SELECT * FROM patient WHERE fullName = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, fullName);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                return mapResultSet(resultSet);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error finding patient by full name: " + e.getMessage());
-            throw e;
-        }
-
-        return null;
-    }
-
-    public Patient findByEmail(String email) throws SQLException {
-        String sql = "SELECT * FROM patient WHERE email = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, email);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                return mapResultSet(resultSet);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error finding patient by email: " + e.getMessage());
-            throw e;
-        }
-
-        return null;
-    }
-
     public ArrayList<Patient> findAll() throws SQLException {
         ArrayList<Patient> patients = new ArrayList<>();
         String sql = "SELECT * FROM patient";
@@ -250,57 +210,5 @@ public class PatientDao extends DaoTemplate<Patient> {
             }
         }
         return allergies;
-    }
-
-    /**
-     * Method to find active patients only
-     */
-    public ArrayList<Patient> findActivePatients() throws SQLException {
-        ArrayList<Patient> activePatients = new ArrayList<>();
-        String sql = "SELECT * FROM patient WHERE isActive = true";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-
-            while (resultSet.next()) {
-                Patient patient = mapResultSet(resultSet);
-                if (patient != null) {
-                    activePatients.add(patient);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error finding active patients: " + e.getMessage());
-            throw e;
-        }
-
-        return activePatients;
-    }
-
-    /**
-     * Method to find patients by ward number
-     */
-    public ArrayList<Patient> findByWardNumber(String wardNumber) throws SQLException {
-        ArrayList<Patient> wardPatients = new ArrayList<>();
-        String sql = "SELECT * FROM patient WHERE wardNumber = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, wardNumber);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                Patient patient = mapResultSet(resultSet);
-                if (patient != null) {
-                    wardPatients.add(patient);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error finding patients by ward number: " + e.getMessage());
-            throw e;
-        }
-
-        return wardPatients;
     }
 }

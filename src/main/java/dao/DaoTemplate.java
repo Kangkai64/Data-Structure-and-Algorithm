@@ -5,10 +5,18 @@ import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import adt.ArrayList;
 import utility.HikariConnectionPool;
+
+/**
+ * @author: Ho Kang Kai
+ * DaoTemplate - Module 1 - 5
+ * Generic DAO template for database operations
+ */
 
 public abstract class DaoTemplate<T> {
     public abstract T findById(String Id) throws SQLException;
+    public abstract ArrayList<T> findAll() throws SQLException;
     public abstract String getNewId() throws SQLException;
     public abstract boolean insert(T object) throws SQLException;
     public abstract boolean update(T object) throws SQLException;
@@ -35,8 +43,8 @@ public abstract class DaoTemplate<T> {
             
             try {
                 // Insert temporary record to trigger ID generation
-                try (PreparedStatement insertStmt = connection.prepareStatement(tempInsertSql)) {
-                    insertStmt.executeUpdate();
+                try (PreparedStatement insertStatement = connection.prepareStatement(tempInsertSql)) {
+                    insertStatement.executeUpdate();
                 }
                 
                 // Get the generated ID
@@ -44,16 +52,16 @@ public abstract class DaoTemplate<T> {
                                  " ORDER BY " + idColumnName + " DESC LIMIT 1";
                 String generatedId = null;
                 
-                try (Statement selectStmt = connection.createStatement();
-                     ResultSet rs = selectStmt.executeQuery(selectSql)) {
-                    if (rs.next()) {
-                        generatedId = rs.getString(idColumnName);
+                try (Statement selectStatement = connection.createStatement();
+                     ResultSet resultSet = selectStatement.executeQuery(selectSql)) {
+                    if (resultSet.next()) {
+                        generatedId = resultSet.getString(idColumnName);
                     }
                 }
                 
                 // Delete the temporary record
-                try (PreparedStatement deleteStmt = connection.prepareStatement(tempDeleteSql)) {
-                    deleteStmt.executeUpdate();
+                try (PreparedStatement deleteStatement = connection.prepareStatement(tempDeleteSql)) {
+                    deleteStatement.executeUpdate();
                 }
                 
                 // Commit transaction

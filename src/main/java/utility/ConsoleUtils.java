@@ -66,7 +66,7 @@ public class ConsoleUtils {
     }
 
     public static String dateTimeFormatter(Date date) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         return dateFormat.format(date);
     }
 

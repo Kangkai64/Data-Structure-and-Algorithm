@@ -144,6 +144,69 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         }
     }
 
+    public boolean insertPrescribedMedicine(Prescription.PrescribedMedicine prescribedMedicine) throws SQLException {
+        String sql = "INSERT INTO prescription_medicine (prescribedMedicineId, prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, prescribedMedicine.getPrescribedMedicineId());
+            preparedStatement.setString(2, prescribedMedicine.getPrescriptionId());
+            preparedStatement.setString(3, prescribedMedicine.getMedicine().getMedicineId());
+            preparedStatement.setInt(4, prescribedMedicine.getQuantity());
+            preparedStatement.setString(5, prescribedMedicine.getDosage());
+            preparedStatement.setString(6, prescribedMedicine.getFrequency());
+            preparedStatement.setInt(7, prescribedMedicine.getDuration());
+            preparedStatement.setDouble(8, prescribedMedicine.getMedicine().getUnitPrice());
+
+            int affectedRows = preparedStatement.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error inserting prescribed medicine: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public boolean updatePrescribedMedicine(Prescription prescription, Prescription.PrescribedMedicine prescribedMedicine) throws SQLException {
+        String sql = "UPDATE prescription_medicine SET prescribedMedicineId = ?, prescriptionId = ?, medicineId = ?, quantity = ?, dosage = ?, frequency = ?, duration = ?, unitPrice = ? WHERE prescriptionId = ?";
+
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, prescribedMedicine.getPrescribedMedicineId());
+            preparedStatement.setString(2, prescription.getPrescriptionId());
+            preparedStatement.setString(3, prescribedMedicine.getMedicine().getMedicineId());
+            preparedStatement.setInt(4, prescribedMedicine.getQuantity());
+            preparedStatement.setString(5, prescribedMedicine.getDosage());
+            preparedStatement.setString(6, prescribedMedicine.getFrequency());
+            preparedStatement.setInt(7, prescribedMedicine.getDuration());
+            preparedStatement.setDouble(8, prescribedMedicine.getMedicine().getUnitPrice());
+
+            int affectedRows = preparedStatement.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating prescribed medicine: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public boolean deletePrescribedMedicine(String prescriptionId, String prescribedMedicineId) throws SQLException {
+        String sql = "DELETE FROM prescription_medicine WHERE prescriptionId = ? AND prescribedMedicineId = ?";
+
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, prescriptionId);
+            preparedStatement.setString(2, prescribedMedicineId);
+
+            int affectedRows = preparedStatement.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting prescribed medicine: " + e.getMessage());
+            throw e;
+        }
+    }
+
     @Override
     public boolean delete(String prescriptionId) throws SQLException {
         String sql = "DELETE FROM prescription WHERE prescriptionId = ?";

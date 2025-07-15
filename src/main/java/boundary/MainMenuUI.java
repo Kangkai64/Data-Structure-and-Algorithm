@@ -27,10 +27,6 @@ public class MainMenuUI {
     }
 
     public void displayMainMenu() {
-        System.out.println("=== TAR UMT CLINIC MANAGEMENT SYSTEM ===");
-        System.out.println("System initialized successfully!");
-        System.out.println("All 5 modules are ready for operation.\n");
-
         while (true) {
             System.out.println("\n=== MAIN MENU ===");
             System.out.println("1. Patient Management Module");
@@ -42,6 +38,7 @@ public class MainMenuUI {
             System.out.println("7. Exit");
             
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+            System.out.println();
             
             switch (choice) {
                 case 1:

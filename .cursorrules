@@ -67,7 +67,7 @@ Please include following modules but not limited to these:
 
 Module 1: Patient Management Module - manage patient registration, record maintenance and queuing management.
 Module 2: Doctor Management Module - Manage doctor information, duty schedules and availability tracking.
-Module 3: Consultation Management Module - Manage patient consultations and arrange subsequent visit  appointments.
+Module 3: Consultation Management Module - Manage patient consultations and arrange subsequent visit appointments.
 Module 4: Medical Treatment Management Module - Manage patient diagnosis and maintain treatment history records
 Module 5: Pharmacy Management Module - Manage medicine dispensing after doctor consultation and maintain medicine stock control.
 Each module should include a reporting feature (at least 2 summary reports).

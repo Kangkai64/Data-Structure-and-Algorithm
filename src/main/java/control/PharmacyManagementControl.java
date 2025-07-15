@@ -73,6 +73,8 @@ public class PharmacyManagementControl {
                                            description, dosageForm, strength, quantityInStock,
                                            minimumStockLevel, unitPrice, expiryDate, storageLocation,
                                            requiresPrescription);
+
+            medicineDao.insert(medicine);
             
             // Add to medicines list
             medicines.add(medicine);
@@ -109,6 +111,16 @@ public class PharmacyManagementControl {
             return false;
         } catch (Exception exception) {
             System.err.println("Error updating medicine price: " + exception.getMessage());
+            return false;
+        }
+    }
+
+    public boolean updateMedicineDetails(Medicine medicine) {
+        try {
+            medicineDao.update(medicine);
+            return true;
+        } catch (Exception exception) {
+            System.err.println("Error updating medicine details: " + exception.getMessage());
             return false;
         }
     }
@@ -162,12 +174,13 @@ public class PharmacyManagementControl {
             Medicine medicine = findMedicineById(medicineId);
 
             if (prescription != null && medicine != null) {
+                String prescribedMedicineId = prescriptionDao.getNewId();
                 Prescription.PrescribedMedicine prescribedMedicine = 
-                    new Prescription.PrescribedMedicine(medicine, quantity, dosage, frequency, 
-                                                       duration, medicine.getUnitPrice());
+                    new Prescription.PrescribedMedicine(prescribedMedicineId, prescriptionId, medicine, quantity, dosage, 
+                                                       frequency, duration, medicine.getUnitPrice());
                 
                 boolean added = prescription.addPrescribedMedicine(prescribedMedicine);
-                prescriptionDao.update(prescription);
+                prescriptionDao.insertPrescribedMedicine(prescribedMedicine);
                 return added;
             }
             return false;
@@ -176,14 +189,66 @@ public class PharmacyManagementControl {
             return false;
         }
     }
-    
+
+    public boolean removeMedicineFromPrescription(String prescriptionId, String prescribedMedicineId) {
+        try {
+            Prescription prescription = findPrescriptionById(prescriptionId);
+            ArrayList<Prescription.PrescribedMedicine> prescribedMedicines = prescription.getPrescribedMedicines();
+            Prescription.PrescribedMedicine prescribedMedicine = null;
+            for (int index = 1; index <= prescribedMedicines.getNumberOfEntries(); index++) {
+                Prescription.PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntry(index);
+                if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicineId)) {
+                    prescribedMedicine = tempPrescribedMedicine;
+                }
+            }
+
+            if (prescription != null && prescribedMedicine != null) {
+                boolean removed = prescription.removePrescribedMedicine(prescribedMedicine);
+                prescriptionDao.deletePrescribedMedicine(prescriptionId, prescribedMedicineId);
+                return removed;
+            }
+            return false;
+        } catch (Exception exception) {
+            System.err.println("Error removing medicine from prescription: " + exception.getMessage());
+            return false;
+        }
+    }
+
+    public boolean updateMedicineInPrescription(String prescriptionId, String prescribedMedicineId, String medicineId, int quantity, String dosage, String frequency, int duration) {
+        try {
+            Prescription prescription = findPrescriptionById(prescriptionId);
+            ArrayList<Prescription.PrescribedMedicine> prescribedMedicines = prescription.getPrescribedMedicines();
+            Prescription.PrescribedMedicine prescribedMedicine = null;
+            for (int index = 1; index <= prescribedMedicines.getNumberOfEntries(); index++) {
+                Prescription.PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntry(index);
+                if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicineId)) {
+                    prescribedMedicine = tempPrescribedMedicine;
+                }
+            }
+
+            if (prescription != null && prescribedMedicine != null) {
+                Medicine medicine = findMedicineById(medicineId);
+                if (medicine != null) {
+                    boolean updated = prescription.updatePrescribedMedicine(prescribedMedicine, medicine, quantity, dosage, frequency, duration);
+                    prescriptionDao.updatePrescribedMedicine(prescription, prescribedMedicine);
+                    return updated;
+                }
+                return false;
+            }
+            return false;
+        } catch (Exception exception) {
+            System.err.println("Error updating medicine in prescription: " + exception.getMessage());
+            return false;
+        }
+    }
+
     public boolean dispensePrescription(String prescriptionId) {
         try {
             Prescription prescription = findPrescriptionById(prescriptionId);
             if (prescription != null && prescription.canBeDispensed()) {
                 // Check if all medicines are available
                 for (int index = 1; index <= prescription.getNumberOfPrescribedMedicines(); index++) {
-                    Prescription.PrescribedMedicine prescribedMedicine = prescription.getPrescribedMedicine(index);
+                    Prescription.PrescribedMedicine prescribedMedicine = prescription.getPrescribedMedicines().getEntry(index);
                     Medicine medicine = prescribedMedicine.getMedicine();
                     
                     if (medicine.getQuantityInStock() < prescribedMedicine.getQuantity()) {
@@ -194,7 +259,7 @@ public class PharmacyManagementControl {
                 
                 // Dispense medicines
                 for (int index = 1; index <= prescription.getNumberOfPrescribedMedicines(); index++) {
-                    Prescription.PrescribedMedicine prescribedMedicine = prescription.getPrescribedMedicine(index);
+                    Prescription.PrescribedMedicine prescribedMedicine = prescription.getPrescribedMedicines().getEntry(index);
                     Medicine medicine = prescribedMedicine.getMedicine();
                     
                     medicineDao.updateStock(medicine.getMedicineId(), medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
@@ -389,12 +454,13 @@ public class PharmacyManagementControl {
         report.append("Expired Medicines: ").append(getExpiredMedicines().getNumberOfEntries()).append("\n");
         report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
         
+        report.append("----------------------------------------\n");
         for (int index = 1; index <= medicines.getNumberOfEntries(); index++) {
             Medicine medicine = medicines.getEntry(index);
             report.append(medicine);
+            report.append("----------------------------------------\n");
         }
 
-        report.append("----------------------------------------\n");
         return report.toString();
     }
     
@@ -405,13 +471,13 @@ public class PharmacyManagementControl {
         report.append("Active Prescriptions: ").append(getActivePrescriptions().getNumberOfEntries()).append("\n");
         report.append("Dispensed Prescriptions: ").append(dispensedPrescriptions.getNumberOfEntries()).append("\n");
         report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
-        
+
+        report.append("----------------------------------------\n");
         for (int index = 1; index <= prescriptions.getNumberOfEntries(); index++) {
             Prescription prescription = prescriptions.getEntry(index);
             report.append(prescription);
+            report.append("----------------------------------------\n");
         }
-
-        report.append("----------------------------------------\n");
         return report.toString();
     }
 } 

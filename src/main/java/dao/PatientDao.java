@@ -14,6 +14,7 @@ import java.sql.Statement;
 import java.sql.Date;
 
 public class PatientDao extends DaoTemplate<Patient> {
+    private final AddressDao addressDao = new AddressDao();
 
     @Override
     public Patient findById(String patientId) throws SQLException {
@@ -74,6 +75,10 @@ public class PatientDao extends DaoTemplate<Patient> {
                 "addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact, isActive) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+        String addressId = addressDao.getNewId();
+        patient.getAddress().setAddressId(addressId);
+        addressDao.insert(patient.getAddress());
+
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
@@ -82,7 +87,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setString(3, patient.getICNumber());
             preparedStatement.setString(4, patient.getEmail());
             preparedStatement.setString(5, patient.getPhoneNumber());
-            preparedStatement.setString(6, patient.getAddress().getAddressId());
+            preparedStatement.setString(6, addressId);
             preparedStatement.setDate(7, new Date(patient.getRegistrationDate().getTime()));
             preparedStatement.setString(8, patient.getWardNumber());
             preparedStatement.setString(9, patient.getBloodType().name());
@@ -150,7 +155,6 @@ public class PatientDao extends DaoTemplate<Patient> {
         try {
             // Create Address object
             String addressId = resultSet.getString("addressId");
-            AddressDao addressDao = new AddressDao();
             Address address = addressDao.findById(addressId);
 
             // Parse allergies from string to ArrayList
@@ -188,14 +192,14 @@ public class PatientDao extends DaoTemplate<Patient> {
             return "";
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < allergies.getNumberOfEntries(); i++) {
             if (i > 0) {
-                sb.append(",");
+                stringBuilder.append(",");
             }
-            sb.append(allergies.getEntry(i + 1)); // ArrayList is 1-indexed
+            stringBuilder.append(allergies.getEntry(i + 1)); // ArrayList is 1-indexed
         }
-        return sb.toString();
+        return stringBuilder.toString();
     }
 
     /**

@@ -79,17 +79,31 @@ public class Prescription {
         return false;
     }
 
-    public boolean removePrescribedMedicine(int position) {
-        PrescribedMedicine removed = prescribedMedicines.remove(position);
-        if (removed != null) {
-            calculateTotalCost();
-            return true;
+    public boolean removePrescribedMedicine(PrescribedMedicine prescribedMedicine) {
+        for (int index = 1; index <= prescribedMedicines.getNumberOfEntries(); index++) {
+            PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntry(index);
+            if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicine.getPrescribedMedicineId())) {
+                prescribedMedicines.remove(index);
+                calculateTotalCost();
+                return true;
+            }
         }
         return false;
     }
 
-    public PrescribedMedicine getPrescribedMedicine(int position) {
-        return prescribedMedicines.getEntry(position);
+    public boolean updatePrescribedMedicine(PrescribedMedicine prescribedMedicine, Medicine medicine, int quantity, String dosage, String frequency, int duration) {
+        for (int index = 1; index <= prescribedMedicines.getNumberOfEntries(); index++) {
+            PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntry(index);
+            if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicine.getPrescribedMedicineId())) {
+                tempPrescribedMedicine.setMedicine(medicine);
+                tempPrescribedMedicine.setQuantity(quantity);
+                tempPrescribedMedicine.setDosage(dosage);
+                tempPrescribedMedicine.setFrequency(frequency);
+                tempPrescribedMedicine.setDuration(duration);
+                return true;
+            }
+        }
+        return false;
     }
 
     public int getNumberOfPrescribedMedicines() {
@@ -124,6 +138,8 @@ public class Prescription {
 
     // Inner class for prescribed medicine details
     public static class PrescribedMedicine {
+        private String prescribedMedicineId;
+        private String prescriptionId;
         private Medicine medicine;
         private int quantity;
         private String dosage;
@@ -131,8 +147,10 @@ public class Prescription {
         private int duration; // in days
         private double unitPrice;
 
-        public PrescribedMedicine(Medicine medicine, int quantity, String dosage, 
+        public PrescribedMedicine(String prescribedMedicineId, String prescriptionId, Medicine medicine, int quantity, String dosage, 
                                 String frequency, int duration, double unitPrice) {
+            this.prescribedMedicineId = prescribedMedicineId;
+            this.prescriptionId = prescriptionId;
             this.medicine = medicine;
             this.quantity = quantity;
             this.dosage = dosage;
@@ -141,7 +159,13 @@ public class Prescription {
             this.unitPrice = unitPrice;
         }
 
-        // Getters and Setters
+        // Getters and Setter
+        public String getPrescribedMedicineId() { return prescribedMedicineId; }
+        public void setPrescribedMedicineId(String prescribedMedicineId) { this.prescribedMedicineId = prescribedMedicineId; }
+
+        public String getPrescriptionId() { return prescriptionId; }
+        public void setPrescriptionId(String prescriptionId) { this.prescriptionId = prescriptionId; }
+
         public Medicine getMedicine() { return medicine; }
         public void setMedicine(Medicine medicine) { this.medicine = medicine; }
 
@@ -166,7 +190,9 @@ public class Prescription {
 
         @Override
         public String toString() {
-            return "Medicine: " + medicine.getMedicineName() + "\n" +
+            return "Prescribed Medicine ID: " + prescribedMedicineId + "\n" +
+                   "Prescription ID: " + prescriptionId + "\n" +
+                   "Medicine: " + medicine.getMedicineName() + "\n" +
                    "Quantity: " + quantity + "\n" +
                    "Dosage: " + dosage + "\n" +
                    "Frequency: " + frequency + "\n" +

@@ -8,12 +8,18 @@ import entity.Doctor;
 import entity.Consultation;
 import dao.MedicineDao;
 import dao.PrescriptionDao;
+import dao.PatientDao;
+import dao.DoctorDao;
+import dao.ConsultationDao;
 import java.util.Date;
+import java.text.SimpleDateFormat;
 
 /**
+ * @author: Ho Kang Kai
  * Pharmacy Management Control - Module 5
  * Manages medicine dispensing after doctor consultation and maintain medicine stock control
  */
+
 public class PharmacyManagementControl {
     
     private ArrayList<Medicine> medicines;
@@ -21,13 +27,35 @@ public class PharmacyManagementControl {
     private ArrayList<Prescription> dispensedPrescriptions;
     private MedicineDao medicineDao;
     private PrescriptionDao prescriptionDao;
-    
+    private PatientDao patientDao;
+    private DoctorDao doctorDao;
+    private ConsultationDao consultationDao;
+
     public PharmacyManagementControl() {
         this.medicines = new ArrayList<>();
         this.prescriptions = new ArrayList<>();
         this.dispensedPrescriptions = new ArrayList<>();
         this.medicineDao = new MedicineDao();
         this.prescriptionDao = new PrescriptionDao();
+        this.patientDao = new PatientDao();
+        this.doctorDao = new DoctorDao();
+        this.consultationDao = new ConsultationDao();
+        loadMedicineData();
+    }
+
+    public void loadMedicineData() {
+        try {
+            medicines = medicineDao.findAll();
+            prescriptions = prescriptionDao.findAll();
+            for (int index = 1; index <= prescriptions.getNumberOfEntries(); index++) {
+                Prescription prescription = prescriptions.getEntry(index);
+                if (prescription.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
+                    dispensedPrescriptions.add(prescription);
+                }
+            }
+        } catch (Exception exception) {
+            System.err.println("Error loading medicine data: " + exception.getMessage());
+        }
     }
     
     // Medicine Management Methods
@@ -59,11 +87,8 @@ public class PharmacyManagementControl {
         try {
             Medicine medicine = findMedicineById(medicineId);
             if (medicine != null) {
-                if (quantity > 0) {
-                    return medicine.addStock(quantity);
-                } else {
-                    return medicine.removeStock(Math.abs(quantity));
-                }
+                medicine.setQuantityInStock(quantity);
+                return medicineDao.updateStock(medicineId, quantity);
             }
             return false;
         } catch (Exception exception) {
@@ -77,6 +102,7 @@ public class PharmacyManagementControl {
             Medicine medicine = findMedicineById(medicineId);
             if (medicine != null) {
                 medicine.setUnitPrice(newPrice);
+                medicineDao.updatePrice(medicineId, newPrice);
                 return true;
             }
             return false;
@@ -91,6 +117,7 @@ public class PharmacyManagementControl {
             Medicine medicine = findMedicineById(medicineId);
             if (medicine != null) {
                 medicine.setStatus(Medicine.MedicineStatus.DISCONTINUED);
+                medicineDao.updateStatus(medicineId, Medicine.MedicineStatus.DISCONTINUED);
                 return true;
             }
             return false;
@@ -101,18 +128,23 @@ public class PharmacyManagementControl {
     }
     
     // Prescription Management Methods
-    public boolean createPrescription(Patient patient, Doctor doctor, Consultation consultation,
+    public boolean createPrescription(String patientId, String doctorId, String consultationId,
                                     String instructions, Date expiryDate) {
         try {
             // Get new prescription ID from database
             String prescriptionId = prescriptionDao.getNewId();
-            
+
+            Patient patient = patientDao.findById(patientId);
+            Doctor doctor = doctorDao.findById(doctorId);
+            Consultation consultation = consultationDao.findById(consultationId);
+
             // Create new prescription
             Prescription prescription = new Prescription(prescriptionId, patient, doctor, 
                                                        consultation, new Date(), instructions, expiryDate);
             
             // Add to prescriptions list
             prescriptions.add(prescription);
+            prescriptionDao.insert(prescription);
             
             return true;
         } catch (Exception exception) {
@@ -121,17 +153,20 @@ public class PharmacyManagementControl {
         }
     }
     
-    public boolean addMedicineToPrescription(String prescriptionId, Medicine medicine,
+    public boolean addMedicineToPrescription(String prescriptionId, String medicineId,
                                            int quantity, String dosage, String frequency, 
                                            int duration) {
         try {
             Prescription prescription = findPrescriptionById(prescriptionId);
+            Medicine medicine = findMedicineById(medicineId);
+
             if (prescription != null && medicine != null) {
                 Prescription.PrescribedMedicine prescribedMedicine = 
                     new Prescription.PrescribedMedicine(medicine, quantity, dosage, frequency, 
                                                        duration, medicine.getUnitPrice());
                 
                 boolean added = prescription.addPrescribedMedicine(prescribedMedicine);
+                prescriptionDao.update(prescription);
                 return added;
             }
             return false;
@@ -161,11 +196,12 @@ public class PharmacyManagementControl {
                     Prescription.PrescribedMedicine prescribedMedicine = prescription.getPrescribedMedicine(index);
                     Medicine medicine = prescribedMedicine.getMedicine();
                     
-                    medicine.removeStock(prescribedMedicine.getQuantity());
+                    medicineDao.updateStock(medicine.getMedicineId(), medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
                 }
                 
                 // Update prescription status
                 prescription.setStatus(Prescription.PrescriptionStatus.DISPENSED);
+                prescriptionDao.update(prescription);
                 
                 // Move to dispensed prescriptions
                 dispensedPrescriptions.add(prescription);
@@ -199,8 +235,18 @@ public class PharmacyManagementControl {
         }
         return null;
     }
+
+    public Medicine findMedicineByGenericName(String genericName) {
+        for (int index = 1; index <= medicines.getNumberOfEntries(); index++) {
+            Medicine medicine = medicines.getEntry(index);
+            if (medicine.getGenericName().equalsIgnoreCase(genericName)) {
+                return medicine;
+            }
+        }
+        return null;
+    }
     
-    public ArrayList<Medicine> findMedicinesByManufacturer(String manufacturer) {
+    public ArrayList<Medicine> findMedicineByManufacturer(String manufacturer) {
         ArrayList<Medicine> manufacturerMedicines = new ArrayList<>();
         for (int index = 1; index <= medicines.getNumberOfEntries(); index++) {
             Medicine medicine = medicines.getEntry(index);
@@ -209,6 +255,16 @@ public class PharmacyManagementControl {
             }
         }
         return manufacturerMedicines;
+    }
+
+    public Medicine findMedicineByStatus(int statusChoice) {
+        for (int index = 1; index <= medicines.getNumberOfEntries(); index++) {
+            Medicine medicine = medicines.getEntry(index);
+            if (medicine.getStatus().equals(Medicine.MedicineStatus.values()[statusChoice - 1])) {
+                return medicine;
+            }
+        }
+        return null;
     }
     
     public ArrayList<Medicine> getLowStockMedicines() {
@@ -254,6 +310,48 @@ public class PharmacyManagementControl {
         return patientPrescriptions;
     }
     
+    public ArrayList<Prescription> findPrescriptionsByDoctor(String doctorId) {
+        ArrayList<Prescription> doctorPrescriptions = new ArrayList<>();
+        for (int index = 1; index <= prescriptions.getNumberOfEntries(); index++) {
+            Prescription prescription = prescriptions.getEntry(index);
+            if (prescription.getDoctor().getDoctorId().equals(doctorId)) {
+                doctorPrescriptions.add(prescription);
+            }
+        }
+        return doctorPrescriptions;
+    }
+
+    public ArrayList<Prescription> findPrescriptionsByStatus(int statusChoice) {
+        ArrayList<Prescription> statusPrescriptions = new ArrayList<>();
+        for (int index = 1; index <= prescriptions.getNumberOfEntries(); index++) {
+            Prescription prescription = prescriptions.getEntry(index);
+            if (prescription.getStatus().equals(Prescription.PrescriptionStatus.values()[statusChoice - 1])) {
+                statusPrescriptions.add(prescription);
+            }
+        }
+        return statusPrescriptions;
+    }
+
+    public ArrayList<Prescription> findPrescriptionsByDateRange(String startDate, String endDate) {
+        ArrayList<Prescription> dateRangePrescriptions = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        Date start = null;
+        Date end = null;
+        try {
+            start = dateFormat.parse(startDate);
+            end = dateFormat.parse(endDate);
+        } catch (Exception e) {
+            System.err.println("Error parsing dates: " + e.getMessage());
+        }
+        for (int index = 1; index <= prescriptions.getNumberOfEntries(); index++) {
+            Prescription prescription = prescriptions.getEntry(index);
+            if (prescription.getPrescriptionDate().after(start) && prescription.getPrescriptionDate().before(end)) {
+                dateRangePrescriptions.add(prescription);
+            }
+        }
+        return dateRangePrescriptions;
+    }
+
     public ArrayList<Prescription> getActivePrescriptions() {
         ArrayList<Prescription> activePrescriptions = new ArrayList<>();
         for (int index = 1; index <= prescriptions.getNumberOfEntries(); index++) {
@@ -329,6 +427,4 @@ public class PharmacyManagementControl {
         
         return report.toString();
     }
-    
-    // Private Helper Methods
 } 

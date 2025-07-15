@@ -9,7 +9,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Date;
+
+/**
+ * @author: Ho Kang Kai
+ * Medicine DAO - Module 5
+ * Manages medicine data access operations
+ */
 
 public class MedicineDao extends DaoTemplate<Medicine> {
 
@@ -348,42 +353,6 @@ public class MedicineDao extends DaoTemplate<Medicine> {
         }
     }
 
-    public boolean addStock(String medicineId, int quantity) throws SQLException {
-        String sql = "UPDATE medicine SET quantityInStock = quantityInStock + ? WHERE medicineId = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setInt(1, quantity);
-            preparedStatement.setString(2, medicineId);
-
-            int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            System.err.println("Error adding medicine stock: " + e.getMessage());
-            throw e;
-        }
-    }
-
-    public boolean removeStock(String medicineId, int quantity) throws SQLException {
-        String sql = "UPDATE medicine SET quantityInStock = GREATEST(0, quantityInStock - ?) " +
-                "WHERE medicineId = ? AND quantityInStock >= ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setInt(1, quantity);
-            preparedStatement.setString(2, medicineId);
-            preparedStatement.setInt(3, quantity);
-
-            int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            System.err.println("Error removing medicine stock: " + e.getMessage());
-            throw e;
-        }
-    }
-
     public boolean updateStatus(String medicineId, Medicine.MedicineStatus status) throws SQLException {
         String sql = "UPDATE medicine SET status = ? WHERE medicineId = ?";
 
@@ -397,6 +366,19 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Error updating medicine status: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public boolean updatePrice(String medicineId, double newPrice) throws SQLException {
+        String sql = "UPDATE medicine SET unitPrice = ? WHERE medicineId = ?";
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setDouble(1, newPrice);
+            preparedStatement.setString(2, medicineId);
+            return preparedStatement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating medicine price: " + e.getMessage());
             throw e;
         }
     }
@@ -418,63 +400,6 @@ public class MedicineDao extends DaoTemplate<Medicine> {
         }
 
         return manufacturers;
-    }
-
-    public ArrayList<String> getAllDosageForms() throws SQLException {
-        ArrayList<String> dosageForms = new ArrayList<>();
-        String sql = "SELECT DISTINCT dosageForm FROM medicine ORDER BY dosageForm";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-
-            while (resultSet.next()) {
-                dosageForms.add(resultSet.getString("dosageForm"));
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting all dosage forms: " + e.getMessage());
-            throw e;
-        }
-
-        return dosageForms;
-    }
-
-    public double getTotalInventoryValue() throws SQLException {
-        String sql = "SELECT SUM(quantityInStock * unitPrice) FROM medicine WHERE status != 'DISCONTINUED'";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-
-            if (resultSet.next()) {
-                return resultSet.getDouble(1);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting total inventory value: " + e.getMessage());
-            throw e;
-        }
-
-        return 0.0;
-    }
-
-    public boolean isMedicineInUse(String medicineId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM prescribed_medicine WHERE medicineId = ?";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, medicineId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                return resultSet.getInt(1) > 0;
-            }
-        } catch (SQLException e) {
-            System.err.println("Error checking if medicine is in use: " + e.getMessage());
-            throw e;
-        }
-
-        return false;
     }
 
     @Override

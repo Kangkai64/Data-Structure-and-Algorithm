@@ -113,14 +113,12 @@ public class Prescription {
 
     @Override
     public String toString() {
-        return "Prescription{" +
-                "prescriptionId='" + prescriptionId + '\'' +
-                ", patient=" + patient.getFullName() +
-                ", doctor=" + doctor.getFullName() +
-                ", prescriptionDate=" + prescriptionDate +
-                ", status=" + status +
-                ", totalCost=" + totalCost +
-                '}';
+        return "Prescription ID: " + prescriptionId + "\n" +
+               "Patient: " + patient.getFullName() + "\n" +
+               "Doctor: " + doctor.getFullName() + "\n" +
+               "Prescription Date: " + prescriptionDate + "\n" +
+               "Status: " + status + "\n" +
+               "Total Cost: " + totalCost + "\n";
     }
 
     // Inner class for prescribed medicine details
@@ -167,13 +165,11 @@ public class Prescription {
 
         @Override
         public String toString() {
-            return "PrescribedMedicine{" +
-                    "medicine=" + medicine.getMedicineName() +
-                    ", quantity=" + quantity +
-                    ", dosage='" + dosage + '\'' +
-                    ", frequency='" + frequency + '\'' +
-                    ", totalCost=" + getTotalCost() +
-                    '}';
+            return "Medicine: " + medicine.getMedicineName() + "\n" +
+                   "Quantity: " + quantity + "\n" +
+                   "Dosage: " + dosage + "\n" +
+                   "Frequency: " + frequency + "\n" +
+                   "Total Cost: " + getTotalCost() + "\n";
         }
     }
 } 

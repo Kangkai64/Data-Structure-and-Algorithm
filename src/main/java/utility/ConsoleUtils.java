@@ -1,16 +1,13 @@
 package utility;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Scanner;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 
 public class ConsoleUtils {
-    // ANSI code for color code
-    private static final String ESC_CODE = "\u001B";
-    private static final String BLUE_COLOR = ESC_CODE + "[34m";
-    private static final String RESET_COLOR = ESC_CODE + "[0m";
-
     public static String getStringInput(Scanner scanner, String prompt) {
         System.out.print(prompt);
         return scanner.nextLine().trim();
@@ -65,6 +62,22 @@ public class ConsoleUtils {
 
     public static double getDoubleInput(Scanner scanner, String prompt) {
         return getDoubleInput(scanner, prompt, 0.0, Double.MAX_VALUE);
+    }
+
+    public static Date getDateInput(Scanner scanner, String prompt) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                return null;
+            }
+            try {
+                return dateFormat.parse(input);
+            } catch (Exception e) {
+                System.out.println("Invalid date format. Please use dd-MM-yyyy");
+            }
+        }
     }
 
     public static void printHeader(String title) {

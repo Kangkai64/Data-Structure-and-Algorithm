@@ -15,6 +15,12 @@ import java.sql.Statement;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+/**
+ * @author: Ho Kang Kai
+ * Prescription DAO - Module 5
+ * Manages prescription data access operations
+ */
+
 public class PrescriptionDao extends DaoTemplate<Prescription> {
 
     private final PatientDao patientDao;

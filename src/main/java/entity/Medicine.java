@@ -92,25 +92,6 @@ public class Medicine {
     public MedicineStatus getStatus() { return status; }
     public void setStatus(MedicineStatus status) { this.status = status; }
 
-    // Business Logic Methods
-    public boolean addStock(int quantity) {
-        if (quantity > 0) {
-            this.quantityInStock += quantity;
-            updateStatus();
-            return true;
-        }
-        return false;
-    }
-
-    public boolean removeStock(int quantity) {
-        if (quantity > 0 && quantity <= this.quantityInStock) {
-            this.quantityInStock -= quantity;
-            updateStatus();
-            return true;
-        }
-        return false;
-    }
-
     public boolean isExpired() {
         return new Date().after(expiryDate);
     }
@@ -131,12 +112,19 @@ public class Medicine {
 
     @Override
     public String toString() {
-        return "Medicine{" +
-                "medicineId='" + medicineId + '\'' +
-                ", medicineName='" + medicineName + '\'' +
-                ", quantityInStock=" + quantityInStock +
-                ", unitPrice=" + unitPrice +
-                ", status=" + status +
-                '}';
+        return "Medicine ID: " + medicineId + "\n" +
+               "Medicine Name: " + medicineName + "\n" +
+               "Generic Name: " + genericName + "\n" +
+               "Manufacturer: " + manufacturer + "\n" +
+               "Description: " + description + "\n" +
+               "Dosage Form: " + dosageForm + "\n" +
+               "Strength: " + strength + "\n" +
+               "Quantity In Stock: " + quantityInStock + "\n" +
+               "Minimum Stock Level: " + minimumStockLevel + "\n" +
+               "Unit Price: " + unitPrice + "\n" +
+               "Expiry Date: " + expiryDate + "\n" +
+               "Storage Location: " + storageLocation + "\n" +
+               "Requires Prescription: " + requiresPrescription + "\n" +
+               "Status: " + status + "\n";
     }
 } 

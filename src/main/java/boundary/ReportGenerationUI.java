@@ -26,7 +26,7 @@ public class ReportGenerationUI {
     }
 
     public void generateAllReports() {
-        System.out.println("\n=== GENERATING ALL REPORTS ===");
+        ConsoleUtils.printHeader("Generating All Reports");
         
         System.out.println("\n" + patientControl.generatePatientRegistrationReport());
         System.out.println("\n" + patientControl.generateQueueStatusReport());
@@ -44,7 +44,7 @@ public class ReportGenerationUI {
 
     public void displayReportMenu() {
         while (true) {
-            System.out.println("\n=== REPORT GENERATION MENU ===");
+            ConsoleUtils.printHeader("Report Generation Menu");
             System.out.println("1. Patient Reports");
             System.out.println("2. Doctor Reports");
             System.out.println("3. Consultation Reports");
@@ -84,7 +84,7 @@ public class ReportGenerationUI {
     }
 
     private void generatePatientReports() {
-        System.out.println("\n=== PATIENT REPORTS ===");
+        ConsoleUtils.printHeader("Patient Reports");
         System.out.println("1. Patient Registration Report");
         System.out.println("2. Queue Status Report");
         System.out.println("3. Both Reports");
@@ -109,7 +109,7 @@ public class ReportGenerationUI {
     }
 
     private void generateDoctorReports() {
-        System.out.println("\n=== DOCTOR REPORTS ===");
+        ConsoleUtils.printHeader("Doctor Reports");
         System.out.println("1. Doctor Information Report");
         System.out.println("2. Schedule Report");
         System.out.println("3. Both Reports");
@@ -134,7 +134,7 @@ public class ReportGenerationUI {
     }
 
     private void generateConsultationReports() {
-        System.out.println("\n=== CONSULTATION REPORTS ===");
+        ConsoleUtils.printHeader("Consultation Reports");
         System.out.println("1. Consultation Report");
         System.out.println("2. Scheduled Consultations Report");
         System.out.println("3. Both Reports");
@@ -159,7 +159,7 @@ public class ReportGenerationUI {
     }
 
     private void generateTreatmentReports() {
-        System.out.println("\n=== TREATMENT REPORTS ===");
+        ConsoleUtils.printHeader("Treatment Reports");
         System.out.println("1. Treatment Report");
         System.out.println("2. Treatment History Report");
         System.out.println("3. Both Reports");
@@ -184,7 +184,7 @@ public class ReportGenerationUI {
     }
 
     private void generatePharmacyReports() {
-        System.out.println("\n=== PHARMACY REPORTS ===");
+        ConsoleUtils.printHeader("Pharmacy Reports");
         System.out.println("1. Medicine Stock Report");
         System.out.println("2. Prescription Report");
         System.out.println("3. Both Reports");

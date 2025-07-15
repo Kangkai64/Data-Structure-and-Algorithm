@@ -1,5 +1,6 @@
 package entity;
 
+import utility.ConsoleUtils;
 import adt.ArrayList;
 import java.util.Date;
 
@@ -116,9 +117,9 @@ public class Prescription {
         return "Prescription ID: " + prescriptionId + "\n" +
                "Patient: " + patient.getFullName() + "\n" +
                "Doctor: " + doctor.getFullName() + "\n" +
-               "Prescription Date: " + prescriptionDate + "\n" +
+               "Prescription Date: " + ConsoleUtils.dateTimeFormatter(prescriptionDate) + "\n" +
                "Status: " + status + "\n" +
-               "Total Cost: " + totalCost + "\n";
+               "Total Cost: RM " + String.format("%.2f", totalCost) + "\n";
     }
 
     // Inner class for prescribed medicine details
@@ -169,7 +170,7 @@ public class Prescription {
                    "Quantity: " + quantity + "\n" +
                    "Dosage: " + dosage + "\n" +
                    "Frequency: " + frequency + "\n" +
-                   "Total Cost: " + getTotalCost() + "\n";
+                   "Total Cost: RM " + String.format("%.2f", getTotalCost()) + "\n";
         }
     }
 } 

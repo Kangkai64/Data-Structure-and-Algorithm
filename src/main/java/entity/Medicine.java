@@ -1,5 +1,6 @@
 package entity;
 
+import utility.ConsoleUtils;
 import java.util.Date;
 
 public class Medicine {
@@ -121,8 +122,8 @@ public class Medicine {
                "Strength: " + strength + "\n" +
                "Quantity In Stock: " + quantityInStock + "\n" +
                "Minimum Stock Level: " + minimumStockLevel + "\n" +
-               "Unit Price: " + unitPrice + "\n" +
-               "Expiry Date: " + expiryDate + "\n" +
+               "Unit Price: RM " + String.format("%.2f", unitPrice) + "\n" +
+               "Expiry Date: " + ConsoleUtils.dateTimeFormatter(expiryDate) + "\n" +
                "Storage Location: " + storageLocation + "\n" +
                "Requires Prescription: " + requiresPrescription + "\n" +
                "Status: " + status + "\n";

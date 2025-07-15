@@ -45,21 +45,6 @@ public class ConsoleUtils {
         }
     }
 
-    public static LocalDateTime getDateTimeInput(Scanner scanner, String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            String input = scanner.nextLine().trim();
-            if (input.isEmpty()) {
-                return null;
-            }
-            try {
-                return LocalDateTime.parse(input.replace(" ", "T"));
-            } catch (DateTimeParseException e) {
-                System.out.println("Invalid date format. Please use yyyy-MM-dd HH:mm");
-            }
-        }
-    }
-
     public static double getDoubleInput(Scanner scanner, String prompt) {
         return getDoubleInput(scanner, prompt, 0.0, Double.MAX_VALUE);
     }
@@ -78,6 +63,16 @@ public class ConsoleUtils {
                 System.out.println("Invalid date format. Please use dd-MM-yyyy");
             }
         }
+    }
+
+    public static String dateTimeFormatter(Date date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        return dateFormat.format(date);
+    }
+
+    public static String reportDateTimeFormatter(Date date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss a");
+        return dateFormat.format(date);
     }
 
     public static void printHeader(String title) {

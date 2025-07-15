@@ -451,10 +451,10 @@ INSERT INTO schedule (scheduleId, doctorId, dayOfWeek, fromTime, toTime) VALUES
 
 -- Sample Medicines
 INSERT INTO medicine (medicineId, medicineName, genericName, manufacturer, description, dosageForm, strength, quantityInStock, minimumStockLevel, unitPrice, expiryDate, storageLocation, requiresPrescription) VALUES
-('M000000001', 'Paracetamol', 'Acetaminophen', 'PharmaCorp', 'Pain reliever and fever reducer', 'Tablet', '500mg', 1000, 100, 0.50, '2025-12-31', 'Shelf A1', FALSE),
-('M000000002', 'Amoxicillin', 'Amoxicillin', 'MediPharm', 'Antibiotic for bacterial infections', 'Capsule', '250mg', 500, 50, 2.00, '2025-06-30', 'Shelf B2', TRUE),
-('M000000003', 'Ibuprofen', 'Ibuprofen', 'HealthCare Ltd', 'Anti-inflammatory pain reliever', 'Tablet', '400mg', 750, 75, 0.75, '2025-09-30', 'Shelf A2', FALSE),
-('M000000004', 'Omeprazole', 'Omeprazole', 'GastroMed', 'Proton pump inhibitor for acid reflux', 'Capsule', '20mg', 300, 30, 3.50, '2025-03-31', 'Shelf C1', TRUE);
+('M000000001', 'Paracetamol', 'Acetaminophen', 'PharmaCorp', 'Pain reliever and fever reducer', 'Tablet', '500mg', 1000, 100, 0.50, '2025-12-31 12:00:00', 'Shelf A1', FALSE),
+('M000000002', 'Amoxicillin', 'Amoxicillin', 'MediPharm', 'Antibiotic for bacterial infections', 'Capsule', '250mg', 500, 50, 2.00, '2025-06-30 8:00:00', 'Shelf B2', TRUE),
+('M000000003', 'Ibuprofen', 'Ibuprofen', 'HealthCare Ltd', 'Anti-inflammatory pain reliever', 'Tablet', '400mg', 750, 75, 0.75, '2025-09-30 11:00:00', 'Shelf A2', FALSE),
+('M000000004', 'Omeprazole', 'Omeprazole', 'GastroMed', 'Proton pump inhibitor for acid reflux', 'Capsule', '20mg', 300, 30, 3.50, '2025-03-31 16:00:00', 'Shelf C1', TRUE);
 
 -- Sample Consultations
 INSERT INTO consultation (consultationId, patientId, doctorId, consultationDate, symptoms, consultationFee) VALUES

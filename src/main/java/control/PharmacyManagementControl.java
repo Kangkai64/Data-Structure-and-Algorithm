@@ -11,6 +11,7 @@ import dao.PrescriptionDao;
 import dao.PatientDao;
 import dao.DoctorDao;
 import dao.ConsultationDao;
+import utility.ConsoleUtils;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
@@ -386,22 +387,14 @@ public class PharmacyManagementControl {
         report.append("Total Medicines: ").append(getTotalMedicines()).append("\n");
         report.append("Low Stock Medicines: ").append(getLowStockMedicines().getNumberOfEntries()).append("\n");
         report.append("Expired Medicines: ").append(getExpiredMedicines().getNumberOfEntries()).append("\n");
-        report.append("Report Generated: ").append(new Date()).append("\n\n");
+        report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
         
         for (int index = 1; index <= medicines.getNumberOfEntries(); index++) {
             Medicine medicine = medicines.getEntry(index);
-            report.append("Medicine ID: ").append(medicine.getMedicineId()).append("\n");
-            report.append("Name: ").append(medicine.getMedicineName()).append("\n");
-            report.append("Generic Name: ").append(medicine.getGenericName()).append("\n");
-            report.append("Manufacturer: ").append(medicine.getManufacturer()).append("\n");
-            report.append("Stock: ").append(medicine.getQuantityInStock()).append(" units\n");
-            report.append("Minimum Stock: ").append(medicine.getMinimumStockLevel()).append(" units\n");
-            report.append("Unit Price: RM").append(medicine.getUnitPrice()).append("\n");
-            report.append("Status: ").append(medicine.getStatus()).append("\n");
-            report.append("Expiry Date: ").append(medicine.getExpiryDate()).append("\n");
-            report.append("----------------------------------------\n");
+            report.append(medicine);
         }
-        
+
+        report.append("----------------------------------------\n");
         return report.toString();
     }
     
@@ -411,20 +404,14 @@ public class PharmacyManagementControl {
         report.append("Total Prescriptions: ").append(getTotalPrescriptions()).append("\n");
         report.append("Active Prescriptions: ").append(getActivePrescriptions().getNumberOfEntries()).append("\n");
         report.append("Dispensed Prescriptions: ").append(dispensedPrescriptions.getNumberOfEntries()).append("\n");
-        report.append("Report Generated: ").append(new Date()).append("\n\n");
+        report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
         
         for (int index = 1; index <= prescriptions.getNumberOfEntries(); index++) {
             Prescription prescription = prescriptions.getEntry(index);
-            report.append("Prescription ID: ").append(prescription.getPrescriptionId()).append("\n");
-            report.append("Patient: ").append(prescription.getPatient().getFullName()).append("\n");
-            report.append("Doctor: ").append(prescription.getDoctor().getFullName()).append("\n");
-            report.append("Date: ").append(prescription.getPrescriptionDate()).append("\n");
-            report.append("Status: ").append(prescription.getStatus()).append("\n");
-            report.append("Total Cost: RM").append(prescription.getTotalCost()).append("\n");
-            report.append("Medicines: ").append(prescription.getNumberOfPrescribedMedicines()).append("\n");
-            report.append("----------------------------------------\n");
+            report.append(prescription);
         }
-        
+
+        report.append("----------------------------------------\n");
         return report.toString();
     }
 } 

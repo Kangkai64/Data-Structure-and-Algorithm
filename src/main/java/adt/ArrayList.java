@@ -6,12 +6,15 @@ package adt;
  */
 
 import java.io.Serializable;
+import java.util.Iterator;
 
-public class ArrayList<T> implements ListInterface<T>, Serializable {
+public class ArrayList<T> implements ListInterface<T>, Serializable, Iterable<T> {
 
   private T[] array;
   private int numberOfEntries;
   private static final int DEFAULT_CAPACITY = 5;
+  private int frontIndex;
+  private int backIndex;
 
   public ArrayList() {
     this(DEFAULT_CAPACITY);
@@ -20,6 +23,8 @@ public class ArrayList<T> implements ListInterface<T>, Serializable {
   public ArrayList(int initialCapacity) {
     numberOfEntries = 0;
     array = (T[]) new Object[initialCapacity];
+    frontIndex = 0;
+    backIndex = 0;
   }
 
   @Override
@@ -123,6 +128,47 @@ public class ArrayList<T> implements ListInterface<T>, Serializable {
     return false;
   }
 
+  public boolean append(T newEntry) {
+    if (getQueueSize() == array.length - 1) {
+      doubleQueue();
+    }
+    array[backIndex] = newEntry;
+    backIndex = (backIndex + 1) % array.length;
+    return true;
+  }
+
+  public T removeFront() {
+    if (isQueueEmpty()) {
+      return null;
+    }
+    T item = array[frontIndex];
+    array[frontIndex] = null;
+    frontIndex = (frontIndex + 1) % array.length;
+    return item;
+  }
+
+  public int getQueueSize() {
+    if (backIndex >= frontIndex) {
+      return backIndex - frontIndex;
+    } else {
+      return array.length - frontIndex + backIndex;
+    }
+  }
+
+  public boolean inQueue(T item) {
+    for (int index = frontIndex; index != backIndex; index = (index + 1) % array.length) {
+      if (array[index].equals(item)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void clearQueue() {
+    frontIndex = 0;
+    backIndex = 0;
+  }
+
   private void doubleArray() {
     T[] oldArray = array;
     array = (T[]) new Object[oldArray.length * 2];
@@ -174,6 +220,84 @@ public class ArrayList<T> implements ListInterface<T>, Serializable {
 
     for (int index = removedIndex; index < lastIndex; index++) {
       array[index] = array[index + 1];
+    }
+  }
+
+  private void doubleQueue() {
+    T[] oldArray = array;
+    array = (T[]) new Object[oldArray.length * 2];
+
+    // Copy elements in correct order for circular queue
+    int oldSize = getQueueSize();
+    for (int index = 0; index < oldSize; index++) {
+      array[index] = oldArray[(frontIndex + index) % oldArray.length];
+    }
+
+    frontIndex = 0;
+    backIndex = oldSize;
+  }
+
+  private boolean isQueueEmpty() {
+    return frontIndex == backIndex;
+  }
+
+  @Override
+  public Iterator<T> iterator() {
+    return new ArrayListIterator();
+  }
+
+  // Method to get queue iterator explicitly
+  public Iterator<T> queueIterator() {
+    return new QueueIterator();
+  }
+
+  // Iterator for ArrayList functionality (sequential from index 0)
+  private class ArrayListIterator implements Iterator<T> {
+    private int currentIndex;
+
+    public ArrayListIterator() {
+      currentIndex = 0;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return currentIndex < numberOfEntries;
+    }
+
+    @Override
+    public T next() {
+      if (!hasNext()) {
+        throw new java.util.NoSuchElementException("No more elements in the list");
+      }
+      return array[currentIndex++];
+    }
+  }
+
+  // Iterator for Queue functionality (circular from frontIndex)
+  private class QueueIterator implements Iterator<T> {
+    private int currentIndex;
+    private int elementsReturned;
+
+    public QueueIterator() {
+      currentIndex = frontIndex;
+      elementsReturned = 0;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return elementsReturned < getQueueSize();
+    }
+
+    @Override
+    public T next() {
+      if (!hasNext()) {
+        throw new java.util.NoSuchElementException("No more elements in the queue");
+      }
+
+      T nextEntry = array[currentIndex];
+      currentIndex = (currentIndex + 1) % array.length;
+      elementsReturned++;
+      return nextEntry;
     }
   }
 }

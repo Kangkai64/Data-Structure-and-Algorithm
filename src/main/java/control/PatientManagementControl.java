@@ -1,7 +1,6 @@
 package control;
 
 import adt.ArrayList;
-import adt.Queue;
 import entity.Patient;
 import entity.Address;
 import entity.BloodType;
@@ -16,12 +15,12 @@ import java.sql.SQLException;
 public class PatientManagementControl {
     
     private PatientDao patientDao;
-    private Queue<Patient> patientQueue;
+    private ArrayList<Patient> patientList;
     private ArrayList<Patient> activePatients;
     
     public PatientManagementControl() {
         this.patientDao = new PatientDao();
-        this.patientQueue = new Queue<>();
+        this.patientList = new ArrayList<>();
         this.activePatients = new ArrayList<>();
         loadActivePatients();
     }
@@ -103,29 +102,29 @@ public class PatientManagementControl {
     // Queuing Management Methods
     public boolean addPatientToQueue(Patient patient) {
         if (patient != null && patient.isActive()) {
-            return patientQueue.enqueue(patient);
+            return patientList.append(patient);
         }
         return false;
     }
     
     public Patient getNextPatientFromQueue() {
-        return patientQueue.dequeue();
+        return patientList.removeFront();
     }
     
     public Patient peekNextPatient() {
-        return patientQueue.getFront();
+        return patientList.getEntry(1);
     }
     
     public int getQueueSize() {
-        return patientQueue.getNumberOfEntries();
+        return patientList.getQueueSize();
     }
     
     public boolean isPatientInQueue(Patient patient) {
-        return patientQueue.contains(patient);
+        return patientList.inQueue(patient);
     }
     
     public void clearQueue() {
-        patientQueue.clear();
+        patientList.clearQueue();
     }
     
     // Search and Retrieval Methods
@@ -201,12 +200,12 @@ public class PatientManagementControl {
         report.append("Total Patients in Queue: ").append(getQueueSize()).append("\n");
         report.append("Report Generated: ").append(new Date()).append("\n\n");
         
-        if (!patientQueue.isEmpty()) {
+        if (!patientList.isEmpty()) {
             report.append("Next Patient: ").append(peekNextPatient().getFullName()).append("\n");
             report.append("Queue Position: 1\n\n");
         }
         
-        report.append("Queue Status: ").append(patientQueue.isEmpty() ? "Empty" : "Has Patients").append("\n");
+        report.append("Queue Status: ").append(patientList.isEmpty() ? "Empty" : "Has Patients").append("\n");
         
         return report.toString();
     }

@@ -5,7 +5,7 @@ package adt;
  * @version 2.0
  */
 
-public interface ListInterface<T> {
+public interface ListInterface<T> extends Iterable<T> {
 
     /**
      * Task: Adds a new entry to the end of the list. Entries currently in the

@@ -3,7 +3,7 @@ package dao;
 import entity.Schedule;
 import entity.DayOfWeek;
 import utility.HikariConnectionPool;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,8 +36,8 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
     }
 
     @Override
-    public ArrayList<Schedule> findAll() throws SQLException {
-        ArrayList<Schedule> schedules = new ArrayList<>();
+    public ArrayBucketList<Schedule> findAll() throws SQLException {
+        ArrayBucketList<Schedule> schedules = new ArrayBucketList<>();
         String sql = "SELECT * FROM schedule ORDER BY doctorId, dayOfWeek, fromTime";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -47,7 +47,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
             while (resultSet.next()) {
                 Schedule schedule = mapResultSet(resultSet);
                 if (schedule != null) {
-                    schedules.add(schedule);
+                    schedules.add(schedule.getScheduleId(), schedule);
                 }
             }
         } catch (SQLException e) {

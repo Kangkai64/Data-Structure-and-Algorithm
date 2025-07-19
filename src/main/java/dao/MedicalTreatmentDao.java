@@ -5,7 +5,7 @@ import entity.Patient;
 import entity.Doctor;
 import entity.Consultation;
 import utility.HikariConnectionPool;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -49,8 +49,8 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     }
 
     @Override
-    public ArrayList<MedicalTreatment> findAll() throws SQLException {
-        ArrayList<MedicalTreatment> treatments = new ArrayList<>();
+    public ArrayBucketList<MedicalTreatment> findAll() throws SQLException {
+        ArrayBucketList<MedicalTreatment> treatments = new ArrayBucketList<>();
         String sql = "SELECT * FROM medical_treatment ORDER BY treatmentDate DESC";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -60,7 +60,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             while (resultSet.next()) {
                 MedicalTreatment treatment = mapResultSet(resultSet);
                 if (treatment != null) {
-                    treatments.add(treatment);
+                    treatments.add(treatment.getTreatmentId(), treatment);
                 }
             }
         } catch (SQLException e) {

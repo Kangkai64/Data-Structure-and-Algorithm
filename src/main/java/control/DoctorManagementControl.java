@@ -1,6 +1,6 @@
 package control;
 
-import adt.ArrayList;
+import adt.ArrayBucketList;
 import entity.Doctor;
 import entity.Schedule;
 import entity.DayOfWeek;
@@ -15,11 +15,11 @@ import java.util.Date;
 public class DoctorManagementControl {
     
     private DoctorDao doctorDao;
-    private ArrayList<Doctor> activeDoctors;
+    private ArrayBucketList<Doctor> activeDoctors;
     
     public DoctorManagementControl() {
         this.doctorDao = new DoctorDao();
-        this.activeDoctors = new ArrayList<>();
+        this.activeDoctors = new ArrayBucketList<>();
         loadActiveDoctors();
     }
     
@@ -137,20 +137,20 @@ public class DoctorManagementControl {
         }
     }
     
-    public ArrayList<Schedule> getDoctorSchedules(String doctorId) {
+    public ArrayBucketList<Schedule> getDoctorSchedules(String doctorId) {
         try {
             Doctor doctor = doctorDao.findById(doctorId);
             if (doctor != null) {
-                ArrayList<Schedule> schedules = new ArrayList<>();
+                ArrayBucketList<Schedule> schedules = new ArrayBucketList<>();
                 for (int index = 1; index <= doctor.getNumberOfSchedule(); index++) {
                     schedules.add(doctor.getSchedule(index));
                 }
                 return schedules;
             }
-            return new ArrayList<>();
+            return new ArrayBucketList<>();
         } catch (Exception exception) {
             System.err.println("Error getting doctor schedules: " + exception.getMessage());
-            return new ArrayList<>();
+            return new ArrayBucketList<>();
         }
     }
     
@@ -173,8 +173,8 @@ public class DoctorManagementControl {
         }
     }
     
-    public ArrayList<Doctor> getAvailableDoctors() {
-        ArrayList<Doctor> availableDoctors = new ArrayList<>();
+    public ArrayBucketList<Doctor> getAvailableDoctors() {
+        ArrayBucketList<Doctor> availableDoctors = new ArrayBucketList<>();
         for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
             Doctor doctor = activeDoctors.getEntry(index);
             if (doctor.isAvailable()) {
@@ -184,8 +184,8 @@ public class DoctorManagementControl {
         return availableDoctors;
     }
     
-    public ArrayList<Doctor> getDoctorsBySpecialty(String specialty) {
-        ArrayList<Doctor> specialtyDoctors = new ArrayList<>();
+    public ArrayBucketList<Doctor> getDoctorsBySpecialty(String specialty) {
+        ArrayBucketList<Doctor> specialtyDoctors = new ArrayBucketList<>();
         for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
             Doctor doctor = activeDoctors.getEntry(index);
             if (doctor.getMedicalSpecialty().equalsIgnoreCase(specialty) && doctor.isAvailable()) {
@@ -205,8 +205,8 @@ public class DoctorManagementControl {
         }
     }
     
-    public ArrayList<Doctor> findDoctorsByName(String name) {
-        ArrayList<Doctor> results = new ArrayList<>();
+    public ArrayBucketList<Doctor> findDoctorsByName(String name) {
+        ArrayBucketList<Doctor> results = new ArrayBucketList<>();
         for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
             Doctor doctor = activeDoctors.getEntry(index);
             if (doctor.getFullName().toLowerCase().contains(name.toLowerCase())) {
@@ -216,7 +216,7 @@ public class DoctorManagementControl {
         return results;
     }
     
-    public ArrayList<Doctor> getAllActiveDoctors() {
+    public ArrayBucketList<Doctor> getAllActiveDoctors() {
         return activeDoctors;
     }
     
@@ -276,7 +276,7 @@ public class DoctorManagementControl {
     
     private void loadActiveDoctors() {
         try {
-            ArrayList<Doctor> allDoctors = doctorDao.findAll();
+            ArrayBucketList<Doctor> allDoctors = doctorDao.findAll();
             for (int index = 1; index <= allDoctors.getNumberOfEntries(); index++) {
                 Doctor doctor = allDoctors.getEntry(index);
                 if (doctor.isAvailable()) {

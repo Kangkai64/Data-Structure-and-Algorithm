@@ -2,7 +2,7 @@ package dao;
 
 import entity.Address;
 import utility.HikariConnectionPool;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,8 +34,8 @@ public class AddressDao extends DaoTemplate<Address> {
     }
 
     @Override
-    public ArrayList<Address> findAll() throws SQLException {
-        ArrayList<Address> addresses = new ArrayList<>();
+    public ArrayBucketList<Address> findAll() throws SQLException {
+        ArrayBucketList<Address> addresses = new ArrayBucketList<>();
         String sql = "SELECT * FROM address ORDER BY city, street";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -45,7 +45,7 @@ public class AddressDao extends DaoTemplate<Address> {
             while (resultSet.next()) {
                 Address address = mapResultSet(resultSet);
                 if (address != null) {
-                    addresses.add(address);
+                    addresses.add(address.getAddressId(), address);
                 }
             }
         } catch (SQLException e) {

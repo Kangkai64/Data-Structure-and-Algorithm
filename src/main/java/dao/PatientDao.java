@@ -4,7 +4,7 @@ import entity.Patient;
 import entity.Address;
 import entity.BloodType;
 import utility.HikariConnectionPool;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,8 +37,8 @@ public class PatientDao extends DaoTemplate<Patient> {
         return null;
     }
 
-    public ArrayList<Patient> findAll() throws SQLException {
-        ArrayList<Patient> patients = new ArrayList<>();
+    public ArrayBucketList<Patient> findAll() throws SQLException {
+        ArrayBucketList<Patient> patients = new ArrayBucketList<>();
         String sql = "SELECT * FROM patient";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -48,7 +48,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             while (resultSet.next()) {
                 Patient patient = mapResultSet(resultSet);
                 if (patient != null) {
-                    patients.add(patient);
+                    patients.add(patient.getPatientId(), patient);
                 }
             }
         } catch (SQLException e) {
@@ -158,7 +158,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             Address address = addressDao.findById(addressId);
 
             // Parse allergies from string to ArrayList
-            ArrayList<String> allergies = parseAllergies(resultSet.getString("allergies"));
+            ArrayBucketList<String> allergies = parseAllergies(resultSet.getString("allergies"));
 
             // Create Patient object directly (it will call Person constructor via super())
             Patient patient = new Patient(
@@ -187,7 +187,7 @@ public class PatientDao extends DaoTemplate<Patient> {
     /**
      * Helper method to convert ArrayList of allergies to comma-separated string
      */
-    private String allergiesToString(ArrayList<String> allergies) {
+    private String allergiesToString(ArrayBucketList<String> allergies) {
         if (allergies == null || allergies.isEmpty()) {
             return "";
         }
@@ -205,8 +205,8 @@ public class PatientDao extends DaoTemplate<Patient> {
     /**
      * Helper method to parse comma-separated string to ArrayList of allergies
      */
-    private ArrayList<String> parseAllergies(String allergiesString) {
-        ArrayList<String> allergies = new ArrayList<>();
+    private ArrayBucketList<String> parseAllergies(String allergiesString) {
+        ArrayBucketList<String> allergies = new ArrayBucketList<>();
         if (allergiesString != null && !allergiesString.trim().isEmpty()) {
             String[] allergyArray = allergiesString.split(",");
             for (String allergy : allergyArray) {

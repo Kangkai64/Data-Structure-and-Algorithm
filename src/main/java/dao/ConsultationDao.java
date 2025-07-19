@@ -4,7 +4,7 @@ import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
 import utility.HikariConnectionPool;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -46,8 +46,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     }
 
     @Override
-    public ArrayList<Consultation> findAll() throws SQLException {
-        ArrayList<Consultation> consultations = new ArrayList<>();
+    public ArrayBucketList<Consultation> findAll() throws SQLException {
+        ArrayBucketList<Consultation> consultations = new ArrayBucketList<>();
         String sql = "SELECT * FROM consultation ORDER BY consultationDate DESC";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -57,7 +57,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             while (resultSet.next()) {
                 Consultation consultation = mapResultSet(resultSet);
                 if (consultation != null) {
-                    consultations.add(consultation);
+                    consultations.add(consultation.getConsultationId(), consultation);
                 }
             }
         } catch (SQLException e) {
@@ -234,8 +234,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         return 0;
     }
 
-    public ArrayList<Consultation> findConsultationsWithNextVisit() throws SQLException {
-        ArrayList<Consultation> consultations = new ArrayList<>();
+    public ArrayBucketList<Consultation> findConsultationsWithNextVisit() throws SQLException {
+        ArrayBucketList<Consultation> consultations = new ArrayBucketList<>();
         String sql = "SELECT * FROM consultation WHERE nextVisitDate IS NOT NULL " +
                 "AND nextVisitDate >= CURDATE() ORDER BY nextVisitDate";
 

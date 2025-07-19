@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 import utility.HikariConnectionPool;
 
 /**
@@ -16,7 +16,7 @@ import utility.HikariConnectionPool;
 
 public abstract class DaoTemplate<T> {
     public abstract T findById(String Id) throws SQLException;
-    public abstract ArrayList<T> findAll() throws SQLException;
+    public abstract ArrayBucketList<T> findAll() throws SQLException;
     public abstract String getNewId() throws SQLException;
     public abstract boolean insert(T object) throws SQLException;
     public abstract boolean update(T object) throws SQLException;

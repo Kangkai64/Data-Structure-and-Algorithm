@@ -2,7 +2,7 @@ package dao;
 
 import entity.Medicine;
 import utility.HikariConnectionPool;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -40,8 +40,8 @@ public class MedicineDao extends DaoTemplate<Medicine> {
     }
 
     @Override
-    public ArrayList<Medicine> findAll() throws SQLException {
-        ArrayList<Medicine> medicines = new ArrayList<>();
+    public ArrayBucketList<Medicine> findAll() throws SQLException {
+        ArrayBucketList<Medicine> medicines = new ArrayBucketList<>();
         String sql = "SELECT * FROM medicine ORDER BY medicineName";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -51,7 +51,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             while (resultSet.next()) {
                 Medicine medicine = mapResultSet(resultSet);
                 if (medicine != null) {
-                    medicines.add(medicine);
+                    medicines.add(medicine.getMedicineId(), medicine);
                 }
             }
         } catch (SQLException e) {

@@ -3,7 +3,7 @@ package boundary;
 import control.PatientManagementControl;
 import entity.Address;
 import entity.BloodType;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 import utility.ConsoleUtils;
 
 import java.util.Scanner;
@@ -93,7 +93,7 @@ public class PatientManagementUI {
         BloodType bloodType = getBloodTypeFromChoice(bloodTypeChoice);
         
         String allergiesInput = ConsoleUtils.getStringInput(scanner, "Enter allergies (comma-separated, or 'None'): ");
-        ArrayList<String> allergies = new ArrayList<>();
+        ArrayBucketList<String> allergies = new ArrayBucketList<>();
         if (!allergiesInput.equalsIgnoreCase("None")) {
             String[] allergyArray = allergiesInput.split(",");
             for (String allergy : allergyArray) {

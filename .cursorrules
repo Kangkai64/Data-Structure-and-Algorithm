@@ -25,6 +25,8 @@ This is a Java-based Clinic Management System built with Maven. The project foll
 - Use the layered architecture pattern consistently
 - Use only user custom data structures
 - Never use ADTs from java.utils.Collection libraries
+- This project only have one ADT implementation, that is, the ArrayBucketList.java
+- All other new implementations like LinkedList and Nodes should be place inside the ArrayBucketList.java
 - Display the date in "DD-MM-YYYY" format.
 
 ## Database Conventions

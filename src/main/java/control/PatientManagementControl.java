@@ -1,12 +1,14 @@
 package control;
 
-import adt.ArrayList;
+import adt.ArrayBucketList;
 import entity.Patient;
 import entity.Address;
 import entity.BloodType;
 import dao.PatientDao;
 import java.util.Date;
 import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * Patient Management Control - Module 1
@@ -15,20 +17,20 @@ import java.sql.SQLException;
 public class PatientManagementControl {
     
     private PatientDao patientDao;
-    private ArrayList<Patient> patientList;
-    private ArrayList<Patient> activePatients;
+    private ArrayBucketList<Patient> patientList;
+    private ArrayBucketList<Patient> activePatients;
     
     public PatientManagementControl() {
         this.patientDao = new PatientDao();
-        this.patientList = new ArrayList<>();
-        this.activePatients = new ArrayList<>();
+        this.patientList = new ArrayBucketList<>();
+        this.activePatients = new ArrayBucketList<>();
         loadActivePatients();
     }
     
     // Patient Registration Methods
     public boolean registerPatient(String fullName, String icNumber, String email, 
                                  String phoneNumber, Address address, String wardNumber,
-                                 BloodType bloodType, ArrayList<String> allergies, 
+                                 BloodType bloodType, ArrayBucketList<String> allergies, 
                                  String emergencyContact) {
         try {
             // Get new patient ID from database
@@ -54,7 +56,7 @@ public class PatientManagementControl {
     
     public boolean updatePatientRecord(String patientId, String fullName, String email, 
                                      String phoneNumber, Address address, String wardNumber,
-                                     BloodType bloodType, ArrayList<String> allergies, 
+                                     BloodType bloodType, ArrayBucketList<String> allergies, 
                                      String emergencyContact) {
         try {
             Patient patient = patientDao.findById(patientId);
@@ -102,29 +104,29 @@ public class PatientManagementControl {
     // Queuing Management Methods
     public boolean addPatientToQueue(Patient patient) {
         if (patient != null && patient.isActive()) {
-            return patientList.append(patient);
+            return patientList.add(patient.getPatientId(), patient);
         }
         return false;
     }
     
     public Patient getNextPatientFromQueue() {
-        return patientList.removeFront();
+        return patientList.remove(patientList.getFirstEntry());
     }
     
     public Patient peekNextPatient() {
-        return patientList.getEntry(1);
+        return patientList.getFirstEntry();
     }
     
     public int getQueueSize() {
-        return patientList.getQueueSize();
+        return patientList.getNumberOfEntries();
     }
     
     public boolean isPatientInQueue(Patient patient) {
-        return patientList.inQueue(patient);
+        return patientList.contains(patient);
     }
     
     public void clearQueue() {
-        patientList.clearQueue();
+        patientList.clear();
     }
     
     // Search and Retrieval Methods
@@ -140,7 +142,7 @@ public class PatientManagementControl {
     public Patient findPatientByIcNumber(String icNumber) {
         try {
             // Since findByIcNumber doesn't exist, we'll search through all patients
-            ArrayList<Patient> allPatients = patientDao.findAll();
+            ArrayBucketList<Patient> allPatients = patientDao.findAll();
             for (int index = 1; index <= allPatients.getNumberOfEntries(); index++) {
                 Patient patient = allPatients.getEntry(index);
                 if (patient.getICNumber().equals(icNumber)) {
@@ -154,8 +156,8 @@ public class PatientManagementControl {
         }
     }
     
-    public ArrayList<Patient> findPatientsByName(String name) {
-        ArrayList<Patient> results = new ArrayList<>();
+    public ArrayBucketList<Patient> findPatientsByName(String name) {
+        ArrayBucketList<Patient> results = new ArrayBucketList<>();
         for (int index = 1; index <= activePatients.getNumberOfEntries(); index++) {
             Patient patient = activePatients.getEntry(index);
             if (patient.getFullName().toLowerCase().contains(name.toLowerCase())) {
@@ -165,7 +167,7 @@ public class PatientManagementControl {
         return results;
     }
     
-    public ArrayList<Patient> getAllActivePatients() {
+    public ArrayBucketList<Patient> getAllActivePatients() {
         return activePatients;
     }
     
@@ -214,11 +216,15 @@ public class PatientManagementControl {
     
     private void loadActivePatients() {
         try {
-            ArrayList<Patient> allPatients = patientDao.findAll();
-            for (int index = 1; index <= allPatients.getNumberOfEntries(); index++) {
-                Patient patient = allPatients.getEntry(index);
-                if (patient.isActive()) {
-                    activePatients.add(patient);
+            ArrayBucketList<Patient> allPatients = patientDao.findAll();
+            for (int index = 0; index < allPatients.getBucketCount(); index++) {
+                ArrayBucketList<Patient>.LinkedList bucket = allPatients.buckets[index];
+                Iterator<Patient> iterator = bucket.iterator();
+                while (iterator.hasNext()) {
+                    Patient patient = iterator.next();
+                    if (patient.isActive()) {
+                        activePatients.add(patient);
+                    }
                 }
             }
         } catch (SQLException exception) {

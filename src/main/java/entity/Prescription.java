@@ -1,8 +1,9 @@
 package entity;
 
 import utility.ConsoleUtils;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 import java.util.Date;
+import java.util.Iterator;
 
 public class Prescription {
     private String prescriptionId;
@@ -10,7 +11,7 @@ public class Prescription {
     private Doctor doctor;
     private Consultation consultation;
     private Date prescriptionDate;
-    private ArrayList<PrescribedMedicine> prescribedMedicines;
+    private ArrayBucketList<PrescribedMedicine> prescribedMedicines;
     private String instructions;
     private Date expiryDate;
     private PrescriptionStatus status;
@@ -29,7 +30,7 @@ public class Prescription {
         this.prescriptionDate = prescriptionDate;
         this.instructions = instructions;
         this.expiryDate = expiryDate;
-        this.prescribedMedicines = new ArrayList<>();
+        this.prescribedMedicines = new ArrayBucketList<>();
         this.status = PrescriptionStatus.ACTIVE;
         this.totalCost = 0.0;
     }
@@ -50,8 +51,8 @@ public class Prescription {
     public Date getPrescriptionDate() { return prescriptionDate; }
     public void setPrescriptionDate(Date prescriptionDate) { this.prescriptionDate = prescriptionDate; }
 
-    public ArrayList<PrescribedMedicine> getPrescribedMedicines() { return prescribedMedicines; }
-    public void setPrescribedMedicines(ArrayList<PrescribedMedicine> prescribedMedicines) { 
+    public ArrayBucketList<PrescribedMedicine> getPrescribedMedicines() { return prescribedMedicines; }
+    public void setPrescribedMedicines(ArrayBucketList<PrescribedMedicine> prescribedMedicines) { 
         this.prescribedMedicines = prescribedMedicines; 
     }
 
@@ -70,7 +71,7 @@ public class Prescription {
     // Business Logic Methods
     public boolean addPrescribedMedicine(PrescribedMedicine prescribedMedicine) {
         if (prescribedMedicine != null) {
-            boolean added = prescribedMedicines.add(prescribedMedicine);
+            boolean added = prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(), prescribedMedicine);
             if (added) {
                 calculateTotalCost();
             }
@@ -80,10 +81,11 @@ public class Prescription {
     }
 
     public boolean removePrescribedMedicine(PrescribedMedicine prescribedMedicine) {
-        for (int index = 1; index <= prescribedMedicines.getNumberOfEntries(); index++) {
-            PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntry(index);
+        Iterator<PrescribedMedicine> iterator = prescribedMedicines.iterator();
+        while (iterator.hasNext()) {
+            PrescribedMedicine tempPrescribedMedicine = iterator.next();
             if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicine.getPrescribedMedicineId())) {
-                prescribedMedicines.remove(index);
+                prescribedMedicines.remove(tempPrescribedMedicine);
                 calculateTotalCost();
                 return true;
             }
@@ -92,16 +94,14 @@ public class Prescription {
     }
 
     public boolean updatePrescribedMedicine(PrescribedMedicine prescribedMedicine, Medicine medicine, int quantity, String dosage, String frequency, int duration) {
-        for (int index = 1; index <= prescribedMedicines.getNumberOfEntries(); index++) {
-            PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntry(index);
-            if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicine.getPrescribedMedicineId())) {
+        PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntryByHash(prescribedMedicine.getPrescribedMedicineId());
+        if (tempPrescribedMedicine != null) {
                 tempPrescribedMedicine.setMedicine(medicine);
                 tempPrescribedMedicine.setQuantity(quantity);
                 tempPrescribedMedicine.setDosage(dosage);
                 tempPrescribedMedicine.setFrequency(frequency);
                 tempPrescribedMedicine.setDuration(duration);
                 return true;
-            }
         }
         return false;
     }
@@ -120,8 +120,9 @@ public class Prescription {
 
     private void calculateTotalCost() {
         totalCost = 0.0;
-        for (int index = 1; index <= prescribedMedicines.getNumberOfEntries(); index++) {
-            PrescribedMedicine pm = prescribedMedicines.getEntry(index);
+        Iterator<PrescribedMedicine> iterator = prescribedMedicines.iterator();
+        while (iterator.hasNext()) {
+            PrescribedMedicine pm = iterator.next();
             totalCost += pm.getTotalCost();
         }
     }

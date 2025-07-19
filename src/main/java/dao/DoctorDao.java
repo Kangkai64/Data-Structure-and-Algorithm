@@ -3,7 +3,7 @@ package dao;
 import entity.Doctor;
 import entity.Address;
 import utility.HikariConnectionPool;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,8 +39,8 @@ public class DoctorDao extends DaoTemplate<Doctor> {
     }
 
     @Override
-    public ArrayList<Doctor> findAll() throws SQLException {
-        ArrayList<Doctor> doctors = new ArrayList<>();
+    public ArrayBucketList<Doctor> findAll() throws SQLException {
+        ArrayBucketList<Doctor> doctors = new ArrayBucketList<>();
         String sql = "SELECT d.*, a.street, a.city, a.state, a.postalCode, a.country " +
                 "FROM doctor d " +
                 "LEFT JOIN address a ON d.addressId = a.addressId " +
@@ -53,7 +53,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
             while (resultSet.next()) {
                 Doctor doctor = mapResultSet(resultSet);
                 if (doctor != null) {
-                    doctors.add(doctor);
+                    doctors.add(doctor.getDoctorId(), doctor);
                 }
             }
         } catch (SQLException e) {

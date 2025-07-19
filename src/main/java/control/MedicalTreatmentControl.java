@@ -1,12 +1,14 @@
 package control;
 
-import adt.ArrayList;
+import adt.ArrayBucketList;
+import adt.ArrayBucketList.LinkedList;
 import entity.MedicalTreatment;
 import entity.Patient;
 import entity.Doctor;
 import entity.Consultation;
 import dao.MedicalTreatmentDao;
 import java.util.Date;
+import java.util.Iterator;
 
 /**
  * Medical Treatment Control - Module 4
@@ -14,13 +16,13 @@ import java.util.Date;
  */
 public class MedicalTreatmentControl {
     
-    private ArrayList<MedicalTreatment> treatments;
-    private ArrayList<MedicalTreatment> activeTreatments;
+    private ArrayBucketList<MedicalTreatment> treatments;
+    private ArrayBucketList<MedicalTreatment> activeTreatments;
     private MedicalTreatmentDao treatmentDao;
     
     public MedicalTreatmentControl() {
-        this.treatments = new ArrayList<>();
-        this.activeTreatments = new ArrayList<>();
+        this.treatments = new ArrayBucketList<>();
+        this.activeTreatments = new ArrayBucketList<>();
         this.treatmentDao = new MedicalTreatmentDao();
     }
     
@@ -36,8 +38,8 @@ public class MedicalTreatmentControl {
                                                             consultation, diagnosis, treatmentPlan, new Date(), treatmentCost);
             
             // Add to lists
-            treatments.add(treatment);
-            activeTreatments.add(treatment);
+            treatments.add(treatmentId, treatment);
+            activeTreatments.add(treatmentId, treatment);
             
             return true;
         } catch (Exception exception) {
@@ -120,28 +122,26 @@ public class MedicalTreatmentControl {
     
     // Search and Retrieval Methods
     public MedicalTreatment findTreatmentById(String treatmentId) {
-        for (int index = 1; index <= treatments.getNumberOfEntries(); index++) {
-            MedicalTreatment treatment = treatments.getEntry(index);
-            if (treatment.getTreatmentId().equals(treatmentId)) {
-                return treatment;
-            }
-        }
-        return null;
+        return treatments.getEntryByHash(treatmentId);
     }
     
-    public ArrayList<MedicalTreatment> findTreatmentsByPatient(String patientId) {
-        ArrayList<MedicalTreatment> patientTreatments = new ArrayList<>();
-        for (int index = 1; index <= treatments.getNumberOfEntries(); index++) {
-            MedicalTreatment treatment = treatments.getEntry(index);
-            if (treatment.getPatient().getPatientId().equals(patientId)) {
-                patientTreatments.add(treatment);
+    public ArrayBucketList<MedicalTreatment> findTreatmentsByPatient(String patientId) {
+        ArrayBucketList<MedicalTreatment> patientTreatments = new ArrayBucketList<>();
+        for (int index = 1; index <= treatments.getBucketCount(); index++) {
+            LinkedList bucket = treatments.buckets[index];
+            Iterator<MedicalTreatment> iterator = bucket.iterator();
+            while (iterator.hasNext()) {
+                MedicalTreatment treatment = iterator.next();
+                if (treatment.getPatient().getPatientId().equals(patientId)) {
+                    patientTreatments.add(treatment);
+                }
             }
         }
         return patientTreatments;
     }
     
-    public ArrayList<MedicalTreatment> findTreatmentsByDoctor(String doctorId) {
-        ArrayList<MedicalTreatment> doctorTreatments = new ArrayList<>();
+    public ArrayBucketList<MedicalTreatment> findTreatmentsByDoctor(String doctorId) {
+        ArrayBucketList<MedicalTreatment> doctorTreatments = new ArrayBucketList<>();
         for (int index = 1; index <= treatments.getNumberOfEntries(); index++) {
             MedicalTreatment treatment = treatments.getEntry(index);
             if (treatment.getDoctor().getDoctorId().equals(doctorId)) {
@@ -151,8 +151,8 @@ public class MedicalTreatmentControl {
         return doctorTreatments;
     }
     
-    public ArrayList<MedicalTreatment> findTreatmentsByDiagnosis(String diagnosis) {
-        ArrayList<MedicalTreatment> diagnosisTreatments = new ArrayList<>();
+    public ArrayBucketList<MedicalTreatment> findTreatmentsByDiagnosis(String diagnosis) {
+        ArrayBucketList<MedicalTreatment> diagnosisTreatments = new ArrayBucketList<>();
         for (int index = 1; index <= treatments.getNumberOfEntries(); index++) {
             MedicalTreatment treatment = treatments.getEntry(index);
             if (treatment.getDiagnosis().toLowerCase().contains(diagnosis.toLowerCase())) {
@@ -162,12 +162,12 @@ public class MedicalTreatmentControl {
         return diagnosisTreatments;
     }
     
-    public ArrayList<MedicalTreatment> getActiveTreatments() {
+    public ArrayBucketList<MedicalTreatment> getActiveTreatments() {
         return activeTreatments;
     }
     
-    public ArrayList<MedicalTreatment> getCompletedTreatments() {
-        ArrayList<MedicalTreatment> completedTreatments = new ArrayList<>();
+    public ArrayBucketList<MedicalTreatment> getCompletedTreatments() {
+        ArrayBucketList<MedicalTreatment> completedTreatments = new ArrayBucketList<>();
         for (int index = 1; index <= treatments.getNumberOfEntries(); index++) {
             MedicalTreatment treatment = treatments.getEntry(index);
             if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.COMPLETED) {
@@ -177,7 +177,7 @@ public class MedicalTreatmentControl {
         return completedTreatments;
     }
     
-    public ArrayList<MedicalTreatment> getAllTreatments() {
+    public ArrayBucketList<MedicalTreatment> getAllTreatments() {
         return treatments;
     }
     
@@ -219,7 +219,7 @@ public class MedicalTreatmentControl {
         report.append("Report Generated: ").append(new Date()).append("\n\n");
         
         // Group by patient
-        ArrayList<String> processedPatients = new ArrayList<>();
+        ArrayBucketList<String> processedPatients = new ArrayBucketList<>();
         
         for (int index = 1; index <= treatments.getNumberOfEntries(); index++) {
             MedicalTreatment treatment = treatments.getEntry(index);
@@ -232,7 +232,7 @@ public class MedicalTreatmentControl {
                       .append(" (").append(patientId).append(")\n");
                 
                 // Get all treatments for this patient
-                ArrayList<MedicalTreatment> patientTreatments = findTreatmentsByPatient(patientId);
+                ArrayBucketList<MedicalTreatment> patientTreatments = findTreatmentsByPatient(patientId);
                 for (int treatmentIndex = 1; treatmentIndex <= patientTreatments.getNumberOfEntries(); treatmentIndex++) {
                     MedicalTreatment patientTreatment = patientTreatments.getEntry(treatmentIndex);
                     report.append("  - Treatment ID: ").append(patientTreatment.getTreatmentId()).append("\n");

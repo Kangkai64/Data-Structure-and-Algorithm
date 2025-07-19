@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 
 public class ConsoleUtils {
     public static String getStringInput(Scanner scanner, String prompt) {

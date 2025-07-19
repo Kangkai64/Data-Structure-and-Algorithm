@@ -4,7 +4,7 @@ package entity;
  * @author Lee Yong Kang
  */
 
-import adt.ArrayList;
+import adt.ArrayBucketList;
 import java.util.Date;
 
 public class Doctor extends Person {
@@ -13,9 +13,9 @@ public class Doctor extends Person {
     private String licenseNumber;
     private int expYears;
     private boolean isAvailable;
-    private ArrayList<Patient> patients;
-    private ArrayList<Schedule> schedules;
-    private ArrayList<Appointment> appointments;
+    private ArrayBucketList<Patient> patients;
+    private ArrayBucketList<Schedule> schedules;
+    private ArrayBucketList<Appointment> appointments;
 
     public Doctor(String fullName, String ICNumber, String email, String phoneNumber,
                   Address address, Date registrationDate, String doctorId, String medicalSpecialty,
@@ -26,9 +26,9 @@ public class Doctor extends Person {
         this.licenseNumber = licenseNumber;
         this.expYears = expYears;
         this.isAvailable = true;
-        this.patients = new ArrayList<>();
-        this.schedules = new ArrayList<>();
-        this.appointments = new ArrayList<>();
+        this.patients = new ArrayBucketList<>();
+        this.schedules = new ArrayBucketList<>();
+        this.appointments = new ArrayBucketList<>();
     }
 
     // Accessor and mutator method for doctor

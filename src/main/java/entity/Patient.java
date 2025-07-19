@@ -1,6 +1,6 @@
 package entity;
 
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 import java.util.Date;
 
@@ -10,7 +10,7 @@ public class Patient extends Person {
     private String patientId;
     private String wardNumber;
     private BloodType bloodType;
-    private ArrayList<String> allergies;
+    private ArrayBucketList<String> allergies;
     private Doctor dischargingDoctor;
     private Prescription currentPrescription;
     private boolean isActive;
@@ -18,7 +18,7 @@ public class Patient extends Person {
 
     public Patient(String fullName, String ICNumber, String email, String phoneNumber,
                    Address address, Date registrationDate, String patientId, String wardNumber,
-                   BloodType bloodType, ArrayList<String> allergies, String emergencyContact) {
+                   BloodType bloodType, ArrayBucketList<String> allergies, String emergencyContact) {
         super(fullName, ICNumber, email, phoneNumber, address, registrationDate);
         this.patientId = patientId;
         this.wardNumber = wardNumber;
@@ -52,11 +52,11 @@ public class Patient extends Person {
         this.bloodType = bloodType;
     }
 
-    public ArrayList<String> getAllergies() {
+    public ArrayBucketList<String> getAllergies() {
         return allergies;
     }
 
-    public void setAllergies(ArrayList<String> allergies) {
+    public void setAllergies(ArrayBucketList<String> allergies) {
         this.allergies = allergies;
     }
 

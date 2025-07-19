@@ -1,6 +1,6 @@
 package control;
 
-import adt.ArrayList;
+import adt.ArrayBucketList;
 import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
@@ -13,13 +13,13 @@ import java.util.Date;
  */
 public class ConsultationManagementControl {
     
-    private ArrayList<Consultation> consultations;
-    private ArrayList<Consultation> scheduledConsultations;
+    private ArrayBucketList<Consultation> consultations;
+    private ArrayBucketList<Consultation> scheduledConsultations;
     private ConsultationDao consultationDao;
     
     public ConsultationManagementControl() {
-        this.consultations = new ArrayList<>();
-        this.scheduledConsultations = new ArrayList<>();
+        this.consultations = new ArrayBucketList<>();
+        this.scheduledConsultations = new ArrayBucketList<>();
         this.consultationDao = new ConsultationDao();
     }
     
@@ -115,8 +115,8 @@ public class ConsultationManagementControl {
         return null;
     }
     
-    public ArrayList<Consultation> findConsultationsByPatient(String patientId) {
-        ArrayList<Consultation> patientConsultations = new ArrayList<>();
+    public ArrayBucketList<Consultation> findConsultationsByPatient(String patientId) {
+        ArrayBucketList<Consultation> patientConsultations = new ArrayBucketList<>();
         for (int index = 1; index <= consultations.getNumberOfEntries(); index++) {
             Consultation consultation = consultations.getEntry(index);
             if (consultation.getPatient().getPatientId().equals(patientId)) {
@@ -126,8 +126,8 @@ public class ConsultationManagementControl {
         return patientConsultations;
     }
     
-    public ArrayList<Consultation> findConsultationsByDoctor(String doctorId) {
-        ArrayList<Consultation> doctorConsultations = new ArrayList<>();
+    public ArrayBucketList<Consultation> findConsultationsByDoctor(String doctorId) {
+        ArrayBucketList<Consultation> doctorConsultations = new ArrayBucketList<>();
         for (int index = 1; index <= consultations.getNumberOfEntries(); index++) {
             Consultation consultation = consultations.getEntry(index);
             if (consultation.getDoctor().getDoctorId().equals(doctorId)) {
@@ -137,8 +137,8 @@ public class ConsultationManagementControl {
         return doctorConsultations;
     }
     
-    public ArrayList<Consultation> findConsultationsByDate(Date date) {
-        ArrayList<Consultation> dateConsultations = new ArrayList<>();
+    public ArrayBucketList<Consultation> findConsultationsByDate(Date date) {
+        ArrayBucketList<Consultation> dateConsultations = new ArrayBucketList<>();
         for (int index = 1; index <= consultations.getNumberOfEntries(); index++) {
             Consultation consultation = consultations.getEntry(index);
             if (consultation.getConsultationDate().equals(date)) {
@@ -148,12 +148,12 @@ public class ConsultationManagementControl {
         return dateConsultations;
     }
     
-    public ArrayList<Consultation> getScheduledConsultations() {
+    public ArrayBucketList<Consultation> getScheduledConsultations() {
         return scheduledConsultations;
     }
     
-    public ArrayList<Consultation> getCompletedConsultations() {
-        ArrayList<Consultation> completedConsultations = new ArrayList<>();
+    public ArrayBucketList<Consultation> getCompletedConsultations() {
+        ArrayBucketList<Consultation> completedConsultations = new ArrayBucketList<>();
         for (int index = 1; index <= consultations.getNumberOfEntries(); index++) {
             Consultation consultation = consultations.getEntry(index);
             if (consultation.getStatus() == Consultation.ConsultationStatus.COMPLETED) {
@@ -163,7 +163,7 @@ public class ConsultationManagementControl {
         return completedConsultations;
     }
     
-    public ArrayList<Consultation> getAllConsultations() {
+    public ArrayBucketList<Consultation> getAllConsultations() {
         return consultations;
     }
     

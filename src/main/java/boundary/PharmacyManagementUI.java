@@ -6,7 +6,7 @@ import entity.Prescription;
 import utility.ConsoleUtils;
 import java.util.Date;
 import java.util.Scanner;
-import adt.ArrayList;
+import adt.ArrayBucketList;
 
 /**
  * @author: Ho Kang Kai
@@ -452,7 +452,7 @@ public class PharmacyManagementUI {
                 break;
             case 4:
                 String manufacturer = ConsoleUtils.getStringInput(scanner, "Enter Manufacturer: ");
-                ArrayList<Medicine> medicines = pharmacyControl.findMedicineByManufacturer(manufacturer);
+                ArrayBucketList<Medicine> medicines = pharmacyControl.findMedicineByManufacturer(manufacturer);
                 if (medicines.isEmpty()) {
                     System.out.println("No medicines found.");
                 } 
@@ -483,7 +483,7 @@ public class PharmacyManagementUI {
         System.out.println("5. Search by Date Range");
 
         Prescription prescription = null;
-        ArrayList<Prescription> prescriptions = null;
+        ArrayBucketList<Prescription> prescriptions = null;
         
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
         System.out.println();

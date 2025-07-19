@@ -20,7 +20,7 @@ public class ReportGenerationUI {
         this.scanner = new Scanner(System.in);
         this.patientControl = new PatientManagementControl();
         this.doctorControl = new DoctorManagementControl();
-        this.consultationControl = new ConsultationManagementControl();
+        this.consultationControl = null; // new ConsultationManagementControl();
         this.treatmentControl = new MedicalTreatmentControl();
         this.pharmacyControl = new PharmacyManagementControl();
     }

@@ -50,11 +50,14 @@ public class PharmacyManagementControl {
         try {
             medicines = medicineDao.findAll();
             prescriptions = prescriptionDao.findAll();
-            Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
-            while (prescriptionIterator.hasNext()) {
-                Prescription prescription = prescriptionIterator.next();
-                if (prescription.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
-                    dispensedPrescriptions.add(prescription.hashCode(), prescription);
+            for (int index = 0; index < prescriptions.getBucketCount(); index++) {
+                LinkedList bucket = prescriptions.buckets[index];
+                Iterator<Prescription> prescriptionNodeIterator = bucket.iterator();
+                while (prescriptionNodeIterator.hasNext()) {
+                    Prescription prescriptionNode = prescriptionNodeIterator.next();
+                    if (prescriptionNode.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
+                        dispensedPrescriptions.add(prescriptionNode.hashCode(), prescriptionNode);
+                    }
                 }
             }
         } catch (Exception exception) {

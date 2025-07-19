@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 /**
- * @author: Ho Kang Kai
+ * @author: Poh Qi Xuan
  * Consultation Management Control - Module 3
  * Manages patient consultations and arrange subsequent visit appointments
  */

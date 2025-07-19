@@ -2,7 +2,7 @@ package utility;
 
 public class HashUtility {
     public static int hashEntity(int hashCode, int bucketCount) {
-        long hash = 0;
+        long hash = 17;
         final int prime = 31;
         final int mod = 1000000007;
 

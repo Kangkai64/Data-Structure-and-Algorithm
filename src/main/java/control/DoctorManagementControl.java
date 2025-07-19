@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 /**
- * @author: Ho Kang Kai
+ * @author: Lee Yong Kang
  * Doctor Management Control - Module 2
  * Manages doctor information, duty schedules and availability tracking
  */

@@ -13,7 +13,7 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
     private int numberOfEntries;
     private int bucketCount;
     private int firstHashCode;
-    private static final int DEFAULT_BUCKET_COUNT = 10;
+    private static final int DEFAULT_BUCKET_COUNT = 1 << 4;
     private static final double LOAD_FACTOR_THRESHOLD = 0.75;
 
     /**
@@ -40,7 +40,7 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
 
     /**
      * Add an entry to the bucket list based on hash index
-     * @param hashString hash string to add entry for
+     * @param hashCode hash string to add entry for
      * @param newEntry entry to add
      * @return true if successfully added
      */
@@ -87,7 +87,7 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
 
     /**
      * Remove an entry from the bucket list by hash string
-     * @param hashString hash string to remove
+     * @param hashCode hash string to remove
      * @return removed entry or null if not found
      */
     public T removeByHash(int hashCode) {
@@ -135,7 +135,7 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
 
     /**
      * Get entry by hash string
-     * @param hashString hash string to get entry for
+     * @param hashCode hash string to get entry for
      * @return entry or null if not found
      */
     public T getEntryByHash(int hashCode) {
@@ -324,7 +324,7 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
         private Node head;
         private Node tail;
         private int size;
-        private static final int MAX_SIZE = 10;
+        private static final int MAX_SIZE = 1 << 4;
 
         public LinkedList() {
             head = null;
@@ -495,7 +495,7 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
 
             @Override
             public boolean hasNext() {
-                return currentNode != null && visitedCount < size;
+                return head != null && visitedCount < size;
             }
 
             @Override

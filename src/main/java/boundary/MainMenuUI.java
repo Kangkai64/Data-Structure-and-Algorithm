@@ -20,7 +20,7 @@ public class MainMenuUI {
         this.scanner = new Scanner(System.in);
         this.patientUI = new PatientManagementUI();
         this.doctorUI = new DoctorManagementUI();
-        this.consultationUI = new ConsultationManagementUI();
+        this.consultationUI = null; //new ConsultationManagementUI();
         this.treatmentUI = new MedicalTreatmentUI();
         this.pharmacyUI = new PharmacyManagementUI();
         this.reportUI = new ReportGenerationUI();

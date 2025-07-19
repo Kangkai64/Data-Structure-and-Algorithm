@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 /**
- * @author: Ho Kang Kai
+ * @author: Lai Yoke Hong
  * Patient Management Control - Module 1
  * Manages patient registration, record maintenance and queuing management
  */

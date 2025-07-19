@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 /**
- * @author: Ho Kang Kai
+ * @author: Benjamin Yee Jun Yi
  * Medical Treatment Control - Module 4
  * Manages patient diagnosis and maintain treatment history records
  */

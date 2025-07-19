@@ -43,10 +43,6 @@ public class ConsoleUtils {
         }
     }
 
-    public static double getDoubleInput(Scanner scanner, String prompt) {
-        return getDoubleInput(scanner, prompt, 0.0, Double.MAX_VALUE);
-    }
-
     public static Date getDateInput(Scanner scanner, String prompt) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         while (true) {
@@ -87,19 +83,6 @@ public class ConsoleUtils {
         System.out.println(separator.toString());
     }
 
-    /**
-     * Prints a divider line with the specified character and length
-     * @param character The character to use for the divider
-     * @param length The length of the divider
-     */
-    public static void printDivider(char character, int length) {
-        StringBuilder divider = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            divider.append(character);
-        }
-        System.out.println(divider.toString());
-    }
-
     public static void waitMessage() {
         System.out.println("\n\n\nPress Enter to continue...");
         try {
@@ -110,48 +93,5 @@ public class ConsoleUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-    public static void clearScreen() {
-        try {
-            final String os = System.getProperty("os.name");
-            if (os.contains("Windows")) {
-                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
-            } else {
-                System.out.print("\033[H\033[2J");
-                System.out.flush();
-            }
-        } catch (Exception e) {
-            // Fallback if clearing the screen fails
-            for (int i = 0; i < 50; i++) {
-                System.out.println();
-            }
-        }
-    }
-
-    /**
-     * Simulates a loading animation with dots
-     * @param message The message to display while loading
-     * @param duration The duration in milliseconds
-     */
-    public static void simulateLoading(String message, int duration) {
-        System.out.print(message);
-        long startTime = System.currentTimeMillis();
-        int dotCount = 0;
-        
-        while (System.currentTimeMillis() - startTime < duration) {
-            try {
-                Thread.sleep(500);
-                System.out.print(".");
-                dotCount++;
-                if (dotCount > 3) {
-                    System.out.print("\r" + message);
-                    dotCount = 0;
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-        System.out.println();
     }
 }

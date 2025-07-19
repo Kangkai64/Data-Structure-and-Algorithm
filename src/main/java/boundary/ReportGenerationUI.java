@@ -33,7 +33,7 @@ public class ReportGenerationUI {
         System.out.println("\n" + doctorControl.generateDoctorInformationReport());
         System.out.println("\n" + doctorControl.generateScheduleReport());
         System.out.println("\n" + consultationControl.generateConsultationReport());
-        System.out.println("\n" + consultationControl.generateScheduledConsultationsReport());
+        System.out.println("\n" + consultationControl.generateConsultationHistoryReport());
         System.out.println("\n" + treatmentControl.generateTreatmentReport());
         System.out.println("\n" + treatmentControl.generateTreatmentHistoryReport());
         System.out.println("\n" + pharmacyControl.generateMedicineStockReport());
@@ -147,11 +147,11 @@ public class ReportGenerationUI {
                 System.out.println(consultationControl.generateConsultationReport());
                 break;
             case 2:
-                System.out.println(consultationControl.generateScheduledConsultationsReport());
+                System.out.println(consultationControl.generateConsultationHistoryReport());
                 break;
             case 3:
                 System.out.println(consultationControl.generateConsultationReport());
-                System.out.println(consultationControl.generateScheduledConsultationsReport());
+                System.out.println(consultationControl.generateConsultationHistoryReport());
                 break;
             default:
                 System.out.println("Invalid choice.");

@@ -66,7 +66,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             while (resultSet.next()) {
                 Prescription prescription = mapResultSet(resultSet);
                 if (prescription != null) {
-                    prescriptions.add(prescription.getPrescriptionId(), prescription);
+                    prescriptions.add(prescription.hashCode(), prescription);
                 }
             }
         } catch (SQLException e) {

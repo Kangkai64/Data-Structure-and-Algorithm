@@ -47,7 +47,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
             while (resultSet.next()) {
                 Schedule schedule = mapResultSet(resultSet);
                 if (schedule != null) {
-                    schedules.add(schedule.getScheduleId(), schedule);
+                    schedules.add(schedule.hashCode(), schedule);
                 }
             }
         } catch (SQLException e) {

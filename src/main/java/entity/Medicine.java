@@ -128,4 +128,9 @@ public class Medicine {
                "Requires Prescription: " + requiresPrescription + "\n" +
                "Status: " + status + "\n";
     }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(medicineId.replaceAll("[^0-9]", ""));
+    }
 } 

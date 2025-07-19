@@ -1,14 +1,17 @@
 package control;
 
 import adt.ArrayBucketList;
+import adt.ArrayBucketList.LinkedList;
 import entity.Doctor;
 import entity.Schedule;
 import entity.DayOfWeek;
 import entity.Address;
 import dao.DoctorDao;
 import java.util.Date;
+import java.util.Iterator;
 
 /**
+ * @author: Ho Kang Kai
  * Doctor Management Control - Module 2
  * Manages doctor information, duty schedules and availability tracking
  */
@@ -21,6 +24,14 @@ public class DoctorManagementControl {
         this.doctorDao = new DoctorDao();
         this.activeDoctors = new ArrayBucketList<>();
         loadActiveDoctors();
+    }
+    
+    public void loadActiveDoctors() {
+        try {
+            activeDoctors = doctorDao.findAll();
+        } catch (Exception exception) {
+            System.err.println("Error loading active doctors: " + exception.getMessage());
+        }
     }
     
     // Doctor Registration Methods
@@ -39,7 +50,7 @@ public class DoctorManagementControl {
             // Save to database
             boolean saved = doctorDao.insert(doctor);
             if (saved) {
-                activeDoctors.add(doctor);
+                activeDoctors.add(doctor.hashCode(), doctor);
                 return true;
             }
             return false;
@@ -143,7 +154,7 @@ public class DoctorManagementControl {
             if (doctor != null) {
                 ArrayBucketList<Schedule> schedules = new ArrayBucketList<>();
                 for (int index = 1; index <= doctor.getNumberOfSchedule(); index++) {
-                    schedules.add(doctor.getSchedule(index));
+                    schedules.add(doctor.getSchedule(index).hashCode(), doctor.getSchedule(index));
                 }
                 return schedules;
             }
@@ -175,10 +186,11 @@ public class DoctorManagementControl {
     
     public ArrayBucketList<Doctor> getAvailableDoctors() {
         ArrayBucketList<Doctor> availableDoctors = new ArrayBucketList<>();
-        for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
-            Doctor doctor = activeDoctors.getEntry(index);
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
             if (doctor.isAvailable()) {
-                availableDoctors.add(doctor);
+                availableDoctors.add(doctor.hashCode(), doctor);
             }
         }
         return availableDoctors;
@@ -186,10 +198,11 @@ public class DoctorManagementControl {
     
     public ArrayBucketList<Doctor> getDoctorsBySpecialty(String specialty) {
         ArrayBucketList<Doctor> specialtyDoctors = new ArrayBucketList<>();
-        for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
-            Doctor doctor = activeDoctors.getEntry(index);
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
             if (doctor.getMedicalSpecialty().equalsIgnoreCase(specialty) && doctor.isAvailable()) {
-                specialtyDoctors.add(doctor);
+                specialtyDoctors.add(doctor.hashCode(), doctor);
             }
         }
         return specialtyDoctors;
@@ -207,10 +220,11 @@ public class DoctorManagementControl {
     
     public ArrayBucketList<Doctor> findDoctorsByName(String name) {
         ArrayBucketList<Doctor> results = new ArrayBucketList<>();
-        for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
-            Doctor doctor = activeDoctors.getEntry(index);
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
             if (doctor.getFullName().toLowerCase().contains(name.toLowerCase())) {
-                results.add(doctor);
+                results.add(doctor.hashCode(), doctor);
             }
         }
         return results;
@@ -232,15 +246,15 @@ public class DoctorManagementControl {
         report.append("Available Doctors: ").append(getAvailableDoctors().getNumberOfEntries()).append("\n");
         report.append("Report Generated: ").append(new Date()).append("\n\n");
         
-        for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
-            Doctor doctor = activeDoctors.getEntry(index);
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
             report.append("Doctor ID: ").append(doctor.getDoctorId()).append("\n");
             report.append("Name: ").append(doctor.getFullName()).append("\n");
             report.append("Specialty: ").append(doctor.getMedicalSpecialty()).append("\n");
             report.append("License: ").append(doctor.getLicenseNumber()).append("\n");
             report.append("Experience: ").append(doctor.getExpYears()).append(" years\n");
-            report.append("Availability: ").append(doctor.isAvailable() ? "Available" : "Unavailable").append("\n");
-            report.append("Schedules: ").append(doctor.getNumberOfSchedule()).append("\n");
+            report.append("Status: ").append(doctor.isAvailable() ? "Available" : "Unavailable").append("\n");
             report.append("----------------------------------------\n");
         }
         
@@ -250,21 +264,20 @@ public class DoctorManagementControl {
     public String generateScheduleReport() {
         StringBuilder report = new StringBuilder();
         report.append("=== DOCTOR SCHEDULE REPORT ===\n");
+        report.append("Total Active Doctors: ").append(getTotalActiveDoctors()).append("\n");
         report.append("Report Generated: ").append(new Date()).append("\n\n");
         
-        for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
-            Doctor doctor = activeDoctors.getEntry(index);
-            report.append("Doctor: ").append(doctor.getFullName()).append(" (").append(doctor.getDoctorId()).append(")\n");
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            report.append("Doctor: ").append(doctor.getFullName()).append("\n");
             report.append("Specialty: ").append(doctor.getMedicalSpecialty()).append("\n");
+            report.append("Schedules:\n");
             
-            if (doctor.getNumberOfSchedule() > 0) {
-                for (int scheduleIndex = 1; scheduleIndex <= doctor.getNumberOfSchedule(); scheduleIndex++) {
-                    Schedule schedule = doctor.getSchedule(scheduleIndex);
-                    report.append("  - ").append(schedule.getDayOfWeek()).append(": ")
-                          .append(schedule.getFromTime()).append(" - ").append(schedule.getToTime()).append("\n");
-                }
-            } else {
-                report.append("  No schedules assigned\n");
+            for (int index = 1; index <= doctor.getNumberOfSchedule(); index++) {
+                Schedule schedule = doctor.getSchedule(index);
+                report.append("  - ").append(schedule.getDayOfWeek()).append(": ")
+                      .append(schedule.getFromTime()).append(" - ").append(schedule.getToTime()).append("\n");
             }
             report.append("----------------------------------------\n");
         }
@@ -272,37 +285,25 @@ public class DoctorManagementControl {
         return report.toString();
     }
     
-    // Private Helper Methods
-    
-    private void loadActiveDoctors() {
-        try {
-            ArrayBucketList<Doctor> allDoctors = doctorDao.findAll();
-            for (int index = 1; index <= allDoctors.getNumberOfEntries(); index++) {
-                Doctor doctor = allDoctors.getEntry(index);
-                if (doctor.isAvailable()) {
-                    activeDoctors.add(doctor);
-                }
-            }
-        } catch (Exception exception) {
-            System.err.println("Error loading active doctors: " + exception.getMessage());
-        }
-    }
-    
     private void updateActiveDoctorsList(Doctor updatedDoctor) {
-        for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
-            Doctor doctor = activeDoctors.getEntry(index);
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
             if (doctor.getDoctorId().equals(updatedDoctor.getDoctorId())) {
-                activeDoctors.replace(index, updatedDoctor);
+                // Remove old entry and add updated one
+                activeDoctors.remove(doctor);
+                activeDoctors.add(updatedDoctor.hashCode(), updatedDoctor);
                 break;
             }
         }
     }
     
     private void removeFromActiveDoctors(Doctor doctor) {
-        for (int index = 1; index <= activeDoctors.getNumberOfEntries(); index++) {
-            Doctor currentDoctor = activeDoctors.getEntry(index);
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor currentDoctor = doctorIterator.next();
             if (currentDoctor.getDoctorId().equals(doctor.getDoctorId())) {
-                activeDoctors.remove(index);
+                activeDoctors.remove(currentDoctor);
                 break;
             }
         }

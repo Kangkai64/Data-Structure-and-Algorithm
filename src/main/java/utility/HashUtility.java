@@ -1,19 +1,13 @@
 package utility;
 
 public class HashUtility {
-    public static int hashEntity(String hashData, int bucketCount) {
+    public static int hashEntity(int hashCode, int bucketCount) {
         long hash = 0;
         final int prime = 31;
-        final int mod = 1000000007; // Large prime for modulo
+        final int mod = 1000000007;
 
-        // Normalize and combine all fields
-        String normalized = hashData.replaceAll("[^0-9]", "");
+        hash = (hash * prime + hashCode) % mod;
 
-        for (int index = 0; index < normalized.length(); index++) {
-            hash = (hash * prime + normalized.charAt(index)) % mod;
-        }
-
-        // Ensure the hash is within the bucket count
         while (hash >= bucketCount) {
             hash = hash % bucketCount;
         }

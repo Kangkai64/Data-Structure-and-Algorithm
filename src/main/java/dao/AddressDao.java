@@ -45,7 +45,7 @@ public class AddressDao extends DaoTemplate<Address> {
             while (resultSet.next()) {
                 Address address = mapResultSet(resultSet);
                 if (address != null) {
-                    addresses.add(address.getAddressId(), address);
+                    addresses.add(address.hashCode(), address);
                 }
             }
         } catch (SQLException e) {

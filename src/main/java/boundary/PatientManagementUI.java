@@ -93,21 +93,12 @@ public class PatientManagementUI {
         BloodType bloodType = getBloodTypeFromChoice(bloodTypeChoice);
         
         String allergiesInput = ConsoleUtils.getStringInput(scanner, "Enter allergies (comma-separated, or 'None'): ");
-        ArrayBucketList<String> allergies = new ArrayBucketList<>();
-        if (!allergiesInput.equalsIgnoreCase("None")) {
-            String[] allergyArray = allergiesInput.split(",");
-            for (String allergy : allergyArray) {
-                allergies.add(allergy.trim());
-            }
-        } else {
-            allergies.add("None");
-        }
+        String allergies = allergiesInput.equalsIgnoreCase("None") ? "None" : allergiesInput;
         
         String emergencyContact = ConsoleUtils.getStringInput(scanner, "Enter emergency contact (0XX-XXXXXXX): ");
         
         boolean success = patientControl.registerPatient(fullName, icNumber, email, phoneNumber, 
-                                                       address, wardNumber, bloodType, 
-                                                       allergies, emergencyContact);
+                                                       address, wardNumber, bloodType, allergiesInput, emergencyContact);
         
         if (success) {
             System.out.println("Patient registered successfully!");

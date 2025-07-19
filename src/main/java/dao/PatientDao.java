@@ -48,9 +48,9 @@ public class PatientDao extends DaoTemplate<Patient> {
             while (resultSet.next()) {
                 Patient patient = mapResultSet(resultSet);
                 if (patient != null) {
-                    patients.add(patient.getPatientId(), patient);
+                    patients.add(patient.hashCode(), patient);
                 }
-            }
+            }   
         } catch (SQLException e) {
             System.err.println("Error finding all patients: " + e.getMessage());
             throw e;
@@ -91,7 +91,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setDate(7, new Date(patient.getRegistrationDate().getTime()));
             preparedStatement.setString(8, patient.getWardNumber());
             preparedStatement.setString(9, patient.getBloodType().name());
-            preparedStatement.setString(10, allergiesToString(patient.getAllergies()));
+            preparedStatement.setString(10, patient.getAllergies());
             preparedStatement.setString(11, patient.getEmergencyContact());
             preparedStatement.setBoolean(12, patient.isActive());
 
@@ -120,7 +120,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setString(5, patient.getAddress().getAddressId());
             preparedStatement.setString(6, patient.getWardNumber());
             preparedStatement.setString(7, patient.getBloodType().name());
-            preparedStatement.setString(8, allergiesToString(patient.getAllergies()));
+            preparedStatement.setString(8, patient.getAllergies());
             preparedStatement.setString(9, patient.getEmergencyContact());
             preparedStatement.setBoolean(10, patient.isActive());
             preparedStatement.setString(11, patient.getPatientId());
@@ -158,7 +158,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             Address address = addressDao.findById(addressId);
 
             // Parse allergies from string to ArrayList
-            ArrayBucketList<String> allergies = parseAllergies(resultSet.getString("allergies"));
+            String allergies = parseAllergies(resultSet.getString("allergies"));
 
             // Create Patient object directly (it will call Person constructor via super())
             Patient patient = new Patient(
@@ -197,7 +197,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             if (i > 0) {
                 stringBuilder.append(",");
             }
-            stringBuilder.append(allergies.getEntry(i + 1)); // ArrayList is 1-indexed
+            stringBuilder.append(allergies.getEntryByHash(i + 1)); // ArrayList is 1-indexed
         }
         return stringBuilder.toString();
     }
@@ -205,14 +205,10 @@ public class PatientDao extends DaoTemplate<Patient> {
     /**
      * Helper method to parse comma-separated string to ArrayList of allergies
      */
-    private ArrayBucketList<String> parseAllergies(String allergiesString) {
-        ArrayBucketList<String> allergies = new ArrayBucketList<>();
+    private String parseAllergies(String allergiesString) {
         if (allergiesString != null && !allergiesString.trim().isEmpty()) {
-            String[] allergyArray = allergiesString.split(",");
-            for (String allergy : allergyArray) {
-                allergies.add(allergy.trim());
-            }
+            return allergiesString.split(",").toString();
         }
-        return allergies;
+        return "";
     }
 }

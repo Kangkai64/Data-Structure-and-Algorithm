@@ -57,7 +57,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             while (resultSet.next()) {
                 Consultation consultation = mapResultSet(resultSet);
                 if (consultation != null) {
-                    consultations.add(consultation.getConsultationId(), consultation);
+                    consultations.add(consultation.hashCode(), consultation);
                 }
             }
         } catch (SQLException e) {
@@ -246,7 +246,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             while (resultSet.next()) {
                 Consultation consultation = mapResultSet(resultSet);
                 if (consultation != null) {
-                    consultations.add(consultation);
+                    consultations.add(consultation.hashCode(), consultation);
                 }
             }
         } catch (SQLException e) {

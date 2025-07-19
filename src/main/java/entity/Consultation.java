@@ -75,4 +75,9 @@ public class Consultation {
                 ", consultationFee=" + consultationFee +
                 '}';
     }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(consultationId.replaceAll("[^0-9]", ""));
+    }
 } 

@@ -50,4 +50,9 @@ public class Appointment {
                 + ", Status = " + status + "\n"
                 + ", Remarks = " + remarks;
     }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(patientId.replaceAll("[^0-9]", ""));
+    }
 }

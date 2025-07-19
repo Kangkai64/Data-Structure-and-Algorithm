@@ -68,4 +68,9 @@ public class Address {
     public String getFormattedAddress() {
         return street + ", " + city + ", " + state + " " + zipCode + ", " + country;
     }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(addressId.replaceAll("[^0-9]", ""));
+    }
 }

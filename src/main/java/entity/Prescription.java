@@ -71,7 +71,7 @@ public class Prescription {
     // Business Logic Methods
     public boolean addPrescribedMedicine(PrescribedMedicine prescribedMedicine) {
         if (prescribedMedicine != null) {
-            boolean added = prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(), prescribedMedicine);
+            boolean added = prescribedMedicines.add(prescribedMedicine.hashCode(), prescribedMedicine);
             if (added) {
                 calculateTotalCost();
             }
@@ -85,7 +85,7 @@ public class Prescription {
         while (iterator.hasNext()) {
             PrescribedMedicine tempPrescribedMedicine = iterator.next();
             if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicine.getPrescribedMedicineId())) {
-                prescribedMedicines.remove(tempPrescribedMedicine);
+                prescribedMedicines.removeByHash(tempPrescribedMedicine.hashCode());
                 calculateTotalCost();
                 return true;
             }
@@ -94,7 +94,7 @@ public class Prescription {
     }
 
     public boolean updatePrescribedMedicine(PrescribedMedicine prescribedMedicine, Medicine medicine, int quantity, String dosage, String frequency, int duration) {
-        PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntryByHash(prescribedMedicine.getPrescribedMedicineId());
+        PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntryByHash(prescribedMedicine.hashCode());
         if (tempPrescribedMedicine != null) {
                 tempPrescribedMedicine.setMedicine(medicine);
                 tempPrescribedMedicine.setQuantity(quantity);
@@ -135,6 +135,11 @@ public class Prescription {
                "Prescription Date: " + ConsoleUtils.dateTimeFormatter(prescriptionDate) + "\n" +
                "Status: " + status + "\n" +
                "Total Cost: RM " + String.format("%.2f", totalCost) + "\n";
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(prescriptionId.replaceAll("[^0-9]", ""));
     }
 
     // Inner class for prescribed medicine details
@@ -198,6 +203,11 @@ public class Prescription {
                    "Dosage: " + dosage + "\n" +
                    "Frequency: " + frequency + "\n" +
                    "Total Cost: RM " + String.format("%.2f", getTotalCost()) + "\n";
+        }
+
+        @Override
+        public int hashCode() {
+            return Integer.parseInt(prescribedMedicineId.replaceAll("[^0-9]", ""));
         }
     }
 } 

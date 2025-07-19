@@ -60,7 +60,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             while (resultSet.next()) {
                 MedicalTreatment treatment = mapResultSet(resultSet);
                 if (treatment != null) {
-                    treatments.add(treatment.getTreatmentId(), treatment);
+                    treatments.add(treatment.hashCode(), treatment);
                 }
             }
         } catch (SQLException e) {

@@ -51,7 +51,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             while (resultSet.next()) {
                 Medicine medicine = mapResultSet(resultSet);
                 if (medicine != null) {
-                    medicines.add(medicine.getMedicineId(), medicine);
+                    medicines.add(medicine.hashCode(), medicine);
                 }
             }
         } catch (SQLException e) {

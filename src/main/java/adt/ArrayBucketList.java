@@ -8,12 +8,11 @@ import utility.HashUtility;
  * ArrayBucketList - A custom ADT that combines ArrayList and LinkedList functionality
  * The main array stores LinkedList buckets, and items are added based on hash index
  */
-public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Iterable<T> {
+public class ArrayBucketList<T> implements Serializable, Iterable<T> {
     public LinkedList[] buckets;
     private int numberOfEntries;
     private int bucketCount;
-    private String firstHashString;
-    private String lastHashString;
+    private int firstHashCode;
     private static final int DEFAULT_BUCKET_COUNT = 10;
     private static final double LOAD_FACTOR_THRESHOLD = 0.75;
 
@@ -41,23 +40,11 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
 
     /**
      * Add an entry to the bucket list based on hash index
-     * We need an hashString to add an entry to the bucket list
-     * This method is not used in the implementation
-     * @param newEntry the entry to add
-     * @return true if successfully added
-     */
-    @Override
-    public boolean add(T newEntry) {
-        return false;
-    }
-
-    /**
-     * Add an entry to the bucket list based on hash index
      * @param hashString hash string to add entry for
      * @param newEntry entry to add
      * @return true if successfully added
      */
-    public boolean add(String hashString, T newEntry) {
+    public boolean add(int hashCode, T newEntry) {
         if (newEntry == null) {
             return false;
         }
@@ -68,35 +55,15 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
         }
 
         // Generate hash index for the entry
-        int bucketIndex = HashUtility.hashEntity(hashString, bucketCount);
+        int bucketIndex = HashUtility.hashEntity(hashCode, bucketCount);
         
         // Add to the appropriate bucket
         buckets[bucketIndex].add(newEntry);
         numberOfEntries++;
         if (numberOfEntries == 1) {
-            firstHashString = hashString;
-        } else {
-            lastHashString = hashString;
+            firstHashCode = hashCode;
         }
         return true;
-    }
-
-    /**
-     * Method was here because of the interface, but it is not used in the implementation
-     * The newPosition is ignored
-     */
-    @Override
-    public boolean add(int newPosition, T newEntry) {
-        return add(newEntry);
-    }
-
-    /**
-     * Method was here because of the interface, but it is not used in the implementation
-     * The givenPosition is ignored
-     */
-    @Override
-    public T remove(int givenPosition) {
-        return null;
     }
 
     /**
@@ -112,8 +79,6 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
                     bucket.remove(entry);
                     numberOfEntries--;
                     return entry;
-                } else {
-                    return null;
                 }
             }
         }
@@ -125,17 +90,15 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
      * @param hashString hash string to remove
      * @return removed entry or null if not found
      */
-    public T removeByHash(String hashString) {
-        int bucketIndex = HashUtility.hashEntity(hashString, bucketCount);
-            LinkedList bucket = buckets[bucketIndex];
-            for (T bucketEntry : bucket) {
-                if (bucketEntry.equals(hashString)) {
-                    bucket.remove(bucketEntry);
-                    numberOfEntries--;
-                    return bucketEntry;
-                } else {
-                    return null;
-                }
+    public T removeByHash(int hashCode) {
+        int bucketIndex = HashUtility.hashEntity(hashCode, bucketCount);
+        LinkedList bucket = buckets[bucketIndex];
+        for (T bucketEntry : bucket) {
+            if (bucketEntry.hashCode() == hashCode) {
+                bucket.remove(bucketEntry);
+                numberOfEntries--;
+                return bucketEntry;
+            }
         }
         return null;
     }
@@ -143,24 +106,11 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
     /**
      * Clear all entries from the bucket list
      */
-    @Override
     public void clear() {
         for (int index = 0; index < bucketCount; index++) {
             buckets[index].clear();
         }
         numberOfEntries = 0;
-    }
-
-    /**
-     * Replace entry at given position
-     * Linked List cannot be accessed by index, so it is not possible to replace an entry at a given position
-     * givenPosition is ignored
-     * @param newEntry new entry
-     * @return true if successfully replaced
-     */
-    @Override
-    public boolean replace(int givenPosition, T newEntry) {
-        return false;
     }
 
     /**
@@ -177,8 +127,6 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
                     bucket.remove(bucketEntry);
                     bucket.add(newEntry);
                     return true;
-                } else {
-                    return false;
                 }
             }
         }
@@ -186,31 +134,18 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
     }
 
     /**
-     * Get entry at given position
-     * Linked List cannot be accessed by index, so it is not possible to get an entry at a given position
-     * givenPosition is ignored
-     * @return entry at position or null if not found
-     */
-    @Override
-    public T getEntry(int givenPosition) {
-        return null;
-    }
-
-    /**
      * Get entry by hash string
      * @param hashString hash string to get entry for
      * @return entry or null if not found
      */
-    public T getEntryByHash(String hashString) {
-        int bucketIndex = HashUtility.hashEntity(hashString, bucketCount);
+    public T getEntryByHash(int hashCode) {
+        int bucketIndex = HashUtility.hashEntity(hashCode, bucketCount);
         LinkedList bucket = buckets[bucketIndex];
         Iterator<T> iterator = bucket.iterator();
         while (iterator.hasNext()) {
             T bucketEntry = iterator.next();
-            if (bucketEntry.equals(hashString)) {
+            if (bucketEntry.hashCode() == hashCode) {
                 return bucketEntry;
-            } else {
-                return null;
             }
         }
         return null;
@@ -221,7 +156,7 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
      * @return first entry or null if not found
      */
     public T getFirstEntry() {
-        return getEntryByHash(firstHashString);
+        return getEntryByHash(firstHashCode);
     }
     
     /**
@@ -229,15 +164,12 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
      * @param anEntry entry to search for
      * @return true if found
      */
-    @Override
     public boolean contains(T anEntry) {
         for (int bucketIndex = 0; bucketIndex < bucketCount; bucketIndex++) {
             LinkedList bucket = buckets[bucketIndex];
             for (T bucketEntry : bucket) {
                 if (bucketEntry.equals(anEntry)) {
                     return true;
-                } else {
-                    return false;
                 }
             }
         }
@@ -248,7 +180,6 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
      * Get total number of entries
      * @return number of entries
      */
-    @Override
     public int getNumberOfEntries() {
         return numberOfEntries;
     }
@@ -257,7 +188,6 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
      * Check if bucket list is empty
      * @return true if empty
      */
-    @Override
     public boolean isEmpty() {
         return numberOfEntries == 0;
     }
@@ -266,7 +196,6 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
      * Check if bucket list is full (always false for dynamic structure)
      * @return false
      */
-    @Override
     public boolean isFull() {
         return false;
     }
@@ -304,31 +233,11 @@ public class ArrayBucketList<T> implements ListInterface<T>, Serializable, Itera
         numberOfEntries = 0;
         for (LinkedList oldBucket : oldBuckets) {
             for (T entry : oldBucket) {
-                add(entry);
+                add(entry.hashCode(), entry);
             }
         }
         
         bucketCount = newBucketCount;
-    }
-
-    /**
-     * Create room for insertion at given position
-     * @param newPosition position to make room for
-     */
-    private void makeRoom(int newPosition) {
-        // This method is not typically used in bucket list implementation
-        // but is required by the interface
-        // Implementation would involve complex reorganization
-    }
-
-    /**
-     * Remove gap at given position
-     * @param givenPosition position to remove gap at
-     */
-    private void removeGap(int givenPosition) {
-        // This method is not typically used in bucket list implementation
-        // but is required by the interface
-        // Implementation would involve complex reorganization
     }
 
     /**

@@ -95,4 +95,9 @@ public class MedicalTreatment {
                 ", treatmentCost=" + treatmentCost +
                 '}';
     }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(treatmentId.replaceAll("[^0-9]", ""));
+    }
 } 

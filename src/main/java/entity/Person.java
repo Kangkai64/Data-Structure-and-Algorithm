@@ -125,6 +125,6 @@ public abstract class Person {
 
     @Override
     public int hashCode() {
-        return Objects.hash(ICNumber);
+        return Integer.parseInt(ICNumber.replaceAll("[^0-9]", ""));
     }
 }

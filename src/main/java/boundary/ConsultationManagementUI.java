@@ -153,6 +153,6 @@ public class ConsultationManagementUI {
     private void generateConsultationReports() {
         System.out.println("\n=== CONSULTATION REPORTS ===");
         System.out.println(consultationControl.generateConsultationReport());
-        System.out.println(consultationControl.generateScheduledConsultationsReport());
+        System.out.println(consultationControl.generateConsultationHistoryReport());
     }
 } 

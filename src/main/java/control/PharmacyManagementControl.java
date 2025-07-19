@@ -54,7 +54,7 @@ public class PharmacyManagementControl {
             while (prescriptionIterator.hasNext()) {
                 Prescription prescription = prescriptionIterator.next();
                 if (prescription.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
-                    dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
+                    dispensedPrescriptions.add(prescription.hashCode(), prescription);
                 }
             }
         } catch (Exception exception) {
@@ -80,7 +80,7 @@ public class PharmacyManagementControl {
             medicineDao.insert(medicine);
             
             // Add to medicines list
-            medicines.add(medicineId, medicine);
+            medicines.add(medicine.hashCode(), medicine);
             
             return true;
         } catch (Exception exception) {
@@ -159,7 +159,7 @@ public class PharmacyManagementControl {
                                                        consultation, new Date(), instructions, expiryDate);
             
             // Add to prescriptions list
-            prescriptions.add(prescriptionId, prescription);
+            prescriptions.add(prescription.hashCode(), prescription);
             prescriptionDao.insert(prescription);
             
             return true;
@@ -277,7 +277,7 @@ public class PharmacyManagementControl {
                 prescriptionDao.update(prescription);
                 
                 // Move to dispensed prescriptions
-                dispensedPrescriptions.add(prescriptionId, prescription);
+                dispensedPrescriptions.add(prescription.hashCode(), prescription);
                 
                 return true;
             }
@@ -290,7 +290,7 @@ public class PharmacyManagementControl {
     
     // Search and Retrieval Methods
     public Medicine findMedicineById(String medicineId) {
-        return medicines.getEntryByHash(medicineId);
+        return medicines.getEntryByHash(Integer.parseInt(medicineId.replaceAll("[^0-9]", "")));
     }
     
     public Medicine findMedicineByName(String medicineName) {
@@ -329,7 +329,7 @@ public class PharmacyManagementControl {
             while (iterator.hasNext()) {
                 Medicine medicine = iterator.next();
                 if (medicine.getManufacturer().equalsIgnoreCase(manufacturer)) {
-                    manufacturerMedicines.add(medicine.getMedicineId(), medicine);
+                    manufacturerMedicines.add(medicine.hashCode(), medicine);
                 }
             }
         }
@@ -358,7 +358,7 @@ public class PharmacyManagementControl {
             while (iterator.hasNext()) {
                 Medicine medicine = iterator.next();
             if (medicine.isLowStock()) {
-                lowStockMedicines.add(medicine.getMedicineId(), medicine);
+                lowStockMedicines.add(medicine.hashCode(), medicine);
                 }
             }
         }
@@ -373,7 +373,7 @@ public class PharmacyManagementControl {
             while (iterator.hasNext()) {
                 Medicine medicine = iterator.next();
                 if (medicine.isExpired()) {
-                    expiredMedicines.add(medicine.getMedicineId(), medicine);
+                    expiredMedicines.add(medicine.hashCode(), medicine);
                 }
             }
         }
@@ -381,7 +381,7 @@ public class PharmacyManagementControl {
     }
     
     public Prescription findPrescriptionById(String prescriptionId) {
-        return prescriptions.getEntryByHash(prescriptionId);
+        return prescriptions.getEntryByHash(Integer.parseInt(prescriptionId.replaceAll("[^0-9]", "")));
     }
     
     public ArrayBucketList<Prescription> findPrescriptionsByPatient(String patientId) {
@@ -392,7 +392,7 @@ public class PharmacyManagementControl {
             while (iterator.hasNext()) {
                 Prescription prescription = iterator.next();
                 if (prescription.getPatient().getPatientId().equals(patientId)) {
-                    patientPrescriptions.add(prescription.getPrescriptionId(), prescription);
+                    patientPrescriptions.add(prescription.hashCode(), prescription);
                 }
             }
         }
@@ -407,7 +407,7 @@ public class PharmacyManagementControl {
             while (iterator.hasNext()) {
                 Prescription prescription = iterator.next();
                 if (prescription.getDoctor().getDoctorId().equals(doctorId)) {
-                    doctorPrescriptions.add(prescription.getPrescriptionId(), prescription);
+                    doctorPrescriptions.add(prescription.hashCode(), prescription);
                 }
             }
         }
@@ -422,7 +422,7 @@ public class PharmacyManagementControl {
             while (iterator.hasNext()) {
                 Prescription prescription = iterator.next();
             if (prescription.getStatus().equals(Prescription.PrescriptionStatus.values()[statusChoice - 1])) {
-                statusPrescriptions.add(prescription.getPrescriptionId(), prescription);
+                statusPrescriptions.add(prescription.hashCode(), prescription);
                 }
             }
         }
@@ -444,11 +444,11 @@ public class PharmacyManagementControl {
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription.getPrescriptionDate().after(start) && prescription.getPrescriptionDate().before(end)) {
-                dateRangePrescriptions.add(prescription.getPrescriptionId(), prescription);
+                    dateRangePrescriptions.add(prescription.hashCode(), prescription);
+                }
             }
+            return dateRangePrescriptions;
         }
-        return dateRangePrescriptions;
-    }
 
     public ArrayBucketList<Prescription> getActivePrescriptions() {
         ArrayBucketList<Prescription> activePrescriptions = new ArrayBucketList<>();
@@ -456,7 +456,7 @@ public class PharmacyManagementControl {
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription.getStatus() == Prescription.PrescriptionStatus.ACTIVE) {
-                activePrescriptions.add(prescription.getPrescriptionId(), prescription);
+                activePrescriptions.add(prescription.hashCode(), prescription);
             }
         }
         return activePrescriptions;

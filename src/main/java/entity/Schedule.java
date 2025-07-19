@@ -48,4 +48,9 @@ public class Schedule {
                 + ", To time = " + toTime + "\n"
                 + ", Status = " + isAvailable;
     }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(scheduleId.replaceAll("[^0-9]", ""));
+    }
 }

@@ -53,7 +53,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
             while (resultSet.next()) {
                 Doctor doctor = mapResultSet(resultSet);
                 if (doctor != null) {
-                    doctors.add(doctor.getDoctorId(), doctor);
+                    doctors.add(doctor.hashCode(), doctor);
                 }
             }
         } catch (SQLException e) {

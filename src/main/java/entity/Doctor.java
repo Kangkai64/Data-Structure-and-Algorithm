@@ -49,15 +49,15 @@ public class Doctor extends Person {
 
     // Patient Management
     public boolean addPatient(Patient patient) {
-        return patients.add(patient);
+        return patients.add(patient.hashCode(), patient);
     }
 
     public Patient removePatient(int position) {
-        return patients.remove(position);
+        return patients.removeByHash(position);
     }
 
     public Patient getPatient(int position) {
-        return patients.getEntry(position);
+        return patients.getEntryByHash(position);
     }
 
     public boolean isPatientExist(Patient patient) {
@@ -70,19 +70,19 @@ public class Doctor extends Person {
 
     // Appointment Management
     public boolean addAppointment(Appointment appointment) {
-        return appointments.add(appointment);
+        return appointments.add(appointment.hashCode(), appointment);
     }
 
     public boolean addAppointment(int position, Appointment appointment) {
-        return appointments.add(appointment);
+        return appointments.add(appointment.hashCode(), appointment);
     }
 
     public Appointment removeAppointment(int position) {
-        return appointments.remove(position);
+        return appointments.removeByHash(position);
     }
 
     public Appointment getAppointment(int position) {
-        return appointments.getEntry(position);
+        return appointments.getEntryByHash(position);
     }
 
     public boolean isAppointmentExist(Appointment appointment) {
@@ -95,15 +95,15 @@ public class Doctor extends Person {
 
     // Schedule Management
     public boolean addSchedule(Schedule schedule) {
-        return schedules.add(schedule);
+        return schedules.add(schedule.hashCode(), schedule);
     }
 
     public Schedule removeSchedule(int position) {
-        return schedules.remove(position);
+        return schedules.removeByHash(position);
     }
 
     public Schedule getSchedule(int position) {
-        return schedules.getEntry(position);
+        return schedules.getEntryByHash(position);
     }
 
     public boolean isScheduleExist(Schedule schedule) {
@@ -122,5 +122,10 @@ public class Doctor extends Person {
                 + ", License Number = " + licenseNumber + "\n"
                 + ", Experience Year(s) = " + expYears + "\n"
                 + ", Availability = " + isAvailable;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(doctorId.replaceAll("[^0-9]", ""));
     }
 }

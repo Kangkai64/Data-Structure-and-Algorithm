@@ -1,7 +1,5 @@
 package entity;
 
-import adt.ArrayBucketList;
-
 import java.util.Date;
 
 import static utility.PatternChecker.PHONE_PATTERN;
@@ -10,7 +8,7 @@ public class Patient extends Person {
     private String patientId;
     private String wardNumber;
     private BloodType bloodType;
-    private ArrayBucketList<String> allergies;
+    private String allergies;
     private Doctor dischargingDoctor;
     private Prescription currentPrescription;
     private boolean isActive;
@@ -18,7 +16,7 @@ public class Patient extends Person {
 
     public Patient(String fullName, String ICNumber, String email, String phoneNumber,
                    Address address, Date registrationDate, String patientId, String wardNumber,
-                   BloodType bloodType, ArrayBucketList<String> allergies, String emergencyContact) {
+                   BloodType bloodType, String allergies, String emergencyContact) {
         super(fullName, ICNumber, email, phoneNumber, address, registrationDate);
         this.patientId = patientId;
         this.wardNumber = wardNumber;
@@ -52,11 +50,11 @@ public class Patient extends Person {
         this.bloodType = bloodType;
     }
 
-    public ArrayBucketList<String> getAllergies() {
+    public String getAllergies() {
         return allergies;
     }
 
-    public void setAllergies(ArrayBucketList<String> allergies) {
+    public void setAllergies(String allergies) {
         this.allergies = allergies;
     }
 
@@ -96,5 +94,10 @@ public class Patient extends Person {
 
     public void setCurrentPrescription(Prescription currentPrescription) {
         this.currentPrescription = currentPrescription;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(patientId.replaceAll("[^0-9]", ""));
     }
 }

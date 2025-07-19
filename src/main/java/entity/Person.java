@@ -1,7 +1,6 @@
 package entity;
 
 import java.util.Date;
-import java.util.Objects;
 import static utility.PatternChecker.*;
 
 /**

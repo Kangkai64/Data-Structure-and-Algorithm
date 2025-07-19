@@ -533,18 +533,6 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
         }
 
         /**
-         * Constructor with data and links
-         * @param data data to store
-         * @param next next node
-         * @param previous previous node
-         */
-        public Node(T data, Node next, Node previous) {
-            this.data = data;
-            this.next = next;
-            this.previous = previous;
-        }
-
-        /**
          * Get data from node
          * @return data
          */

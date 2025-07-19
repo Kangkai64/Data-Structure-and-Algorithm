@@ -39,7 +39,7 @@ public class Doctor extends Person {
     public void setMedicalSpecialty(String medicalSpecialty) { this.medicalSpecialty = medicalSpecialty; }
 
     public String getLicenseNumber() { return  licenseNumber; }
-    public void setLicenseNumber() { this.licenseNumber = licenseNumber; }
+    public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
 
     public int getExpYears() { return  expYears; }
     public void setExpYears(int expYears) { this.expYears = expYears; }

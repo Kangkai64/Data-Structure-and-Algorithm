@@ -91,7 +91,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setDate(7, new Date(patient.getRegistrationDate().getTime()));
             preparedStatement.setString(8, patient.getWardNumber());
             preparedStatement.setString(9, patient.getBloodType().name());
-            preparedStatement.setString(10, patient.getAllergies());
+            preparedStatement.setString(10, allergiesToString(patient.getAllergies()));
             preparedStatement.setString(11, patient.getEmergencyContact());
             preparedStatement.setBoolean(12, patient.isActive());
 
@@ -120,7 +120,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setString(5, patient.getAddress().getAddressId());
             preparedStatement.setString(6, patient.getWardNumber());
             preparedStatement.setString(7, patient.getBloodType().name());
-            preparedStatement.setString(8, patient.getAllergies());
+            preparedStatement.setString(8, allergiesToString(patient.getAllergies()));
             preparedStatement.setString(9, patient.getEmergencyContact());
             preparedStatement.setBoolean(10, patient.isActive());
             preparedStatement.setString(11, patient.getPatientId());
@@ -187,17 +187,17 @@ public class PatientDao extends DaoTemplate<Patient> {
     /**
      * Helper method to convert ArrayList of allergies to comma-separated string
      */
-    private String allergiesToString(ArrayBucketList<String> allergies) {
+    private String allergiesToString(String allergies) {
         if (allergies == null || allergies.isEmpty()) {
             return "";
         }
 
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < allergies.getNumberOfEntries(); i++) {
+        for (int i = 0; i < allergies.split(",").length; i++) {
             if (i > 0) {
                 stringBuilder.append(",");
             }
-            stringBuilder.append(allergies.getEntryByHash(i + 1)); // ArrayList is 1-indexed
+            stringBuilder.append(allergies.split(",")[i]);
         }
         return stringBuilder.toString();
     }

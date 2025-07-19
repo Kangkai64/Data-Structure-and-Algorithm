@@ -204,7 +204,7 @@ public class PharmacyManagementUI {
         int quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", 0, 10000);
         int minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", 0, 1000);
         double price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", 0.0, 10000.0);
-        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY hh:mm:ss): ");
+        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ");
         System.out.println();
 
         ConsoleUtils.printHeader("Medicine Overview");
@@ -217,7 +217,7 @@ public class PharmacyManagementUI {
         System.out.println("Strength: " + strength);
         System.out.println("Quantity: " + quantity);
         System.out.println("Minimum Stock Level: " + minStock);
-        System.out.println("Unit Price: " + price);
+        System.out.println("Unit Price: " + String.format("%.2f", price));
         System.out.println("Expiry Date: " + ConsoleUtils.dateTimeFormatter(expiryDate));
 
         String confirm = ConsoleUtils.getStringInput(scanner, "Are you sure you want to update this medicine? (Y/N): ");

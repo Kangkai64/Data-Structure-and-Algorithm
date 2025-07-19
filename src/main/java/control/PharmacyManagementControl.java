@@ -1,7 +1,6 @@
 package control;
 
 import adt.ArrayBucketList;
-import adt.ArrayBucketList.LinkedList;
 import entity.Medicine;
 import entity.Prescription;
 import entity.Patient;
@@ -19,12 +18,13 @@ import java.util.Iterator;
 
 /**
  * @author: Ho Kang Kai
- * Pharmacy Management Control - Module 5
- * Manages medicine dispensing after doctor consultation and maintain medicine stock control
+ *          Pharmacy Management Control - Module 5
+ *          Manages medicine dispensing after doctor consultation and maintain
+ *          medicine stock control
  */
 
 public class PharmacyManagementControl {
-    
+
     private ArrayBucketList<Medicine> medicines;
     private ArrayBucketList<Prescription> prescriptions;
     private ArrayBucketList<Prescription> dispensedPrescriptions;
@@ -50,48 +50,45 @@ public class PharmacyManagementControl {
         try {
             medicines = medicineDao.findAll();
             prescriptions = prescriptionDao.findAll();
-            for (int index = 0; index < prescriptions.getBucketCount(); index++) {
-                LinkedList bucket = prescriptions.buckets[index];
-                Iterator<Prescription> prescriptionNodeIterator = bucket.iterator();
-                while (prescriptionNodeIterator.hasNext()) {
-                    Prescription prescriptionNode = prescriptionNodeIterator.next();
-                    if (prescriptionNode.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
-                        dispensedPrescriptions.add(prescriptionNode.hashCode(), prescriptionNode);
-                    }
+            Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
+            while (prescriptionIterator.hasNext()) {
+                Prescription prescription = prescriptionIterator.next();
+                if (prescription.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
+                    dispensedPrescriptions.add(prescription.hashCode(), prescription);
                 }
             }
         } catch (Exception exception) {
             System.err.println("Error loading medicine data: " + exception.getMessage());
         }
     }
-    
+
     // Medicine Management Methods
     public boolean addMedicine(String medicineName, String genericName, String manufacturer,
-                             String description, String dosageForm, String strength,
-                             int quantityInStock, int minimumStockLevel, double unitPrice,
-                             Date expiryDate, String storageLocation, boolean requiresPrescription) {
+            String description, String dosageForm, String strength,
+            int quantityInStock, int minimumStockLevel, double unitPrice,
+            Date expiryDate, String storageLocation, boolean requiresPrescription) {
         try {
             // Get new medicine ID from database
             String medicineId = medicineDao.getNewId();
-            
+
             // Create new medicine
             Medicine medicine = new Medicine(medicineId, medicineName, genericName, manufacturer,
-                                           description, dosageForm, strength, quantityInStock,
-                                           minimumStockLevel, unitPrice, expiryDate, storageLocation,
-                                           requiresPrescription);
+                    description, dosageForm, strength, quantityInStock,
+                    minimumStockLevel, unitPrice, expiryDate, storageLocation,
+                    requiresPrescription);
 
             medicineDao.insert(medicine);
-            
+
             // Add to medicines list
             medicines.add(medicine.hashCode(), medicine);
-            
+
             return true;
         } catch (Exception exception) {
             System.err.println("Error adding medicine: " + exception.getMessage());
             return false;
         }
     }
-    
+
     public boolean updateMedicineStock(String medicineId, int quantity) {
         try {
             Medicine medicine = findMedicineById(medicineId);
@@ -105,7 +102,7 @@ public class PharmacyManagementControl {
             return false;
         }
     }
-    
+
     public boolean updateMedicinePrice(String medicineId, double newPrice) {
         try {
             Medicine medicine = findMedicineById(medicineId);
@@ -130,7 +127,7 @@ public class PharmacyManagementControl {
             return false;
         }
     }
-    
+
     public boolean discontinueMedicine(String medicineId) {
         try {
             Medicine medicine = findMedicineById(medicineId);
@@ -145,10 +142,10 @@ public class PharmacyManagementControl {
             return false;
         }
     }
-    
+
     // Prescription Management Methods
     public boolean createPrescription(String patientId, String doctorId, String consultationId,
-                                    String instructions, Date expiryDate) {
+            String instructions, Date expiryDate) {
         try {
             // Get new prescription ID from database
             String prescriptionId = prescriptionDao.getNewId();
@@ -158,33 +155,33 @@ public class PharmacyManagementControl {
             Consultation consultation = consultationDao.findById(consultationId);
 
             // Create new prescription
-            Prescription prescription = new Prescription(prescriptionId, patient, doctor, 
-                                                       consultation, new Date(), instructions, expiryDate);
-            
+            Prescription prescription = new Prescription(prescriptionId, patient, doctor,
+                    consultation, new Date(), instructions, expiryDate);
+
             // Add to prescriptions list
             prescriptions.add(prescription.hashCode(), prescription);
             prescriptionDao.insert(prescription);
-            
+
             return true;
         } catch (Exception exception) {
             System.err.println("Error creating prescription: " + exception.getMessage());
             return false;
         }
     }
-    
+
     public boolean addMedicineToPrescription(String prescriptionId, String medicineId,
-                                           int quantity, String dosage, String frequency, 
-                                           int duration) {
+            int quantity, String dosage, String frequency,
+            int duration) {
         try {
             Prescription prescription = findPrescriptionById(prescriptionId);
             Medicine medicine = findMedicineById(medicineId);
 
             if (prescription != null && medicine != null) {
                 String prescribedMedicineId = prescriptionDao.getNewId();
-                Prescription.PrescribedMedicine prescribedMedicine = 
-                    new Prescription.PrescribedMedicine(prescribedMedicineId, prescriptionId, medicine, quantity, dosage, 
-                                                       frequency, duration, medicine.getUnitPrice());
-                
+                Prescription.PrescribedMedicine prescribedMedicine = new Prescription.PrescribedMedicine(
+                        prescribedMedicineId, prescriptionId, medicine, quantity, dosage,
+                        frequency, duration, medicine.getUnitPrice());
+
                 boolean added = prescription.addPrescribedMedicine(prescribedMedicine);
                 prescriptionDao.insertPrescribedMedicine(prescribedMedicine);
                 return added;
@@ -199,7 +196,8 @@ public class PharmacyManagementControl {
     public boolean removeMedicineFromPrescription(String prescriptionId, String prescribedMedicineId) {
         try {
             Prescription prescription = findPrescriptionById(prescriptionId);
-            ArrayBucketList<Prescription.PrescribedMedicine> prescribedMedicines = prescription.getPrescribedMedicines();
+            ArrayBucketList<Prescription.PrescribedMedicine> prescribedMedicines = prescription
+                    .getPrescribedMedicines();
             Prescription.PrescribedMedicine prescribedMedicine = null;
             Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescribedMedicines.iterator();
             while (prescribedMedicineIterator.hasNext()) {
@@ -221,10 +219,12 @@ public class PharmacyManagementControl {
         }
     }
 
-    public boolean updateMedicineInPrescription(String prescriptionId, String prescribedMedicineId, String medicineId, int quantity, String dosage, String frequency, int duration) {
+    public boolean updateMedicineInPrescription(String prescriptionId, String prescribedMedicineId, String medicineId,
+            int quantity, String dosage, String frequency, int duration) {
         try {
             Prescription prescription = findPrescriptionById(prescriptionId);
-            ArrayBucketList<Prescription.PrescribedMedicine> prescribedMedicines = prescription.getPrescribedMedicines();
+            ArrayBucketList<Prescription.PrescribedMedicine> prescribedMedicines = prescription
+                    .getPrescribedMedicines();
             Prescription.PrescribedMedicine prescribedMedicine = null;
             Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescribedMedicines.iterator();
             while (prescribedMedicineIterator.hasNext()) {
@@ -237,7 +237,8 @@ public class PharmacyManagementControl {
             if (prescription != null && prescribedMedicine != null) {
                 Medicine medicine = findMedicineById(medicineId);
                 if (medicine != null) {
-                    boolean updated = prescription.updatePrescribedMedicine(prescribedMedicine, medicine, quantity, dosage, frequency, duration);
+                    boolean updated = prescription.updatePrescribedMedicine(prescribedMedicine, medicine, quantity,
+                            dosage, frequency, duration);
                     prescriptionDao.updatePrescribedMedicine(prescription, prescribedMedicine);
                     return updated;
                 }
@@ -255,33 +256,36 @@ public class PharmacyManagementControl {
             Prescription prescription = findPrescriptionById(prescriptionId);
             if (prescription != null && prescription.canBeDispensed()) {
                 // Check if all medicines are available
-                Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescription.getPrescribedMedicines().iterator();
+                Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescription
+                        .getPrescribedMedicines().iterator();
                 while (prescribedMedicineIterator.hasNext()) {
                     Prescription.PrescribedMedicine prescribedMedicine = prescribedMedicineIterator.next();
                     Medicine medicine = prescribedMedicine.getMedicine();
-                    
+
                     if (medicine.getQuantityInStock() < prescribedMedicine.getQuantity()) {
                         System.err.println("Insufficient stock for medicine: " + medicine.getMedicineName());
                         return false;
                     }
                 }
-                
+
                 // Dispense medicines
-                Iterator<Prescription.PrescribedMedicine> dispenseMedicineIterator = prescription.getPrescribedMedicines().iterator();
+                Iterator<Prescription.PrescribedMedicine> dispenseMedicineIterator = prescription
+                        .getPrescribedMedicines().iterator();
                 while (dispenseMedicineIterator.hasNext()) {
                     Prescription.PrescribedMedicine prescribedMedicine = dispenseMedicineIterator.next();
                     Medicine medicine = prescribedMedicine.getMedicine();
-                    
-                    medicineDao.updateStock(medicine.getMedicineId(), medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
+
+                    medicineDao.updateStock(medicine.getMedicineId(),
+                            medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
                 }
-                
+
                 // Update prescription status
                 prescription.setStatus(Prescription.PrescriptionStatus.DISPENSED);
                 prescriptionDao.update(prescription);
-                
+
                 // Move to dispensed prescriptions
                 dispensedPrescriptions.add(prescription.hashCode(), prescription);
-                
+
                 return true;
             }
             return false;
@@ -290,128 +294,105 @@ public class PharmacyManagementControl {
             return false;
         }
     }
-    
+
     // Search and Retrieval Methods
     public Medicine findMedicineById(String medicineId) {
         return medicines.getEntryByHash(Integer.parseInt(medicineId.replaceAll("[^0-9]", "")));
     }
-    
+
     public Medicine findMedicineByName(String medicineName) {
-        for (int index = 1; index <= medicines.getBucketCount(); index++) {
-            LinkedList bucket = medicines.buckets[index];
-            Iterator<Medicine> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Medicine medicine = iterator.next();
-                if (medicine.getMedicineName().equalsIgnoreCase(medicineName)) {
-                    return medicine;
-                }
+        Iterator<Medicine> medicineIterator = medicines.iterator();
+        while (medicineIterator.hasNext()) {
+            Medicine medicine = medicineIterator.next();
+            if (medicine.getMedicineName().equalsIgnoreCase(medicineName)) {
+                return medicine;
             }
         }
         return null;
     }
 
     public Medicine findMedicineByGenericName(String genericName) {
-        for (int index = 1; index <= medicines.getBucketCount(); index++) {
-            LinkedList bucket = medicines.buckets[index];
-            Iterator<Medicine> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Medicine medicine = iterator.next();
-                if (medicine.getGenericName().equalsIgnoreCase(genericName)) {
-                    return medicine;
-                }
+        Iterator<Medicine> medicineIterator = medicines.iterator();
+        while (medicineIterator.hasNext()) {
+            Medicine medicine = medicineIterator.next();
+            if (medicine.getGenericName().equalsIgnoreCase(genericName)) {
+                return medicine;
             }
         }
         return null;
     }
-    
+
     public ArrayBucketList<Medicine> findMedicineByManufacturer(String manufacturer) {
         ArrayBucketList<Medicine> manufacturerMedicines = new ArrayBucketList<>();
-        for (int index = 1; index <= medicines.getBucketCount(); index++) {
-            LinkedList bucket = medicines.buckets[index];
-            Iterator<Medicine> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Medicine medicine = iterator.next();
-                if (medicine.getManufacturer().equalsIgnoreCase(manufacturer)) {
-                    manufacturerMedicines.add(medicine.hashCode(), medicine);
-                }
+        Iterator<Medicine> medicineIterator = medicines.iterator();
+        while (medicineIterator.hasNext()) {
+            Medicine medicine = medicineIterator.next();
+            if (medicine.getManufacturer().equalsIgnoreCase(manufacturer)) {
+                manufacturerMedicines.add(medicine.hashCode(), medicine);
             }
         }
         return manufacturerMedicines;
     }
 
     public Medicine findMedicineByStatus(int statusChoice) {
-        for (int index = 1; index <= medicines.getBucketCount(); index++) {
-            LinkedList bucket = medicines.buckets[index];
-            Iterator<Medicine> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Medicine medicine = iterator.next();
-                if (medicine.getStatus().equals(Medicine.MedicineStatus.values()[statusChoice - 1])) {
-                    return medicine;
-                }
+        Iterator<Medicine> medicineIterator = medicines.iterator();
+        while (medicineIterator.hasNext()) {
+            Medicine medicine = medicineIterator.next();
+            if (medicine.getStatus().equals(Medicine.MedicineStatus.values()[statusChoice - 1])) {
+                return medicine;
             }
         }
         return null;
     }
-    
+
     public ArrayBucketList<Medicine> getLowStockMedicines() {
         ArrayBucketList<Medicine> lowStockMedicines = new ArrayBucketList<>();
-        for (int index = 0; index < medicines.getBucketCount(); index++) {
-            LinkedList bucket = medicines.buckets[index];
-            Iterator<Medicine> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Medicine medicine = iterator.next();
+        Iterator<Medicine> medicineIterator = medicines.iterator();
+        while (medicineIterator.hasNext()) {
+            Medicine medicine = medicineIterator.next();
             if (medicine.isLowStock()) {
                 lowStockMedicines.add(medicine.hashCode(), medicine);
-                }
             }
         }
         return lowStockMedicines;
     }
-    
+
     public ArrayBucketList<Medicine> getExpiredMedicines() {
         ArrayBucketList<Medicine> expiredMedicines = new ArrayBucketList<>();
-        for (int index = 0; index < medicines.getBucketCount(); index++) {
-            LinkedList bucket = medicines.buckets[index];
-            Iterator<Medicine> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Medicine medicine = iterator.next();
-                if (medicine.isExpired()) {
-                    expiredMedicines.add(medicine.hashCode(), medicine);
-                }
+        Iterator<Medicine> medicineIterator = medicines.iterator();
+        while (medicineIterator.hasNext()) {
+            Medicine medicine = medicineIterator.next();
+            if (medicine.isExpired()) {
+                expiredMedicines.add(medicine.hashCode(), medicine);
             }
         }
         return expiredMedicines;
     }
-    
+
     public Prescription findPrescriptionById(String prescriptionId) {
         return prescriptions.getEntryByHash(Integer.parseInt(prescriptionId.replaceAll("[^0-9]", "")));
     }
-    
+
     public ArrayBucketList<Prescription> findPrescriptionsByPatient(String patientId) {
         ArrayBucketList<Prescription> patientPrescriptions = new ArrayBucketList<>();
-        for (int index = 0; index < prescriptions.getBucketCount(); index++) {
-            LinkedList bucket = prescriptions.buckets[index];
-            Iterator<Prescription> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Prescription prescription = iterator.next();
-                if (prescription.getPatient().getPatientId().equals(patientId)) {
-                    patientPrescriptions.add(prescription.hashCode(), prescription);
-                }
+        Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
+            if (prescription.getPatient().getPatientId().equals(patientId)) {
+                patientPrescriptions.add(prescription.hashCode(), prescription);
             }
         }
+
         return patientPrescriptions;
     }
-    
+
     public ArrayBucketList<Prescription> findPrescriptionsByDoctor(String doctorId) {
         ArrayBucketList<Prescription> doctorPrescriptions = new ArrayBucketList<>();
-        for (int index = 0; index < prescriptions.getBucketCount(); index++) {
-            LinkedList bucket = prescriptions.buckets[index];
-            Iterator<Prescription> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Prescription prescription = iterator.next();
-                if (prescription.getDoctor().getDoctorId().equals(doctorId)) {
-                    doctorPrescriptions.add(prescription.hashCode(), prescription);
-                }
+        Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
+            if (prescription.getDoctor().getDoctorId().equals(doctorId)) {
+                doctorPrescriptions.add(prescription.hashCode(), prescription);
             }
         }
         return doctorPrescriptions;
@@ -419,14 +400,11 @@ public class PharmacyManagementControl {
 
     public ArrayBucketList<Prescription> findPrescriptionsByStatus(int statusChoice) {
         ArrayBucketList<Prescription> statusPrescriptions = new ArrayBucketList<>();
-        for (int index = 0; index < prescriptions.getBucketCount(); index++) {
-            LinkedList bucket = prescriptions.buckets[index];
-            Iterator<Prescription> iterator = bucket.iterator();
-            while (iterator.hasNext()) {
-                Prescription prescription = iterator.next();
+        Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
             if (prescription.getStatus().equals(Prescription.PrescriptionStatus.values()[statusChoice - 1])) {
                 statusPrescriptions.add(prescription.hashCode(), prescription);
-                }
             }
         }
         return statusPrescriptions;
@@ -447,11 +425,11 @@ public class PharmacyManagementControl {
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription.getPrescriptionDate().after(start) && prescription.getPrescriptionDate().before(end)) {
-                    dateRangePrescriptions.add(prescription.hashCode(), prescription);
-                }
+                dateRangePrescriptions.add(prescription.hashCode(), prescription);
             }
-            return dateRangePrescriptions;
         }
+        return dateRangePrescriptions;
+    }
 
     public ArrayBucketList<Prescription> getActivePrescriptions() {
         ArrayBucketList<Prescription> activePrescriptions = new ArrayBucketList<>();
@@ -464,23 +442,23 @@ public class PharmacyManagementControl {
         }
         return activePrescriptions;
     }
-    
+
     public ArrayBucketList<Medicine> getAllMedicines() {
         return medicines;
     }
-    
+
     public ArrayBucketList<Prescription> getAllPrescriptions() {
         return prescriptions;
     }
-    
+
     public int getTotalMedicines() {
         return medicines.getNumberOfEntries();
     }
-    
+
     public int getTotalPrescriptions() {
         return prescriptions.getNumberOfEntries();
     }
-    
+
     // Reporting Methods
     public String generateMedicineStockReport() {
         StringBuilder report = new StringBuilder();
@@ -489,7 +467,7 @@ public class PharmacyManagementControl {
         report.append("Low Stock Medicines: ").append(getLowStockMedicines().getNumberOfEntries()).append("\n");
         report.append("Expired Medicines: ").append(getExpiredMedicines().getNumberOfEntries()).append("\n");
         report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
-        
+
         report.append("----------------------------------------\n");
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
@@ -500,7 +478,7 @@ public class PharmacyManagementControl {
 
         return report.toString();
     }
-    
+
     public String generatePrescriptionReport() {
         StringBuilder report = new StringBuilder();
         report.append("=== PRESCRIPTION REPORT ===\n");
@@ -518,4 +496,4 @@ public class PharmacyManagementControl {
         }
         return report.toString();
     }
-} 
+}

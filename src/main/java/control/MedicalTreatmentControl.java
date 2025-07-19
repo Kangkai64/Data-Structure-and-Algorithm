@@ -1,7 +1,6 @@
 package control;
 
 import adt.ArrayBucketList;
-import adt.ArrayBucketList.LinkedList;
 import entity.MedicalTreatment;
 import entity.Patient;
 import entity.Doctor;

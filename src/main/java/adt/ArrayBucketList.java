@@ -295,7 +295,7 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
             currentNode = currentNode.getNext();
             
             // If we've reached the end of current bucket, move to next bucket
-            if (currentNode == null) {
+            if (currentNode == currentNode.getNext()) {
                 currentBucketIndex++;
                 findNextNode();
             }
@@ -310,8 +310,9 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
                 if (!bucket.isEmpty()) {
                     currentNode = bucket.head;
                     return;
+                } else {
+                    currentBucketIndex++;
                 }
-                currentBucketIndex++;
             }
             currentNode = null; // No more elements
         }
@@ -320,7 +321,7 @@ public class ArrayBucketList<T> implements Serializable, Iterable<T> {
     /**
      * Inner LinkedList class for bucket implementation
      */
-    public class LinkedList implements Iterable<T> {
+    private class LinkedList implements Iterable<T> {
         private Node head;
         private Node tail;
         private int size;

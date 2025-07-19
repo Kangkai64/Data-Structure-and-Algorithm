@@ -1,7 +1,6 @@
 package control;
 
 import adt.ArrayBucketList;
-import adt.ArrayBucketList.LinkedList;
 import entity.Doctor;
 import entity.Schedule;
 import entity.DayOfWeek;

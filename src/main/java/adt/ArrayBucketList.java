@@ -9,7 +9,7 @@ import java.util.Iterator;
  */
 public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Serializable, Iterable<V> {
     private LinkedList[] buckets;
-    private LinkedList queueIteratorCache;
+    private LinkedList queueData;
     private int numberOfEntries;
     private int bucketCount;
     private static final int DEFAULT_BUCKET_COUNT = 1 << 4;
@@ -33,7 +33,6 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         for (int index = 0; index < bucketCount; index++) {
             buckets[index] = new LinkedList();
         }
-        this.queueIteratorCache = new LinkedList();
     }
 
     /**
@@ -60,7 +59,6 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         if (node != null) {
             V oldValue = node.getValue();
             node.setValue(value);
-            queueIteratorCache.add(key, value);
             return oldValue;
         } else {
             bucket.add(key, value);
@@ -68,10 +66,16 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
             if (getLoadFactor() > LOAD_FACTOR_THRESHOLD) {
                 resizeBuckets();
             }
-            queueIteratorCache.add(key, value);
             return null;
         }
     }
+
+    public void addToQueue(K key, V value) {
+        if (key == null || value == null) {
+            return;
+        }
+        queueData.add(key, value);
+    }   
 
     /**
      * Removes a specific entry from the dictionary.
@@ -87,10 +91,25 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
             V value = node.getValue();
             bucket.remove(key);
             numberOfEntries--;
-            queueIteratorCache.remove(key);
             return value;
         }
         return null;
+    }
+
+    public V removeFront() {
+        if (queueData.isEmpty()) {
+            return null;
+        }
+        V value = queueData.head.getValue();
+        queueData.remove(queueData.head.getKey());
+        return value;
+    }
+
+    public V peekFront() {
+        if (queueData.isEmpty()) {
+            return null;
+        }
+        return queueData.head.getValue();
     }
 
     /**
@@ -399,10 +418,12 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         private class LinkedListIterator implements Iterator<Node> {
             private Node currentNode;
             private int visitedCount;
+
             public LinkedListIterator() {
                 currentNode = head;
                 visitedCount = 0;
             }
+
             @Override
             public boolean hasNext() {
                 return head != null && visitedCount < size;

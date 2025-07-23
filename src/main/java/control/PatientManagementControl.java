@@ -112,17 +112,18 @@ public class PatientManagementControl {
     // Queuing Management Methods
     public boolean addPatientToQueue(Patient patient) {
         if (patient != null && patient.isActive()) {
-            return patientList.add(patient.getPatientId(), patient) != null;
+            patientList.addToQueue(patient.getPatientId(), patient);
+            return true;
         }
         return false;
     }
     
     public Patient getNextPatientFromQueue() {
-        return patientList.remove(patientList.iterator().next().getPatientId());
+        return patientList.removeFront();
     }
     
     public Patient peekNextPatient() {
-        return patientList.getValue(patientList.iterator().next().getPatientId());
+        return patientList.peekFront();
     }
     
     public int getQueueSize() {

@@ -37,8 +37,8 @@ public class PatientDao extends DaoTemplate<Patient> {
         return null;
     }
 
-    public ArrayBucketList<Patient> findAll() throws SQLException {
-        ArrayBucketList<Patient> patients = new ArrayBucketList<>();
+    public ArrayBucketList<String, Patient> findAll() throws SQLException {
+        ArrayBucketList<String, Patient> patients = new ArrayBucketList<String, Patient>();
         String sql = "SELECT * FROM patient";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -48,7 +48,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             while (resultSet.next()) {
                 Patient patient = mapResultSet(resultSet);
                 if (patient != null) {
-                    patients.add(patient.hashCode(), patient);
+                    patients.add(patient.getPatientId(), patient);
                 }
             }   
         } catch (SQLException e) {

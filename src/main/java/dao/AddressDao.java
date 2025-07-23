@@ -34,8 +34,8 @@ public class AddressDao extends DaoTemplate<Address> {
     }
 
     @Override
-    public ArrayBucketList<Address> findAll() throws SQLException {
-        ArrayBucketList<Address> addresses = new ArrayBucketList<>();
+    public ArrayBucketList<String, Address> findAll() throws SQLException {
+        ArrayBucketList<String, Address> addresses = new ArrayBucketList<String, Address>();
         String sql = "SELECT * FROM address ORDER BY city, street";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -45,7 +45,7 @@ public class AddressDao extends DaoTemplate<Address> {
             while (resultSet.next()) {
                 Address address = mapResultSet(resultSet);
                 if (address != null) {
-                    addresses.add(address.hashCode(), address);
+                    addresses.add(address.getAddressId(), address);
                 }
             }
         } catch (SQLException e) {

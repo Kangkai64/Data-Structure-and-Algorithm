@@ -36,8 +36,8 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
     }
 
     @Override
-    public ArrayBucketList<Schedule> findAll() throws SQLException {
-        ArrayBucketList<Schedule> schedules = new ArrayBucketList<>();
+    public ArrayBucketList<String, Schedule> findAll() throws SQLException {
+        ArrayBucketList<String, Schedule> schedules = new ArrayBucketList<String, Schedule>();
         String sql = "SELECT * FROM schedule ORDER BY doctorId, dayOfWeek, fromTime";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -47,7 +47,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
             while (resultSet.next()) {
                 Schedule schedule = mapResultSet(resultSet);
                 if (schedule != null) {
-                    schedules.add(schedule.hashCode(), schedule);
+                    schedules.add(schedule.getScheduleId(), schedule);
                 }
             }
         } catch (SQLException e) {

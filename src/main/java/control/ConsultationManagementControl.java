@@ -15,13 +15,13 @@ import java.util.Iterator;
  */
 public class ConsultationManagementControl {
     
-    private ArrayBucketList<Consultation> consultations;
-    private ArrayBucketList<Consultation> scheduledConsultations;
+    private ArrayBucketList<String, Consultation> consultations;
+    private ArrayBucketList<String, Consultation> scheduledConsultations;
     private ConsultationDao consultationDao;
     
     public ConsultationManagementControl() {
-        this.consultations = new ArrayBucketList<>();
-        this.scheduledConsultations = new ArrayBucketList<>();
+        this.consultations = new ArrayBucketList<String, Consultation>();
+        this.scheduledConsultations = new ArrayBucketList<String, Consultation>();
         this.consultationDao = new ConsultationDao();
         loadConsultationData();
     }
@@ -33,7 +33,7 @@ public class ConsultationManagementControl {
             while (consultationIterator.hasNext()) {
                 Consultation consultation = consultationIterator.next();
                 if (consultation.getStatus() == Consultation.ConsultationStatus.SCHEDULED) {
-                    scheduledConsultations.add(consultation.hashCode(), consultation);
+                    scheduledConsultations.add(consultation.getConsultationId(), consultation);
                 }
             }
         } catch (Exception exception) {
@@ -54,8 +54,8 @@ public class ConsultationManagementControl {
                                                        consultationDate, symptoms, consultationFee);
             
             // Add to lists
-            consultations.add(consultation.hashCode(), consultation);
-            scheduledConsultations.add(consultation.hashCode(), consultation);
+            consultations.add(consultation.getConsultationId(), consultation);
+            scheduledConsultations.add(consultation.getConsultationId(), consultation);
             
             // Add to doctor's appointment list
             doctor.addAppointment(null); // We'll need to create an Appointment entity
@@ -134,68 +134,68 @@ public class ConsultationManagementControl {
         return null;
     }
     
-    public ArrayBucketList<Consultation> findConsultationsByPatient(String patientId) {
-        ArrayBucketList<Consultation> patientConsultations = new ArrayBucketList<>();
+    public ArrayBucketList<String, Consultation> findConsultationsByPatient(String patientId) {
+        ArrayBucketList<String, Consultation> patientConsultations = new ArrayBucketList<String, Consultation>();
         Iterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
             Consultation consultation = consultationIterator.next();
             if (consultation.getPatient().getPatientId().equals(patientId)) {
-                patientConsultations.add(consultation.hashCode(), consultation);
+                patientConsultations.add(consultation.getConsultationId(), consultation);
             }
         }
         return patientConsultations;
     }
     
-    public ArrayBucketList<Consultation> findConsultationsByDoctor(String doctorId) {
-        ArrayBucketList<Consultation> doctorConsultations = new ArrayBucketList<>();
+    public ArrayBucketList<String, Consultation> findConsultationsByDoctor(String doctorId) {
+        ArrayBucketList<String, Consultation> doctorConsultations = new ArrayBucketList<String, Consultation>();
         Iterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
             Consultation consultation = consultationIterator.next();
             if (consultation.getDoctor().getDoctorId().equals(doctorId)) {
-                doctorConsultations.add(consultation.hashCode(), consultation);
+                doctorConsultations.add(consultation.getConsultationId(), consultation);
             }
         }
         return doctorConsultations;
     }
     
-    public ArrayBucketList<Consultation> findConsultationsByDate(Date date) {
-        ArrayBucketList<Consultation> dateConsultations = new ArrayBucketList<>();
+    public ArrayBucketList<String, Consultation> findConsultationsByDate(Date date) {
+        ArrayBucketList<String, Consultation> dateConsultations = new ArrayBucketList<String, Consultation>();
         Iterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
             Consultation consultation = consultationIterator.next();
             if (consultation.getConsultationDate().equals(date)) {
-                dateConsultations.add(consultation.hashCode(), consultation);
+                dateConsultations.add(consultation.getConsultationId(), consultation);
             }
         }
         return dateConsultations;
     }
     
-    public ArrayBucketList<Consultation> getScheduledConsultations() {
+    public ArrayBucketList<String, Consultation> getScheduledConsultations() {
         return scheduledConsultations;
     }
     
-    public ArrayBucketList<Consultation> getCompletedConsultations() {
-        ArrayBucketList<Consultation> completedConsultations = new ArrayBucketList<>();
+    public ArrayBucketList<String, Consultation> getCompletedConsultations() {
+        ArrayBucketList<String, Consultation> completedConsultations = new ArrayBucketList<String, Consultation>();
         Iterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
             Consultation consultation = consultationIterator.next();
             if (consultation.getStatus() == Consultation.ConsultationStatus.COMPLETED) {
-                completedConsultations.add(consultation.hashCode(), consultation);
+                completedConsultations.add(consultation.getConsultationId(), consultation);
             }
         }
         return completedConsultations;
     }
     
-    public ArrayBucketList<Consultation> getAllConsultations() {
+    public ArrayBucketList<String, Consultation> getAllConsultations() {
         return consultations;
     }
     
     public int getTotalConsultations() {
-        return consultations.getNumberOfEntries();
+        return consultations.getSize();
     }
     
     public int getScheduledConsultationsCount() {
-        return scheduledConsultations.getNumberOfEntries();
+        return scheduledConsultations.getSize();
     }
     
     // Reporting Methods
@@ -204,7 +204,7 @@ public class ConsultationManagementControl {
         report.append("=== CONSULTATION REPORT ===\n");
         report.append("Total Consultations: ").append(getTotalConsultations()).append("\n");
         report.append("Scheduled Consultations: ").append(getScheduledConsultationsCount()).append("\n");
-        report.append("Completed Consultations: ").append(getCompletedConsultations().getNumberOfEntries()).append("\n");
+        report.append("Completed Consultations: ").append(getCompletedConsultations().getSize()).append("\n");
         report.append("Report Generated: ").append(new Date()).append("\n\n");
         
         Iterator<Consultation> consultationIterator = consultations.iterator();
@@ -226,7 +226,7 @@ public class ConsultationManagementControl {
         StringBuilder report = new StringBuilder();
         report.append("=== CONSULTATION HISTORY REPORT ===\n");
         report.append("Total Consultations: ").append(getTotalConsultations()).append("\n");
-        report.append("Completed Consultations: ").append(getCompletedConsultations().getNumberOfEntries()).append("\n");
+        report.append("Completed Consultations: ").append(getCompletedConsultations().getSize()).append("\n");
         report.append("Report Generated: ").append(new Date()).append("\n\n");
         
         Iterator<Consultation> consultationIterator = consultations.iterator();
@@ -251,7 +251,7 @@ public class ConsultationManagementControl {
         while (scheduledIterator.hasNext()) {
             Consultation scheduledConsultation = scheduledIterator.next();
             if (scheduledConsultation.getConsultationId().equals(consultation.getConsultationId())) {
-                scheduledConsultations.remove(scheduledConsultation);
+                scheduledConsultations.remove(scheduledConsultation.getConsultationId());
                 break;
             }
         }

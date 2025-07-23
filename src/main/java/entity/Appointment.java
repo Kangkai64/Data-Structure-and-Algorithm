@@ -1,6 +1,7 @@
 package entity;
 
 public class Appointment {
+    private String appointmentId;
     private String patientId;
     private String doctorId;
     private String appointmentDate;
@@ -9,8 +10,9 @@ public class Appointment {
     private String status;
     private String remarks;
 
-    public Appointment (String patientId, String doctorId, String appointmentDate,
+    public Appointment (String appointmentId, String patientId, String doctorId, String appointmentDate,
                         String appointmentTime, String appointmentType, String status, String remarks) {
+        this.appointmentId = appointmentId;
         this.patientId = patientId;
         this.doctorId = doctorId;
         this.appointmentDate = appointmentDate;
@@ -19,6 +21,9 @@ public class Appointment {
         this.status = "SCHEDULED";
         this.remarks = "";
     }
+
+    public String getAppointmentId() { return appointmentId; }
+    public void setAppointmentId(String appointmentId) { this.appointmentId = appointmentId; }
 
     public String getPatientId() { return  patientId; }
     public void setPatientId(String patientId) { this.patientId = patientId; }

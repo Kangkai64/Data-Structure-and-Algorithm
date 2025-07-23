@@ -40,8 +40,8 @@ public class MedicineDao extends DaoTemplate<Medicine> {
     }
 
     @Override
-    public ArrayBucketList<Medicine> findAll() throws SQLException {
-        ArrayBucketList<Medicine> medicines = new ArrayBucketList<>();
+    public ArrayBucketList<String, Medicine> findAll() throws SQLException {
+        ArrayBucketList<String, Medicine> medicines = new ArrayBucketList<String, Medicine>();
         String sql = "SELECT * FROM medicine ORDER BY medicineName";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -51,7 +51,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             while (resultSet.next()) {
                 Medicine medicine = mapResultSet(resultSet);
                 if (medicine != null) {
-                    medicines.add(medicine.hashCode(), medicine);
+                    medicines.add(medicine.getMedicineId(), medicine);
                 }
             }
         } catch (SQLException e) {

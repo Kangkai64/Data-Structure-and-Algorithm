@@ -17,13 +17,13 @@ import java.util.Iterator;
 public class PatientManagementControl {
     
     private PatientDao patientDao;
-    private ArrayBucketList<Patient> patientList;
-    private ArrayBucketList<Patient> activePatients;
+    private ArrayBucketList<String, Patient> patientList;
+    private ArrayBucketList<String, Patient> activePatients;
     
     public PatientManagementControl() {
         this.patientDao = new PatientDao();
-        this.patientList = new ArrayBucketList<>();
-        this.activePatients = new ArrayBucketList<>();
+        this.patientList = new ArrayBucketList<String, Patient>();
+        this.activePatients = new ArrayBucketList<String, Patient>();
         loadActivePatients();
     }
     
@@ -52,7 +52,7 @@ public class PatientManagementControl {
             // Save to database
             boolean saved = patientDao.insert(patient);
             if (saved) {
-                activePatients.add(patient.hashCode(), patient);
+                activePatients.add(patient.getPatientId(), patient);
                 return true;
             }
             return false;
@@ -112,25 +112,25 @@ public class PatientManagementControl {
     // Queuing Management Methods
     public boolean addPatientToQueue(Patient patient) {
         if (patient != null && patient.isActive()) {
-            return patientList.add(patient.hashCode(), patient);
+            return patientList.add(patient.getPatientId(), patient) != null;
         }
         return false;
     }
     
     public Patient getNextPatientFromQueue() {
-        return patientList.remove(patientList.getFirstEntry());
+        return patientList.remove(patientList.iterator().next().getPatientId());
     }
     
     public Patient peekNextPatient() {
-        return patientList.getFirstEntry();
+        return patientList.getValue(patientList.iterator().next().getPatientId());
     }
     
     public int getQueueSize() {
-        return patientList.getNumberOfEntries();
+        return patientList.getSize();
     }
     
     public boolean isPatientInQueue(Patient patient) {
-        return patientList.contains(patient);
+        return patientList.contains(patient.getPatientId());
     }
     
     public void clearQueue() {
@@ -163,24 +163,24 @@ public class PatientManagementControl {
         }
     }
     
-    public ArrayBucketList<Patient> findPatientsByName(String name) {
-        ArrayBucketList<Patient> results = new ArrayBucketList<>();
+    public ArrayBucketList<String, Patient> findPatientsByName(String name) {
+        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
         Iterator<Patient> patientIterator = activePatients.iterator();
         while (patientIterator.hasNext()) {
             Patient patient = patientIterator.next();
             if (patient.getFullName().toLowerCase().contains(name.toLowerCase())) {
-                results.add(patient.hashCode(), patient);
+                results.add(patient.getPatientId(), patient);
             }
         }
         return results;
     }
     
-    public ArrayBucketList<Patient> getAllActivePatients() {
+    public ArrayBucketList<String, Patient> getAllActivePatients() {
         return activePatients;
     }
     
     public int getTotalActivePatients() {
-        return activePatients.getNumberOfEntries();
+        return activePatients.getSize();
     }
     
     // Reporting Methods
@@ -233,8 +233,8 @@ public class PatientManagementControl {
             Patient patient = patientIterator.next();
             if (patient.getPatientId().equals(updatedPatient.getPatientId())) {
                 // Remove old entry and add updated one
-                activePatients.remove(patient);
-                activePatients.add(updatedPatient.hashCode(), updatedPatient);
+                activePatients.remove(patient.getPatientId());
+                activePatients.add(updatedPatient.getPatientId(), updatedPatient);
                 break;
             }
         }
@@ -245,7 +245,7 @@ public class PatientManagementControl {
         while (patientIterator.hasNext()) {
             Patient currentPatient = patientIterator.next();
             if (currentPatient.getPatientId().equals(patient.getPatientId())) {
-                activePatients.remove(currentPatient);
+                activePatients.remove(currentPatient.getPatientId());
                 break;
             }
         }

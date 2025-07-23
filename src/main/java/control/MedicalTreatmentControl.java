@@ -16,13 +16,13 @@ import java.util.Iterator;
  */
 public class MedicalTreatmentControl {
     
-    private ArrayBucketList<MedicalTreatment> treatments;
-    private ArrayBucketList<MedicalTreatment> activeTreatments;
+    private ArrayBucketList<String, MedicalTreatment> treatments;
+    private ArrayBucketList<String, MedicalTreatment> activeTreatments;
     private MedicalTreatmentDao treatmentDao;
     
     public MedicalTreatmentControl() {
-        this.treatments = new ArrayBucketList<>();
-        this.activeTreatments = new ArrayBucketList<>();
+        this.treatments = new ArrayBucketList<String, MedicalTreatment>();
+        this.activeTreatments = new ArrayBucketList<String, MedicalTreatment>();
         this.treatmentDao = new MedicalTreatmentDao();
         loadTreatmentData();
     }
@@ -34,7 +34,7 @@ public class MedicalTreatmentControl {
             while (treatmentIterator.hasNext()) {
                 MedicalTreatment treatment = treatmentIterator.next();
                 if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
-                    activeTreatments.add(treatment.hashCode(), treatment);
+                    activeTreatments.add(treatment.getTreatmentId(), treatment);
                 }
             }
         } catch (Exception exception) {
@@ -54,8 +54,8 @@ public class MedicalTreatmentControl {
                                                             consultation, diagnosis, treatmentPlan, new Date(), treatmentCost);
             
             // Add to lists
-            treatments.add(treatment.hashCode(), treatment);
-            activeTreatments.add(treatment.hashCode(), treatment);
+            treatments.add(treatment.getTreatmentId(), treatment);
+            activeTreatments.add(treatment.getTreatmentId(), treatment);
             
             return true;
         } catch (Exception exception) {
@@ -138,71 +138,71 @@ public class MedicalTreatmentControl {
     
     // Search and Retrieval Methods
     public MedicalTreatment findTreatmentById(String treatmentId) {
-        return treatments.getEntryByHash(Integer.parseInt(treatmentId.replaceAll("[^0-9]", "")));
+        return treatments.getValue(treatmentId);
     }
     
-    public ArrayBucketList<MedicalTreatment> findTreatmentsByPatient(String patientId) {
-        ArrayBucketList<MedicalTreatment> patientTreatments = new ArrayBucketList<>();
+    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByPatient(String patientId) {
+        ArrayBucketList<String, MedicalTreatment> patientTreatments = new ArrayBucketList<String, MedicalTreatment>();
         Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             if (treatment.getPatient().getPatientId().equals(patientId)) {
-                patientTreatments.add(treatment.hashCode(), treatment);
+                patientTreatments.add(treatment.getTreatmentId(), treatment);
             }
         }
         return patientTreatments;
     }
     
-    public ArrayBucketList<MedicalTreatment> findTreatmentsByDoctor(String doctorId) {
-        ArrayBucketList<MedicalTreatment> doctorTreatments = new ArrayBucketList<>();
+    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByDoctor(String doctorId) {
+        ArrayBucketList<String, MedicalTreatment> doctorTreatments = new ArrayBucketList<String, MedicalTreatment>();
         Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             if (treatment.getDoctor().getDoctorId().equals(doctorId)) {
-                doctorTreatments.add(treatment.hashCode(), treatment);
+                doctorTreatments.add(treatment.getTreatmentId(), treatment);
             }
         }
         return doctorTreatments;
     }
     
-    public ArrayBucketList<MedicalTreatment> findTreatmentsByDiagnosis(String diagnosis) {
-        ArrayBucketList<MedicalTreatment> diagnosisTreatments = new ArrayBucketList<>();
+    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByDiagnosis(String diagnosis) {
+        ArrayBucketList<String, MedicalTreatment> diagnosisTreatments = new ArrayBucketList<String, MedicalTreatment>();
         Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             if (treatment.getDiagnosis().toLowerCase().contains(diagnosis.toLowerCase())) {
-                diagnosisTreatments.add(treatment.hashCode(), treatment);
+                diagnosisTreatments.add(treatment.getTreatmentId(), treatment);
             }
         }
         return diagnosisTreatments;
     }
     
-    public ArrayBucketList<MedicalTreatment> getActiveTreatments() {
+    public ArrayBucketList<String, MedicalTreatment> getActiveTreatments() {
         return activeTreatments;
     }
     
-    public ArrayBucketList<MedicalTreatment> getCompletedTreatments() {
-        ArrayBucketList<MedicalTreatment> completedTreatments = new ArrayBucketList<>();
+    public ArrayBucketList<String, MedicalTreatment> getCompletedTreatments() {
+        ArrayBucketList<String, MedicalTreatment> completedTreatments = new ArrayBucketList<String, MedicalTreatment>();
         Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.COMPLETED) {
-                completedTreatments.add(treatment.hashCode(), treatment);
+                completedTreatments.add(treatment.getTreatmentId(), treatment);
             }
         }
         return completedTreatments;
     }
     
-    public ArrayBucketList<MedicalTreatment> getAllTreatments() {
+    public ArrayBucketList<String, MedicalTreatment> getAllTreatments() {
         return treatments;
     }
     
     public int getTotalTreatments() {
-        return treatments.getNumberOfEntries();
+        return treatments.getSize();
     }
     
     public int getActiveTreatmentsCount() {
-        return activeTreatments.getNumberOfEntries();
+        return activeTreatments.getSize();
     }
     
     // Reporting Methods
@@ -211,7 +211,7 @@ public class MedicalTreatmentControl {
         report.append("=== MEDICAL TREATMENT REPORT ===\n");
         report.append("Total Treatments: ").append(getTotalTreatments()).append("\n");
         report.append("Active Treatments: ").append(getActiveTreatmentsCount()).append("\n");
-        report.append("Completed Treatments: ").append(getCompletedTreatments().getNumberOfEntries()).append("\n");
+        report.append("Completed Treatments: ").append(getCompletedTreatments().getSize()).append("\n");
         report.append("Report Generated: ").append(new Date()).append("\n\n");
         
         Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
@@ -233,7 +233,7 @@ public class MedicalTreatmentControl {
         StringBuilder report = new StringBuilder();
         report.append("=== TREATMENT HISTORY REPORT ===\n");
         report.append("Total Treatments: ").append(getTotalTreatments()).append("\n");
-        report.append("Completed Treatments: ").append(getCompletedTreatments().getNumberOfEntries()).append("\n");
+        report.append("Completed Treatments: ").append(getCompletedTreatments().getSize()).append("\n");
         report.append("Report Generated: ").append(new Date()).append("\n\n");
         
         Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
@@ -259,7 +259,7 @@ public class MedicalTreatmentControl {
         while (activeIterator.hasNext()) {
             MedicalTreatment activeTreatment = activeIterator.next();
             if (activeTreatment.getTreatmentId().equals(treatment.getTreatmentId())) {
-                activeTreatments.remove(activeTreatment);
+                activeTreatments.remove(activeTreatment.getTreatmentId());
                 break;
             }
         }

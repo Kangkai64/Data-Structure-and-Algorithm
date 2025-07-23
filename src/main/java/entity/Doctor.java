@@ -13,9 +13,9 @@ public class Doctor extends Person {
     private String licenseNumber;
     private int expYears;
     private boolean isAvailable;
-    private ArrayBucketList<Patient> patients;
-    private ArrayBucketList<Schedule> schedules;
-    private ArrayBucketList<Appointment> appointments;
+    private ArrayBucketList<String, Patient> patients;
+    private ArrayBucketList<String, Appointment> appointments;
+    private ArrayBucketList<String, Schedule> schedules;
 
     public Doctor(String fullName, String ICNumber, String email, String phoneNumber,
                   Address address, Date registrationDate, String doctorId, String medicalSpecialty,
@@ -26,9 +26,9 @@ public class Doctor extends Person {
         this.licenseNumber = licenseNumber;
         this.expYears = expYears;
         this.isAvailable = true;
-        this.patients = new ArrayBucketList<>();
-        this.schedules = new ArrayBucketList<>();
-        this.appointments = new ArrayBucketList<>();
+        this.patients = new ArrayBucketList<String, Patient>();
+        this.appointments = new ArrayBucketList<String, Appointment>();
+        this.schedules = new ArrayBucketList<String, Schedule>();
     }
 
     // Accessor and mutator method for doctor
@@ -49,69 +49,73 @@ public class Doctor extends Person {
 
     // Patient Management
     public boolean addPatient(Patient patient) {
-        return patients.add(patient.hashCode(), patient);
+        return patients.add(patient.getPatientId(), patient) != null;
     }
 
-    public Patient removePatient(int position) {
-        return patients.removeByHash(position);
+    public Patient removePatient(String patientId) {
+        return patients.remove(patientId);
     }
 
-    public Patient getPatient(int position) {
-        return patients.getEntryByHash(position);
+    public Patient getPatient(String patientId) {
+        return patients.getValue(patientId);
     }
 
-    public boolean isPatientExist(Patient patient) {
-        return patients.contains(patient);
+    public boolean isPatientExist(String patientId) {
+        return patients.contains(patientId);
     }
 
     public int getNumberOfPatients() {
-        return patients.getNumberOfEntries();
+        return patients.getSize();
     }
 
     // Appointment Management
     public boolean addAppointment(Appointment appointment) {
-        return appointments.add(appointment.hashCode(), appointment);
+        return appointments.add(appointment.getAppointmentId(), appointment) != null;
     }
 
     public boolean addAppointment(int position, Appointment appointment) {
-        return appointments.add(appointment.hashCode(), appointment);
+        return appointments.add(appointment.getAppointmentId(), appointment) != null;
     }
 
-    public Appointment removeAppointment(int position) {
-        return appointments.removeByHash(position);
+    public Appointment removeAppointment(String appointmentId) {
+        return appointments.remove(appointmentId);
     }
 
-    public Appointment getAppointment(int position) {
-        return appointments.getEntryByHash(position);
+    public Appointment getAppointment(String appointmentId) {
+        return appointments.getValue(appointmentId);
     }
 
-    public boolean isAppointmentExist(Appointment appointment) {
-        return appointments.contains(appointment);
+    public boolean isAppointmentExist(String appointmentId) {
+        return appointments.contains(appointmentId);
     }
 
     public int getNumberOfAppointment() {
-        return appointments.getNumberOfEntries();
+        return appointments.getSize();
     }
 
     // Schedule Management
     public boolean addSchedule(Schedule schedule) {
-        return schedules.add(schedule.hashCode(), schedule);
+        return schedules.add(schedule.getScheduleId(), schedule) != null;
     }
 
-    public Schedule removeSchedule(int position) {
-        return schedules.removeByHash(position);
+    public Schedule removeSchedule(String scheduleId) {
+        return schedules.remove(scheduleId);
     }
 
-    public Schedule getSchedule(int position) {
-        return schedules.getEntryByHash(position);
+    public Schedule getSchedule(String scheduleId) {
+        return schedules.getValue(scheduleId);
     }
 
-    public boolean isScheduleExist(Schedule schedule) {
-        return schedules.contains(schedule);
+    public boolean isScheduleExist(String scheduleId) {
+        return schedules.contains(scheduleId);
     }
 
     public int getNumberOfSchedule() {
-        return schedules.getNumberOfEntries();
+        return schedules.getSize();
+    }
+
+    public ArrayBucketList<String, Schedule> getSchedules() {
+        return schedules;
     }
 
     @Override

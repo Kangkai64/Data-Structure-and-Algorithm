@@ -25,9 +25,9 @@ import java.util.Iterator;
 
 public class PharmacyManagementControl {
 
-    private ArrayBucketList<Medicine> medicines;
-    private ArrayBucketList<Prescription> prescriptions;
-    private ArrayBucketList<Prescription> dispensedPrescriptions;
+    private ArrayBucketList<String, Medicine> medicines;
+    private ArrayBucketList<String, Prescription> prescriptions;
+    private ArrayBucketList<String, Prescription> dispensedPrescriptions;
     private MedicineDao medicineDao;
     private PrescriptionDao prescriptionDao;
     private PatientDao patientDao;
@@ -35,9 +35,9 @@ public class PharmacyManagementControl {
     private ConsultationDao consultationDao;
 
     public PharmacyManagementControl() {
-        this.medicines = new ArrayBucketList<>();
-        this.prescriptions = new ArrayBucketList<>();
-        this.dispensedPrescriptions = new ArrayBucketList<>();
+        this.medicines = new ArrayBucketList<String, Medicine>();
+        this.prescriptions = new ArrayBucketList<String, Prescription>();
+        this.dispensedPrescriptions = new ArrayBucketList<String, Prescription>();
         this.medicineDao = new MedicineDao();
         this.prescriptionDao = new PrescriptionDao();
         this.patientDao = new PatientDao();
@@ -54,7 +54,7 @@ public class PharmacyManagementControl {
             while (prescriptionIterator.hasNext()) {
                 Prescription prescription = prescriptionIterator.next();
                 if (prescription.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
-                    dispensedPrescriptions.add(prescription.hashCode(), prescription);
+                    dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
                 }
             }
         } catch (Exception exception) {
@@ -80,7 +80,7 @@ public class PharmacyManagementControl {
             medicineDao.insert(medicine);
 
             // Add to medicines list
-            medicines.add(medicine.hashCode(), medicine);
+            medicines.add(medicine.getMedicineId(), medicine);
 
             return true;
         } catch (Exception exception) {
@@ -159,7 +159,7 @@ public class PharmacyManagementControl {
                     consultation, new Date(), instructions, expiryDate);
 
             // Add to prescriptions list
-            prescriptions.add(prescription.hashCode(), prescription);
+            prescriptions.add(prescription.getPrescriptionId(), prescription);
             prescriptionDao.insert(prescription);
 
             return true;
@@ -196,7 +196,7 @@ public class PharmacyManagementControl {
     public boolean removeMedicineFromPrescription(String prescriptionId, String prescribedMedicineId) {
         try {
             Prescription prescription = findPrescriptionById(prescriptionId);
-            ArrayBucketList<Prescription.PrescribedMedicine> prescribedMedicines = prescription
+            ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = prescription
                     .getPrescribedMedicines();
             Prescription.PrescribedMedicine prescribedMedicine = null;
             Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescribedMedicines.iterator();
@@ -223,7 +223,7 @@ public class PharmacyManagementControl {
             int quantity, String dosage, String frequency, int duration) {
         try {
             Prescription prescription = findPrescriptionById(prescriptionId);
-            ArrayBucketList<Prescription.PrescribedMedicine> prescribedMedicines = prescription
+            ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = prescription
                     .getPrescribedMedicines();
             Prescription.PrescribedMedicine prescribedMedicine = null;
             Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescribedMedicines.iterator();
@@ -284,7 +284,7 @@ public class PharmacyManagementControl {
                 prescriptionDao.update(prescription);
 
                 // Move to dispensed prescriptions
-                dispensedPrescriptions.add(prescription.hashCode(), prescription);
+                dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
 
                 return true;
             }
@@ -297,7 +297,7 @@ public class PharmacyManagementControl {
 
     // Search and Retrieval Methods
     public Medicine findMedicineById(String medicineId) {
-        return medicines.getEntryByHash(Integer.parseInt(medicineId.replaceAll("[^0-9]", "")));
+        return medicines.getValue(medicineId);
     }
 
     public Medicine findMedicineByName(String medicineName) {
@@ -322,13 +322,13 @@ public class PharmacyManagementControl {
         return null;
     }
 
-    public ArrayBucketList<Medicine> findMedicineByManufacturer(String manufacturer) {
-        ArrayBucketList<Medicine> manufacturerMedicines = new ArrayBucketList<>();
+    public ArrayBucketList<String, Medicine> findMedicineByManufacturer(String manufacturer) {
+        ArrayBucketList<String, Medicine> manufacturerMedicines = new ArrayBucketList<String, Medicine>();
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
             Medicine medicine = medicineIterator.next();
             if (medicine.getManufacturer().equalsIgnoreCase(manufacturer)) {
-                manufacturerMedicines.add(medicine.hashCode(), medicine);
+                manufacturerMedicines.add(medicine.getMedicineId(), medicine);
             }
         }
         return manufacturerMedicines;
@@ -345,73 +345,73 @@ public class PharmacyManagementControl {
         return null;
     }
 
-    public ArrayBucketList<Medicine> getLowStockMedicines() {
-        ArrayBucketList<Medicine> lowStockMedicines = new ArrayBucketList<>();
+    public ArrayBucketList<String, Medicine> getLowStockMedicines() {
+        ArrayBucketList<String, Medicine> lowStockMedicines = new ArrayBucketList<String, Medicine>();
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
             Medicine medicine = medicineIterator.next();
             if (medicine.isLowStock()) {
-                lowStockMedicines.add(medicine.hashCode(), medicine);
+                lowStockMedicines.add(medicine.getMedicineId(), medicine);
             }
         }
         return lowStockMedicines;
     }
 
-    public ArrayBucketList<Medicine> getExpiredMedicines() {
-        ArrayBucketList<Medicine> expiredMedicines = new ArrayBucketList<>();
+    public ArrayBucketList<String, Medicine> getExpiredMedicines() {
+        ArrayBucketList<String, Medicine> expiredMedicines = new ArrayBucketList<String, Medicine>();
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
             Medicine medicine = medicineIterator.next();
             if (medicine.isExpired()) {
-                expiredMedicines.add(medicine.hashCode(), medicine);
+                expiredMedicines.add(medicine.getMedicineId(), medicine);
             }
         }
         return expiredMedicines;
     }
 
     public Prescription findPrescriptionById(String prescriptionId) {
-        return prescriptions.getEntryByHash(Integer.parseInt(prescriptionId.replaceAll("[^0-9]", "")));
+        return prescriptions.getValue(prescriptionId);
     }
 
-    public ArrayBucketList<Prescription> findPrescriptionsByPatient(String patientId) {
-        ArrayBucketList<Prescription> patientPrescriptions = new ArrayBucketList<>();
+    public ArrayBucketList<String, Prescription> findPrescriptionsByPatient(String patientId) {
+        ArrayBucketList<String, Prescription> patientPrescriptions = new ArrayBucketList<String, Prescription>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription.getPatient().getPatientId().equals(patientId)) {
-                patientPrescriptions.add(prescription.hashCode(), prescription);
+                patientPrescriptions.add(prescription.getPrescriptionId(), prescription);
             }
         }
 
         return patientPrescriptions;
     }
 
-    public ArrayBucketList<Prescription> findPrescriptionsByDoctor(String doctorId) {
-        ArrayBucketList<Prescription> doctorPrescriptions = new ArrayBucketList<>();
+    public ArrayBucketList<String, Prescription> findPrescriptionsByDoctor(String doctorId) {
+        ArrayBucketList<String, Prescription> doctorPrescriptions = new ArrayBucketList<String, Prescription>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription.getDoctor().getDoctorId().equals(doctorId)) {
-                doctorPrescriptions.add(prescription.hashCode(), prescription);
+                doctorPrescriptions.add(prescription.getPrescriptionId(), prescription);
             }
         }
         return doctorPrescriptions;
     }
 
-    public ArrayBucketList<Prescription> findPrescriptionsByStatus(int statusChoice) {
-        ArrayBucketList<Prescription> statusPrescriptions = new ArrayBucketList<>();
+    public ArrayBucketList<String, Prescription> findPrescriptionsByStatus(int statusChoice) {
+        ArrayBucketList<String, Prescription> statusPrescriptions = new ArrayBucketList<String, Prescription>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription.getStatus().equals(Prescription.PrescriptionStatus.values()[statusChoice - 1])) {
-                statusPrescriptions.add(prescription.hashCode(), prescription);
+                statusPrescriptions.add(prescription.getPrescriptionId(), prescription);
             }
         }
         return statusPrescriptions;
     }
 
-    public ArrayBucketList<Prescription> findPrescriptionsByDateRange(String startDate, String endDate) {
-        ArrayBucketList<Prescription> dateRangePrescriptions = new ArrayBucketList<>();
+    public ArrayBucketList<String, Prescription> findPrescriptionsByDateRange(String startDate, String endDate) {
+        ArrayBucketList<String, Prescription> dateRangePrescriptions = new ArrayBucketList<String, Prescription>();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         Date start = null;
         Date end = null;
@@ -425,38 +425,38 @@ public class PharmacyManagementControl {
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription.getPrescriptionDate().after(start) && prescription.getPrescriptionDate().before(end)) {
-                dateRangePrescriptions.add(prescription.hashCode(), prescription);
+                dateRangePrescriptions.add(prescription.getPrescriptionId(), prescription);
             }
         }
         return dateRangePrescriptions;
     }
 
-    public ArrayBucketList<Prescription> getActivePrescriptions() {
-        ArrayBucketList<Prescription> activePrescriptions = new ArrayBucketList<>();
+    public ArrayBucketList<String, Prescription> getActivePrescriptions() {
+        ArrayBucketList<String, Prescription> activePrescriptions = new ArrayBucketList<String, Prescription>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription.getStatus() == Prescription.PrescriptionStatus.ACTIVE) {
-                activePrescriptions.add(prescription.hashCode(), prescription);
+                activePrescriptions.add(prescription.getPrescriptionId(), prescription);
             }
         }
         return activePrescriptions;
     }
 
-    public ArrayBucketList<Medicine> getAllMedicines() {
+    public ArrayBucketList<String, Medicine> getAllMedicines() {
         return medicines;
     }
 
-    public ArrayBucketList<Prescription> getAllPrescriptions() {
+    public ArrayBucketList<String, Prescription> getAllPrescriptions() {
         return prescriptions;
     }
 
     public int getTotalMedicines() {
-        return medicines.getNumberOfEntries();
+        return medicines.getSize();
     }
 
     public int getTotalPrescriptions() {
-        return prescriptions.getNumberOfEntries();
+        return prescriptions.getSize();
     }
 
     // Reporting Methods
@@ -464,8 +464,8 @@ public class PharmacyManagementControl {
         StringBuilder report = new StringBuilder();
         report.append("=== MEDICINE STOCK REPORT ===\n");
         report.append("Total Medicines: ").append(getTotalMedicines()).append("\n");
-        report.append("Low Stock Medicines: ").append(getLowStockMedicines().getNumberOfEntries()).append("\n");
-        report.append("Expired Medicines: ").append(getExpiredMedicines().getNumberOfEntries()).append("\n");
+        report.append("Low Stock Medicines: ").append(getLowStockMedicines().getSize()).append("\n");
+        report.append("Expired Medicines: ").append(getExpiredMedicines().getSize()).append("\n");
         report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
 
         report.append("----------------------------------------\n");
@@ -483,8 +483,8 @@ public class PharmacyManagementControl {
         StringBuilder report = new StringBuilder();
         report.append("=== PRESCRIPTION REPORT ===\n");
         report.append("Total Prescriptions: ").append(getTotalPrescriptions()).append("\n");
-        report.append("Active Prescriptions: ").append(getActivePrescriptions().getNumberOfEntries()).append("\n");
-        report.append("Dispensed Prescriptions: ").append(dispensedPrescriptions.getNumberOfEntries()).append("\n");
+        report.append("Active Prescriptions: ").append(getActivePrescriptions().getSize()).append("\n");
+        report.append("Dispensed Prescriptions: ").append(dispensedPrescriptions.getSize()).append("\n");
         report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
 
         report.append("----------------------------------------\n");

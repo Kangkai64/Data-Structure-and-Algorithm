@@ -39,8 +39,8 @@ public class DoctorDao extends DaoTemplate<Doctor> {
     }
 
     @Override
-    public ArrayBucketList<Doctor> findAll() throws SQLException {
-        ArrayBucketList<Doctor> doctors = new ArrayBucketList<>();
+    public ArrayBucketList<String, Doctor> findAll() throws SQLException {
+        ArrayBucketList<String, Doctor> doctors = new ArrayBucketList<String, Doctor>();
         String sql = "SELECT d.*, a.street, a.city, a.state, a.postalCode, a.country " +
                 "FROM doctor d " +
                 "LEFT JOIN address a ON d.addressId = a.addressId " +
@@ -53,7 +53,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
             while (resultSet.next()) {
                 Doctor doctor = mapResultSet(resultSet);
                 if (doctor != null) {
-                    doctors.add(doctor.hashCode(), doctor);
+                    doctors.add(doctor.getDoctorId(), doctor);
                 }
             }
         } catch (SQLException e) {

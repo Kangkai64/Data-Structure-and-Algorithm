@@ -46,8 +46,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     }
 
     @Override
-    public ArrayBucketList<Consultation> findAll() throws SQLException {
-        ArrayBucketList<Consultation> consultations = new ArrayBucketList<>();
+    public ArrayBucketList<String, Consultation> findAll() throws SQLException {
+        ArrayBucketList<String, Consultation> consultations = new ArrayBucketList<String, Consultation>();
         String sql = "SELECT * FROM consultation ORDER BY consultationDate DESC";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -57,7 +57,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             while (resultSet.next()) {
                 Consultation consultation = mapResultSet(resultSet);
                 if (consultation != null) {
-                    consultations.add(consultation.hashCode(), consultation);
+                    consultations.add(consultation.getConsultationId(), consultation);
                 }
             }
         } catch (SQLException e) {
@@ -234,8 +234,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         return 0;
     }
 
-    public ArrayBucketList<Consultation> findConsultationsWithNextVisit() throws SQLException {
-        ArrayBucketList<Consultation> consultations = new ArrayBucketList<>();
+    public ArrayBucketList<String, Consultation> findConsultationsWithNextVisit() throws SQLException {
+        ArrayBucketList<String, Consultation> consultations = new ArrayBucketList<String, Consultation>();
         String sql = "SELECT * FROM consultation WHERE nextVisitDate IS NOT NULL " +
                 "AND nextVisitDate >= CURDATE() ORDER BY nextVisitDate";
 
@@ -246,7 +246,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             while (resultSet.next()) {
                 Consultation consultation = mapResultSet(resultSet);
                 if (consultation != null) {
-                    consultations.add(consultation.hashCode(), consultation);
+                    consultations.add(consultation.getConsultationId(), consultation);
                 }
             }
         } catch (SQLException e) {

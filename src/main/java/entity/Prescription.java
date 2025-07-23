@@ -11,7 +11,7 @@ public class Prescription {
     private Doctor doctor;
     private Consultation consultation;
     private Date prescriptionDate;
-    private ArrayBucketList<PrescribedMedicine> prescribedMedicines;
+    private ArrayBucketList<String, PrescribedMedicine> prescribedMedicines;
     private String instructions;
     private Date expiryDate;
     private PrescriptionStatus status;
@@ -30,7 +30,7 @@ public class Prescription {
         this.prescriptionDate = prescriptionDate;
         this.instructions = instructions;
         this.expiryDate = expiryDate;
-        this.prescribedMedicines = new ArrayBucketList<>();
+        this.prescribedMedicines = new ArrayBucketList<String, PrescribedMedicine>();
         this.status = PrescriptionStatus.ACTIVE;
         this.totalCost = 0.0;
     }
@@ -51,8 +51,8 @@ public class Prescription {
     public Date getPrescriptionDate() { return prescriptionDate; }
     public void setPrescriptionDate(Date prescriptionDate) { this.prescriptionDate = prescriptionDate; }
 
-    public ArrayBucketList<PrescribedMedicine> getPrescribedMedicines() { return prescribedMedicines; }
-    public void setPrescribedMedicines(ArrayBucketList<PrescribedMedicine> prescribedMedicines) { 
+    public ArrayBucketList<String, PrescribedMedicine> getPrescribedMedicines() { return prescribedMedicines; }
+    public void setPrescribedMedicines(ArrayBucketList<String, PrescribedMedicine> prescribedMedicines) { 
         this.prescribedMedicines = prescribedMedicines; 
     }
 
@@ -71,7 +71,7 @@ public class Prescription {
     // Business Logic Methods
     public boolean addPrescribedMedicine(PrescribedMedicine prescribedMedicine) {
         if (prescribedMedicine != null) {
-            boolean added = prescribedMedicines.add(prescribedMedicine.hashCode(), prescribedMedicine);
+            boolean added = prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(), prescribedMedicine) != null;
             if (added) {
                 calculateTotalCost();
             }
@@ -85,7 +85,7 @@ public class Prescription {
         while (iterator.hasNext()) {
             PrescribedMedicine tempPrescribedMedicine = iterator.next();
             if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicine.getPrescribedMedicineId())) {
-                prescribedMedicines.removeByHash(tempPrescribedMedicine.hashCode());
+                prescribedMedicines.remove(tempPrescribedMedicine.getPrescribedMedicineId());
                 calculateTotalCost();
                 return true;
             }
@@ -94,7 +94,7 @@ public class Prescription {
     }
 
     public boolean updatePrescribedMedicine(PrescribedMedicine prescribedMedicine, Medicine medicine, int quantity, String dosage, String frequency, int duration) {
-        PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getEntryByHash(prescribedMedicine.hashCode());
+        PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getValue(prescribedMedicine.getPrescribedMedicineId());
         if (tempPrescribedMedicine != null) {
                 tempPrescribedMedicine.setMedicine(medicine);
                 tempPrescribedMedicine.setQuantity(quantity);
@@ -107,7 +107,7 @@ public class Prescription {
     }
 
     public int getNumberOfPrescribedMedicines() {
-        return prescribedMedicines.getNumberOfEntries();
+        return prescribedMedicines.getSize();
     }
 
     public boolean isExpired() {

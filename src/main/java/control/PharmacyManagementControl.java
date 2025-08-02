@@ -63,19 +63,13 @@ public class PharmacyManagementControl {
     }
 
     // Medicine Management Methods
-    public boolean addMedicine(String medicineName, String genericName, String manufacturer,
-            String description, String dosageForm, String strength,
-            int quantityInStock, int minimumStockLevel, double unitPrice,
-            Date expiryDate, String storageLocation, boolean requiresPrescription) {
+    public boolean addMedicine(Medicine medicine) {
         try {
             // Get new medicine ID from database
             String medicineId = medicineDao.getNewId();
 
             // Create new medicine
-            Medicine medicine = new Medicine(medicineId, medicineName, genericName, manufacturer,
-                    description, dosageForm, strength, quantityInStock,
-                    minimumStockLevel, unitPrice, expiryDate, storageLocation,
-                    requiresPrescription);
+            medicine.setMedicineId(medicineId);
 
             medicineDao.insert(medicine);
 
@@ -94,7 +88,9 @@ public class PharmacyManagementControl {
             Medicine medicine = findMedicineById(medicineId);
             if (medicine != null) {
                 medicine.setQuantityInStock(quantity);
-                return medicineDao.updateStock(medicineId, quantity);
+                medicineDao.updateStock(medicineId, quantity);
+                loadMedicineData();
+                return true;
             }
             return false;
         } catch (Exception exception) {
@@ -109,6 +105,7 @@ public class PharmacyManagementControl {
             if (medicine != null) {
                 medicine.setUnitPrice(newPrice);
                 medicineDao.updatePrice(medicineId, newPrice);
+                loadMedicineData();
                 return true;
             }
             return false;
@@ -121,6 +118,7 @@ public class PharmacyManagementControl {
     public boolean updateMedicineDetails(Medicine medicine) {
         try {
             medicineDao.update(medicine);
+            loadMedicineData();
             return true;
         } catch (Exception exception) {
             System.err.println("Error updating medicine details: " + exception.getMessage());
@@ -134,6 +132,7 @@ public class PharmacyManagementControl {
             if (medicine != null) {
                 medicine.setStatus(Medicine.MedicineStatus.DISCONTINUED);
                 medicineDao.updateStatus(medicineId, Medicine.MedicineStatus.DISCONTINUED);
+                loadMedicineData();
                 return true;
             }
             return false;
@@ -169,19 +168,13 @@ public class PharmacyManagementControl {
         }
     }
 
-    public boolean addMedicineToPrescription(String prescriptionId, String medicineId,
-            int quantity, String dosage, String frequency,
-            int duration) {
+    public boolean addMedicineToPrescription(Prescription.PrescribedMedicine prescribedMedicine) {
         try {
-            Prescription prescription = findPrescriptionById(prescriptionId);
-            Medicine medicine = findMedicineById(medicineId);
+            Prescription prescription = findPrescriptionById(prescribedMedicine.getPrescriptionId());
+            Medicine medicine = findMedicineById(prescribedMedicine.getMedicine().getMedicineId());
 
             if (prescription != null && medicine != null) {
-                String prescribedMedicineId = prescriptionDao.getNewId();
-                Prescription.PrescribedMedicine prescribedMedicine = new Prescription.PrescribedMedicine(
-                        prescribedMedicineId, prescriptionId, medicine, quantity, dosage,
-                        frequency, duration, medicine.getUnitPrice());
-
+                prescribedMedicine.setPrescribedMedicineId(prescriptionDao.getNewId());
                 boolean added = prescription.addPrescribedMedicine(prescribedMedicine);
                 prescriptionDao.insertPrescribedMedicine(prescribedMedicine);
                 return added;
@@ -219,27 +212,16 @@ public class PharmacyManagementControl {
         }
     }
 
-    public boolean updateMedicineInPrescription(String prescriptionId, String prescribedMedicineId, String medicineId,
-            int quantity, String dosage, String frequency, int duration) {
+    public boolean updateMedicineInPrescription(Prescription.PrescribedMedicine prescribedMedicine) {
         try {
-            Prescription prescription = findPrescriptionById(prescriptionId);
-            ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = prescription
-                    .getPrescribedMedicines();
-            Prescription.PrescribedMedicine prescribedMedicine = null;
-            Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescribedMedicines.iterator();
-            while (prescribedMedicineIterator.hasNext()) {
-                Prescription.PrescribedMedicine tempPrescribedMedicine = prescribedMedicineIterator.next();
-                if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicineId)) {
-                    prescribedMedicine = tempPrescribedMedicine;
-                }
-            }
-
+            Prescription prescription = findPrescriptionById(prescribedMedicine.getPrescriptionId());
             if (prescription != null && prescribedMedicine != null) {
-                Medicine medicine = findMedicineById(medicineId);
+                Medicine medicine = prescribedMedicine.getMedicine();
                 if (medicine != null) {
-                    boolean updated = prescription.updatePrescribedMedicine(prescribedMedicine, medicine, quantity,
-                            dosage, frequency, duration);
+                    boolean updated = prescription.updatePrescribedMedicine(prescribedMedicine, medicine, prescribedMedicine.getQuantity(),
+                            prescribedMedicine.getDosage(), prescribedMedicine.getFrequency(), prescribedMedicine.getDuration());
                     prescriptionDao.updatePrescribedMedicine(prescription, prescribedMedicine);
+                    loadMedicineData();
                     return updated;
                 }
                 return false;
@@ -277,14 +259,13 @@ public class PharmacyManagementControl {
 
                     medicineDao.updateStock(medicine.getMedicineId(),
                             medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
+                    loadMedicineData();
                 }
 
                 // Update prescription status
                 prescription.setStatus(Prescription.PrescriptionStatus.DISPENSED);
                 prescriptionDao.update(prescription);
-
-                // Move to dispensed prescriptions
-                dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
+                loadMedicineData();
 
                 return true;
             }

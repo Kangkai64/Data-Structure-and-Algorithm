@@ -69,6 +69,10 @@ public class Prescription {
     public void setTotalCost(double totalCost) { this.totalCost = totalCost; }
 
     // Business Logic Methods
+    public PrescribedMedicine findPrescribedMedicineById(String prescribedMedicineId) {
+        return prescribedMedicines.getValue(prescribedMedicineId);
+    }
+
     public boolean addPrescribedMedicine(PrescribedMedicine prescribedMedicine) {
         if (prescribedMedicine != null) {
             boolean added = prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(), prescribedMedicine) != null;

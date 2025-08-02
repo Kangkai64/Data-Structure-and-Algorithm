@@ -44,6 +44,28 @@ public class Medicine {
         updateStatus();
     }
 
+    // Constructor without medicineId for UI use
+    public Medicine(String medicineName, String genericName, 
+                   String manufacturer, String description, String dosageForm, 
+                   String strength, int quantityInStock, int minimumStockLevel, 
+                   double unitPrice, Date expiryDate, String storageLocation, 
+                   boolean requiresPrescription) {
+        this.medicineId = null; // Will be set by control layer
+        this.medicineName = medicineName;
+        this.genericName = genericName;
+        this.manufacturer = manufacturer;
+        this.description = description;
+        this.dosageForm = dosageForm;
+        this.strength = strength;
+        this.quantityInStock = quantityInStock;
+        this.minimumStockLevel = minimumStockLevel;
+        this.unitPrice = unitPrice;
+        this.expiryDate = expiryDate;
+        this.storageLocation = storageLocation;
+        this.requiresPrescription = requiresPrescription;
+        updateStatus();
+    }
+
     // Getters and Setters
     public String getMedicineId() { return medicineId; }
     public void setMedicineId(String medicineId) { this.medicineId = medicineId; }
@@ -87,7 +109,8 @@ public class Medicine {
     public String getStorageLocation() { return storageLocation; }
     public void setStorageLocation(String storageLocation) { this.storageLocation = storageLocation; }
 
-    public boolean isRequiresPrescription() { return requiresPrescription; }
+    public boolean getRequiresPrescription() { return requiresPrescription; }
+    public String getRequiresPrescriptionString() { return requiresPrescription ? "Y" : "N"; }
     public void setRequiresPrescription(boolean requiresPrescription) { this.requiresPrescription = requiresPrescription; }
 
     public MedicineStatus getStatus() { return status; }
@@ -108,6 +131,18 @@ public class Medicine {
             status = MedicineStatus.LOW_STOCK;
         } else {
             status = MedicineStatus.AVAILABLE;
+        }
+    }
+
+    public void setStatus(String status) {
+        if (status.equalsIgnoreCase("AVAILABLE")) {
+            this.status = MedicineStatus.AVAILABLE;
+        } else if (status.equalsIgnoreCase("LOW_STOCK")) {
+            this.status = MedicineStatus.LOW_STOCK;
+        } else if (status.equalsIgnoreCase("OUT_OF_STOCK")) {
+            this.status = MedicineStatus.OUT_OF_STOCK;
+        } else if (status.equalsIgnoreCase("DISCONTINUED")) {
+            this.status = MedicineStatus.DISCONTINUED;
         }
     }
 

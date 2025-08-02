@@ -95,7 +95,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             preparedStatement.setDouble(10, medicine.getUnitPrice());
             preparedStatement.setDate(11, new java.sql.Date(medicine.getExpiryDate().getTime()));
             preparedStatement.setString(12, medicine.getStorageLocation());
-            preparedStatement.setBoolean(13, medicine.isRequiresPrescription());
+            preparedStatement.setBoolean(13, medicine.getRequiresPrescription());
             preparedStatement.setString(14, medicine.getStatus().name());
 
             int affectedRows = preparedStatement.executeUpdate();
@@ -128,7 +128,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             preparedStatement.setDouble(9, medicine.getUnitPrice());
             preparedStatement.setDate(10, new java.sql.Date(medicine.getExpiryDate().getTime()));
             preparedStatement.setString(11, medicine.getStorageLocation());
-            preparedStatement.setBoolean(12, medicine.isRequiresPrescription());
+            preparedStatement.setBoolean(12, medicine.getRequiresPrescription());
             preparedStatement.setString(13, medicine.getStatus().name());
             preparedStatement.setString(14, medicine.getMedicineId());
 

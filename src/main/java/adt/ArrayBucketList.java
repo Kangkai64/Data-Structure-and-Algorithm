@@ -218,6 +218,14 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         return outputStr.toString();
     }
 
+    public String parseElementsToString() {
+        StringBuilder outputStr = new StringBuilder();
+        for (V value : this) {
+            outputStr.append(value.toString()).append("\n");
+        }
+        return outputStr.toString();
+    }
+
     /**
      * Iterator for the main bucket list (values only)
      * @return iterator for all values

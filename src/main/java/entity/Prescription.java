@@ -169,6 +169,11 @@ public class Prescription {
             this.unitPrice = unitPrice;
         }
 
+        // Constructor with prescriptionId only
+        public PrescribedMedicine(String prescriptionId) {
+            this.prescriptionId = prescriptionId;
+        }
+
         // Getters and Setter
         public String getPrescribedMedicineId() { return prescribedMedicineId; }
         public void setPrescribedMedicineId(String prescribedMedicineId) { this.prescribedMedicineId = prescribedMedicineId; }

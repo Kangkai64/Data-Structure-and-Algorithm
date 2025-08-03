@@ -158,8 +158,8 @@ public class PharmacyManagementControl {
                     consultation, new Date(), instructions, expiryDate);
 
             // Add to prescriptions list
-            prescriptions.add(prescription.getPrescriptionId(), prescription);
             prescriptionDao.insert(prescription);
+            loadMedicineData();
 
             return true;
         } catch (Exception exception) {
@@ -174,9 +174,9 @@ public class PharmacyManagementControl {
             Medicine medicine = findMedicineById(prescribedMedicine.getMedicine().getMedicineId());
 
             if (prescription != null && medicine != null) {
-                prescribedMedicine.setPrescribedMedicineId(prescriptionDao.getNewId());
-                boolean added = prescription.addPrescribedMedicine(prescribedMedicine);
-                prescriptionDao.insertPrescribedMedicine(prescribedMedicine);
+                prescribedMedicine.setPrescribedMedicineId(prescriptionDao.getNewPrescribedMedicineId());
+                boolean added = prescriptionDao.insertPrescribedMedicine(prescribedMedicine);
+                loadMedicineData();
                 return added;
             }
             return false;
@@ -203,6 +203,7 @@ public class PharmacyManagementControl {
             if (prescription != null && prescribedMedicine != null) {
                 boolean removed = prescription.removePrescribedMedicine(prescribedMedicine);
                 prescriptionDao.deletePrescribedMedicine(prescriptionId, prescribedMedicineId);
+                loadMedicineData();
                 return removed;
             }
             return false;
@@ -218,10 +219,13 @@ public class PharmacyManagementControl {
             if (prescription != null && prescribedMedicine != null) {
                 Medicine medicine = prescribedMedicine.getMedicine();
                 if (medicine != null) {
-                    boolean updated = prescription.updatePrescribedMedicine(prescribedMedicine, medicine, prescribedMedicine.getQuantity(),
-                            prescribedMedicine.getDosage(), prescribedMedicine.getFrequency(), prescribedMedicine.getDuration());
+                    boolean updated = prescription.updatePrescribedMedicine(prescribedMedicine, medicine,
+                            prescribedMedicine.getQuantity(),
+                            prescribedMedicine.getDosage(), prescribedMedicine.getFrequency(),
+                            prescribedMedicine.getDuration());
                     prescriptionDao.updatePrescribedMedicine(prescription, prescribedMedicine);
                     loadMedicineData();
+                    prescriptions.add(prescription.getPrescriptionId(), prescription);
                     return updated;
                 }
                 return false;
@@ -266,7 +270,6 @@ public class PharmacyManagementControl {
                 prescription.setStatus(Prescription.PrescriptionStatus.DISPENSED);
                 prescriptionDao.update(prescription);
                 loadMedicineData();
-
                 return true;
             }
             return false;
@@ -315,15 +318,16 @@ public class PharmacyManagementControl {
         return manufacturerMedicines;
     }
 
-    public Medicine findMedicineByStatus(int statusChoice) {
+    public ArrayBucketList<String, Medicine> findMedicineByStatus(int statusChoice) {
+        ArrayBucketList<String, Medicine> statusMedicines = new ArrayBucketList<String, Medicine>();
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
             Medicine medicine = medicineIterator.next();
             if (medicine.getStatus().equals(Medicine.MedicineStatus.values()[statusChoice - 1])) {
-                return medicine;
+                statusMedicines.add(medicine.getMedicineId(), medicine);
             }
         }
-        return null;
+        return statusMedicines;
     }
 
     public ArrayBucketList<String, Medicine> getLowStockMedicines() {
@@ -391,21 +395,13 @@ public class PharmacyManagementControl {
         return statusPrescriptions;
     }
 
-    public ArrayBucketList<String, Prescription> findPrescriptionsByDateRange(String startDate, String endDate) {
+    public ArrayBucketList<String, Prescription> findPrescriptionsByDateRange(Date startDate, Date endDate) {
         ArrayBucketList<String, Prescription> dateRangePrescriptions = new ArrayBucketList<String, Prescription>();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-        Date start = null;
-        Date end = null;
-        try {
-            start = dateFormat.parse(startDate);
-            end = dateFormat.parse(endDate);
-        } catch (Exception e) {
-            System.err.println("Error parsing dates: " + e.getMessage());
-        }
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
-            if (prescription.getPrescriptionDate().after(start) && prescription.getPrescriptionDate().before(end)) {
+            if (prescription.getPrescriptionDate().after(startDate)
+                    && prescription.getPrescriptionDate().before(endDate)) {
                 dateRangePrescriptions.add(prescription.getPrescriptionId(), prescription);
             }
         }

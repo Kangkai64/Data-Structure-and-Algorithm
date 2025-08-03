@@ -152,7 +152,7 @@ CREATE TABLE prescribed_medicine (
     frequency VARCHAR(100) NOT NULL,
     duration INT NOT NULL, -- in days
     unitPrice DECIMAL(10,2) NOT NULL,
-    totalCost DECIMAL(10,2) NOT NULL,
+    totalCost DECIMAL(10,2) DEFAULT 0.00,
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (prescriptionId) REFERENCES prescription(prescriptionId) ON DELETE CASCADE,
     FOREIGN KEY (medicineId) REFERENCES medicine(medicineId) ON DELETE CASCADE
@@ -300,6 +300,27 @@ BEGIN
     ELSE
         SET NEW.status = 'AVAILABLE';
     END IF;
+END//
+DELIMITER ;
+
+
+-- Trigger to calculate totalCost for prescribed_medicine on INSERT
+DELIMITER //
+CREATE TRIGGER tr_prescribed_medicine_calculate_total_insert
+BEFORE INSERT ON prescribed_medicine
+FOR EACH ROW
+BEGIN
+    SET NEW.totalCost = NEW.quantity * NEW.unitPrice;
+END//
+DELIMITER ;
+
+-- Trigger to calculate totalCost for prescribed_medicine on UPDATE
+DELIMITER //
+CREATE TRIGGER tr_prescribed_medicine_calculate_total_update
+BEFORE UPDATE ON prescribed_medicine
+FOR EACH ROW
+BEGIN
+    SET NEW.totalCost = NEW.quantity * NEW.unitPrice;
 END//
 DELIMITER ;
 

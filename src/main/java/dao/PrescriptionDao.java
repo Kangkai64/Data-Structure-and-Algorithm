@@ -4,6 +4,7 @@ import entity.Prescription;
 import entity.Patient;
 import entity.Doctor;
 import entity.Consultation;
+import entity.Medicine;
 import utility.HikariConnectionPool;
 import adt.ArrayBucketList;
 
@@ -17,8 +18,8 @@ import java.sql.Timestamp;
 
 /**
  * @author: Ho Kang Kai
- * Prescription DAO - Module 5
- * Manages prescription data access operations
+ *          Prescription DAO - Module 5
+ *          Manages prescription data access operations
  */
 
 public class PrescriptionDao extends DaoTemplate<Prescription> {
@@ -26,11 +27,13 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
     private final PatientDao patientDao;
     private final DoctorDao doctorDao;
     private final ConsultationDao consultationDao;
+    private final MedicineDao medicineDao;
 
     public PrescriptionDao() {
         this.patientDao = new PatientDao();
         this.doctorDao = new DoctorDao();
         this.consultationDao = new ConsultationDao();
+        this.medicineDao = new MedicineDao();
     }
 
     @Override
@@ -38,14 +41,17 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         String sql = "SELECT * FROM prescription WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, prescriptionId);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
-                return mapResultSet(resultSet);
+                Prescription prescription = mapResultSet(resultSet);
+                prescription.setPrescribedMedicines(findPrescribedMedicines(prescriptionId));
+                return prescription;
             }
+
         } catch (SQLException e) {
             System.err.println("Error finding prescription by ID: " + e.getMessage());
             throw e;
@@ -60,13 +66,14 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         String sql = "SELECT * FROM prescription ORDER BY prescriptionDate DESC";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 Prescription prescription = mapResultSet(resultSet);
                 if (prescription != null) {
                     prescriptions.add(prescription.getPrescriptionId(), prescription);
+                    prescription.setPrescribedMedicines(findPrescribedMedicines(prescription.getPrescriptionId()));
                 }
             }
         } catch (SQLException e) {
@@ -77,14 +84,50 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         return prescriptions;
     }
 
+    public ArrayBucketList<String, Prescription.PrescribedMedicine> findPrescribedMedicines(String prescriptionId)
+            throws SQLException {
+        ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = new ArrayBucketList<String, Prescription.PrescribedMedicine>();
+        String prescribedMedicineSql = "SELECT * FROM prescribed_medicine WHERE prescriptionId = ?";
+
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+                PreparedStatement prescribedMedicinePreparedStatement = connection
+                        .prepareStatement(prescribedMedicineSql)) {
+
+            prescribedMedicinePreparedStatement.setString(1, prescriptionId);
+            ResultSet prescribedMedicineResultSet = prescribedMedicinePreparedStatement.executeQuery();
+
+            while (prescribedMedicineResultSet.next()) {
+                Prescription.PrescribedMedicine prescribedMedicine = mapPrescribedMedicineResultSet(
+                        prescribedMedicineResultSet);
+                if (prescribedMedicine != null) {
+                    prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(), prescribedMedicine);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error finding prescribed medicines: " + e.getMessage());
+            throw e;
+        }
+
+        return prescribedMedicines;
+    }
+
     @Override
     public String getNewId() throws SQLException {
         String tempInsertSql = "INSERT INTO prescription (prescriptionId, patientId, doctorId, consultationId, " +
-                              "prescriptionDate, instructions, expiryDate, status, totalCost) " +
-                              "VALUES (NULL, 'P000000001', 'D000000001', NULL, " +
-                              "NOW(), 'TEMP', DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'ACTIVE', 0.0)";
+                "prescriptionDate, instructions, expiryDate, status, totalCost) " +
+                "VALUES (NULL, 'P000000001', 'D000000001', NULL, " +
+                "NOW(), 'TEMP', DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'ACTIVE', 0.0)";
         String tempDeleteSql = "DELETE FROM prescription WHERE instructions = 'TEMP'";
         return getNextIdFromDatabase("prescription", "prescriptionId", tempInsertSql, tempDeleteSql);
+    }
+
+    public String getNewPrescribedMedicineId() throws SQLException {
+        String tempInsertSql = "INSERT INTO prescribed_medicine (prescribedMedicineId, prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice) "
+                +
+                "VALUES (NULL, 'PR00000001', 'M000000001', 1, 'TEMP', 'TEMP', 1, 0.0)";
+        String tempDeleteSql = "DELETE FROM prescribed_medicine WHERE medicineId = 'M000000001'";
+        return getNextIdFromDatabase("prescribed_medicine", "prescribedMedicineId", tempInsertSql, tempDeleteSql);
     }
 
     @Override
@@ -94,13 +137,13 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, prescription.getPrescriptionId());
             preparedStatement.setString(2, prescription.getPatient().getPatientId());
             preparedStatement.setString(3, prescription.getDoctor().getDoctorId());
-            preparedStatement.setString(4, prescription.getConsultation() != null ? 
-                    prescription.getConsultation().getConsultationId() : null);
+            preparedStatement.setString(4,
+                    prescription.getConsultation() != null ? prescription.getConsultation().getConsultationId() : null);
             preparedStatement.setTimestamp(5, new Timestamp(prescription.getPrescriptionDate().getTime()));
             preparedStatement.setString(6, prescription.getInstructions());
             preparedStatement.setDate(7, new Date(prescription.getExpiryDate().getTime()));
@@ -123,12 +166,12 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
                 "WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, prescription.getPatient().getPatientId());
             preparedStatement.setString(2, prescription.getDoctor().getDoctorId());
-            preparedStatement.setString(3, prescription.getConsultation() != null ? 
-                    prescription.getConsultation().getConsultationId() : null);
+            preparedStatement.setString(3,
+                    prescription.getConsultation() != null ? prescription.getConsultation().getConsultationId() : null);
             preparedStatement.setTimestamp(4, new Timestamp(prescription.getPrescriptionDate().getTime()));
             preparedStatement.setString(5, prescription.getInstructions());
             preparedStatement.setDate(6, new Date(prescription.getExpiryDate().getTime()));
@@ -145,10 +188,10 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
     }
 
     public boolean insertPrescribedMedicine(Prescription.PrescribedMedicine prescribedMedicine) throws SQLException {
-        String sql = "INSERT INTO prescription_medicine (prescribedMedicineId, prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO prescribed_medicine (prescribedMedicineId, prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, prescribedMedicine.getPrescribedMedicineId());
             preparedStatement.setString(2, prescribedMedicine.getPrescriptionId());
@@ -167,11 +210,12 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         }
     }
 
-    public boolean updatePrescribedMedicine(Prescription prescription, Prescription.PrescribedMedicine prescribedMedicine) throws SQLException {
-        String sql = "UPDATE prescription_medicine SET prescribedMedicineId = ?, prescriptionId = ?, medicineId = ?, quantity = ?, dosage = ?, frequency = ?, duration = ?, unitPrice = ? WHERE prescriptionId = ?";
+    public boolean updatePrescribedMedicine(Prescription prescription,
+            Prescription.PrescribedMedicine prescribedMedicine) throws SQLException {
+        String sql = "UPDATE prescribed_medicine SET prescribedMedicineId = ?, prescriptionId = ?, medicineId = ?, quantity = ?, dosage = ?, frequency = ?, duration = ?, unitPrice = ? WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, prescribedMedicine.getPrescribedMedicineId());
             preparedStatement.setString(2, prescription.getPrescriptionId());
@@ -181,6 +225,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             preparedStatement.setString(6, prescribedMedicine.getFrequency());
             preparedStatement.setInt(7, prescribedMedicine.getDuration());
             preparedStatement.setDouble(8, prescribedMedicine.getMedicine().getUnitPrice());
+            preparedStatement.setString(9, prescription.getPrescriptionId());
 
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;
@@ -191,10 +236,10 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
     }
 
     public boolean deletePrescribedMedicine(String prescriptionId, String prescribedMedicineId) throws SQLException {
-        String sql = "DELETE FROM prescription_medicine WHERE prescriptionId = ? AND prescribedMedicineId = ?";
+        String sql = "DELETE FROM prescribed_medicine WHERE prescriptionId = ? AND prescribedMedicineId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, prescriptionId);
             preparedStatement.setString(2, prescribedMedicineId);
@@ -212,7 +257,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         String sql = "DELETE FROM prescription WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, prescriptionId);
 
@@ -228,7 +273,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         String sql = "UPDATE prescription SET status = ? WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, status.name());
             preparedStatement.setString(2, prescriptionId);
@@ -245,7 +290,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         String sql = "UPDATE prescription SET totalCost = ? WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setDouble(1, totalCost);
             preparedStatement.setString(2, prescriptionId);
@@ -265,14 +310,14 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             Patient patient = patientDao.findById(resultSet.getString("patientId"));
             Doctor doctor = doctorDao.findById(resultSet.getString("doctorId"));
             Consultation consultation = null;
-            
+
             String consultationId = resultSet.getString("consultationId");
             if (consultationId != null) {
                 consultation = consultationDao.findById(consultationId);
             }
 
             if (patient == null || doctor == null) {
-                System.err.println("Patient or Doctor not found for prescription: " + 
+                System.err.println("Patient or Doctor not found for prescription: " +
                         resultSet.getString("prescriptionId"));
                 return null;
             }
@@ -285,8 +330,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
                     consultation,
                     resultSet.getTimestamp("prescriptionDate"),
                     resultSet.getString("instructions"),
-                    resultSet.getDate("expiryDate")
-            );
+                    resultSet.getDate("expiryDate"));
 
             // Set additional fields
             prescription.setStatus(Prescription.PrescriptionStatus.valueOf(resultSet.getString("status")));
@@ -298,4 +342,12 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             throw e;
         }
     }
-} 
+
+    protected Prescription.PrescribedMedicine mapPrescribedMedicineResultSet(ResultSet resultSet) throws SQLException {
+        Medicine medicine = medicineDao.findById(resultSet.getString("medicineId"));
+        return new Prescription.PrescribedMedicine(resultSet.getString("prescribedMedicineId"),
+                resultSet.getString("prescriptionId"), medicine, resultSet.getInt("quantity"),
+                resultSet.getString("dosage"), resultSet.getString("frequency"), resultSet.getInt("duration"),
+                resultSet.getDouble("unitPrice"));
+    }
+}

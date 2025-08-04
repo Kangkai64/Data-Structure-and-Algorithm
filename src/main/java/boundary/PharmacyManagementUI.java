@@ -24,6 +24,7 @@ public class PharmacyManagementUI {
 
     public void displayPharmacyManagementMenu() {
         while (true) {
+            pharmacyControl.loadPhramacyData();
             ConsoleUtils.printHeader("Pharmacy Management Module");
             System.out.println("1. Add Medicine");
             System.out.println("2. Update Medicine");

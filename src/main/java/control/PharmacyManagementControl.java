@@ -42,10 +42,10 @@ public class PharmacyManagementControl {
         this.patientDao = new PatientDao();
         this.doctorDao = new DoctorDao();
         this.consultationDao = new ConsultationDao();
-        loadMedicineData();
+        loadPhramacyData();
     }
 
-    public void loadMedicineData() {
+    public void loadPhramacyData() {
         try {
             medicines = medicineDao.findAll();
             prescriptions = prescriptionDao.findAll();
@@ -83,7 +83,6 @@ public class PharmacyManagementControl {
             if (medicine != null) {
                 medicine.setQuantityInStock(quantity);
                 medicineDao.updateStock(medicineId, quantity);
-                loadMedicineData();
                 return true;
             }
             return false;
@@ -99,7 +98,6 @@ public class PharmacyManagementControl {
             if (medicine != null) {
                 medicine.setUnitPrice(newPrice);
                 medicineDao.updatePrice(medicineId, newPrice);
-                loadMedicineData();
                 return true;
             }
             return false;
@@ -112,7 +110,6 @@ public class PharmacyManagementControl {
     public boolean updateMedicineDetails(Medicine medicine) {
         try {
             medicineDao.update(medicine);
-            loadMedicineData();
             return true;
         } catch (Exception exception) {
             System.err.println("Error updating medicine details: " + exception.getMessage());
@@ -126,7 +123,6 @@ public class PharmacyManagementControl {
             if (medicine != null) {
                 medicine.setStatus(Medicine.MedicineStatus.DISCONTINUED);
                 medicineDao.updateStatus(medicineId, Medicine.MedicineStatus.DISCONTINUED);
-                loadMedicineData();
                 return true;
             }
             return false;
@@ -150,7 +146,6 @@ public class PharmacyManagementControl {
 
             // Add to prescriptions list
             prescriptionDao.insertAndReturnId(prescription);
-            loadMedicineData();
 
             return true;
         } catch (Exception exception) {
@@ -166,7 +161,6 @@ public class PharmacyManagementControl {
 
             if (prescription != null && medicine != null) {
                 prescriptionDao.insertPrescribedMedicineAndReturnId(prescribedMedicine);
-                loadMedicineData();
                 return true;
             }
             return false;
@@ -193,7 +187,6 @@ public class PharmacyManagementControl {
             if (prescription != null && prescribedMedicine != null) {
                 boolean removed = prescription.removePrescribedMedicine(prescribedMedicine);
                 prescriptionDao.deletePrescribedMedicine(prescriptionId, prescribedMedicineId);
-                loadMedicineData();
                 return removed;
             }
             return false;
@@ -214,7 +207,6 @@ public class PharmacyManagementControl {
                             prescribedMedicine.getDosage(), prescribedMedicine.getFrequency(),
                             prescribedMedicine.getDuration());
                     prescriptionDao.updatePrescribedMedicine(prescription, prescribedMedicine);
-                    loadMedicineData();
                     prescriptions.add(prescription.getPrescriptionId(), prescription);
                     return updated;
                 }
@@ -253,13 +245,11 @@ public class PharmacyManagementControl {
 
                     medicineDao.updateStock(medicine.getMedicineId(),
                             medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
-                    loadMedicineData();
                 }
 
                 // Update prescription status
                 prescription.setStatus(Prescription.PrescriptionStatus.DISPENSED);
                 prescriptionDao.update(prescription);
-                loadMedicineData();
                 return true;
             }
             return false;

@@ -71,6 +71,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
 
             while (resultSet.next()) {
                 Prescription prescription = mapResultSet(resultSet);
+                prescription.setPrescribedMedicines(findPrescribedMedicines(prescription.getPrescriptionId()));
                 if (prescription != null) {
                     prescriptions.add(prescription.getPrescriptionId(), prescription);
                 }

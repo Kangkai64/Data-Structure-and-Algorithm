@@ -697,7 +697,11 @@ public class PharmacyManagementUI {
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
-                    System.out.println("\n" + prescription);
+                    System.out.println("\n" + prescription + "\n");
+                    for (Prescription.PrescribedMedicine prescribedMedicine : prescription.getPrescribedMedicines()) {
+                        System.out.println(prescribedMedicine);
+                    }
+                    System.out.println();
                 }
                 break;
             case 2:
@@ -709,7 +713,7 @@ public class PharmacyManagementUI {
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
-                    System.out.println("\n" + prescriptions.parseElementsToString());
+                    System.out.println("\n" + prescriptions.parseElementsToString() + "\n");
                 }
                 break;
             case 3:

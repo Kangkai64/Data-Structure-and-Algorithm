@@ -69,6 +69,41 @@ public class ConsoleUtils {
         return dateFormat.format(date);
     }
 
+    // Get user input with default value
+    public static String getStringInput(Scanner scanner, String prompt, String defaultValue) {
+        System.out.print(prompt);
+        String input = scanner.nextLine().trim();
+        return input.isEmpty() ? defaultValue : input;
+    }
+
+    public static int getIntInput(Scanner scanner, String prompt, int defaultValue) {
+        System.out.print(prompt);
+        String input = scanner.nextLine().trim();
+        return input.isEmpty() ? defaultValue : Integer.parseInt(input);
+    }
+
+    public static double getDoubleInput(Scanner scanner, String prompt, double defaultValue) {
+        System.out.print(prompt);
+        String input = scanner.nextLine().trim();
+        return input.isEmpty() ? defaultValue : Double.parseDouble(input);
+    }
+
+    public static Date getDateInput(Scanner scanner, String prompt, Date defaultValue) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                return defaultValue;
+            }
+            try {
+                return dateFormat.parse(input);
+            } catch (Exception e) {
+                System.out.println("Invalid date format. Please use dd-MM-yyyy");
+            }
+        }
+    }
+
     public static void printHeader(String title) {
         int headerWidth = title.length();
 

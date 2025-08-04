@@ -57,30 +57,31 @@ public class AddressDao extends DaoTemplate<Address> {
     }
 
     @Override
-    public String getNewId() throws SQLException {
-        String tempInsertSql = "INSERT INTO address (addressId, street, city, state, postalCode, country) " +
-                              "VALUES (NULL, 'TEMP', 'TEMP', 'TEMP', '00000', 'TEMP')";
-        String tempDeleteSql = "DELETE FROM address WHERE street = 'TEMP' AND city = 'TEMP'";
-        return getNextIdFromDatabase("address", "addressId", tempInsertSql, tempDeleteSql);
-    }
-
-    @Override
-    public boolean insert(Address address) throws SQLException {
-        String sql = "INSERT INTO address (addressId, street, city, state, postalCode, country) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+    public boolean insertAndReturnId(Address address) throws SQLException {
+        String sql = "INSERT INTO address (street, city, state, postalCode, country) " +
+                "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preparedStatement.setString(1, address.getAddressId());
-            preparedStatement.setString(2, address.getStreet());
-            preparedStatement.setString(3, address.getCity());
-            preparedStatement.setString(4, address.getState());
-            preparedStatement.setString(5, address.getZipCode());
-            preparedStatement.setString(6, address.getCountry());
+            preparedStatement.setString(1, address.getStreet());
+            preparedStatement.setString(2, address.getCity());
+            preparedStatement.setString(3, address.getState());
+            preparedStatement.setString(4, address.getZipCode());
+            preparedStatement.setString(5, address.getCountry());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedAddressId(connection);
+                if (generatedId != null) {
+                    address.setAddressId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
 
         } catch (SQLException e) {
             System.err.println("Error inserting address: " + e.getMessage());
@@ -128,16 +129,38 @@ public class AddressDao extends DaoTemplate<Address> {
         }
     }
 
+    /**
+     * Get the ID of the last inserted address
+     * @param connection The database connection
+     * @return The generated address ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedAddressId(Connection connection) throws SQLException {
+        String sql = "SELECT addressId FROM address ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("addressId");
+            }
+        }
+        
+        return null;
+    }
+
     @Override
     protected Address mapResultSet(ResultSet resultSet) throws SQLException {
         try {
-            return new Address(
+            Address address = new Address(
                     resultSet.getString("street"),
                     resultSet.getString("city"),
                     resultSet.getString("state"),
                     resultSet.getString("postalCode"),
                     resultSet.getString("country")
             );
+            address.setAddressId(resultSet.getString("addressId"));
+            return address;
         } catch (SQLException e) {
             System.err.println("Error mapping result set to Address: " + e.getMessage());
             throw e;

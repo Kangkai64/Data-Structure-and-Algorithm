@@ -72,41 +72,40 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     }
 
     @Override
-    public String getNewId() throws SQLException {
-        String tempInsertSql = "INSERT INTO medical_treatment (treatmentId, patientId, doctorId, consultationId, " +
-                              "diagnosis, treatmentPlan, prescribedMedications, treatmentNotes, treatmentDate, " +
-                              "followUpDate, status, treatmentCost) VALUES (NULL, 'P000000001', 'D000000001', NULL, " +
-                              "'TEMP', 'TEMP', 'TEMP', 'TEMP', NOW(), NULL, 'ACTIVE', 0.0)";
-        String tempDeleteSql = "DELETE FROM medical_treatment WHERE diagnosis = 'TEMP' AND treatmentPlan = 'TEMP'";
-        return getNextIdFromDatabase("medical_treatment", "treatmentId", tempInsertSql, tempDeleteSql);
-    }
-
-    @Override
-    public boolean insert(MedicalTreatment treatment) throws SQLException {
-        String sql = "INSERT INTO medical_treatment (treatmentId, patientId, doctorId, consultationId, " +
+    public boolean insertAndReturnId(MedicalTreatment treatment) throws SQLException {
+        String sql = "INSERT INTO medical_treatment (patientId, doctorId, consultationId, " +
                 "diagnosis, treatmentPlan, prescribedMedications, treatmentNotes, treatmentDate, " +
-                "followUpDate, status, treatmentCost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "followUpDate, status, treatmentCost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preparedStatement.setString(1, treatment.getTreatmentId());
-            preparedStatement.setString(2, treatment.getPatient().getPatientId());
-            preparedStatement.setString(3, treatment.getDoctor().getDoctorId());
-            preparedStatement.setString(4, treatment.getConsultation() != null ? 
+            preparedStatement.setString(1, treatment.getPatient().getPatientId());
+            preparedStatement.setString(2, treatment.getDoctor().getDoctorId());
+            preparedStatement.setString(3, treatment.getConsultation() != null ? 
                     treatment.getConsultation().getConsultationId() : null);
-            preparedStatement.setString(5, treatment.getDiagnosis());
-            preparedStatement.setString(6, treatment.getTreatmentPlan());
-            preparedStatement.setString(7, treatment.getPrescribedMedications());
-            preparedStatement.setString(8, treatment.getTreatmentNotes());
-            preparedStatement.setTimestamp(9, new Timestamp(treatment.getTreatmentDate().getTime()));
-            preparedStatement.setDate(10, treatment.getFollowUpDate() != null ? 
+            preparedStatement.setString(4, treatment.getDiagnosis());
+            preparedStatement.setString(5, treatment.getTreatmentPlan());
+            preparedStatement.setString(6, treatment.getPrescribedMedications());
+            preparedStatement.setString(7, treatment.getTreatmentNotes());
+            preparedStatement.setTimestamp(8, new Timestamp(treatment.getTreatmentDate().getTime()));
+            preparedStatement.setDate(9, treatment.getFollowUpDate() != null ? 
                     new Date(treatment.getFollowUpDate().getTime()) : null);
-            preparedStatement.setString(11, treatment.getStatus().name());
-            preparedStatement.setDouble(12, treatment.getTreatmentCost());
+            preparedStatement.setString(10, treatment.getStatus().name());
+            preparedStatement.setDouble(11, treatment.getTreatmentCost());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedTreatmentId(connection);
+                if (generatedId != null) {
+                    treatment.setTreatmentId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
 
         } catch (SQLException e) {
             System.err.println("Error inserting medical treatment: " + e.getMessage());
@@ -196,6 +195,26 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             System.err.println("Error updating medical treatment follow-up date: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * Get the ID of the last inserted medical treatment
+     * @param connection The database connection
+     * @return The generated treatment ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedTreatmentId(Connection connection) throws SQLException {
+        String sql = "SELECT treatmentId FROM medical_treatment ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("treatmentId");
+            }
+        }
+        
+        return null;
     }
 
     @Override

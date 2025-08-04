@@ -6,6 +6,7 @@ import entity.Schedule;
 import entity.DayOfWeek;
 import entity.Address;
 import dao.DoctorDao;
+import dao.AddressDao;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -17,10 +18,12 @@ import java.util.Iterator;
 public class DoctorManagementControl {
     
     private DoctorDao doctorDao;
+    private AddressDao addressDao;
     private ArrayBucketList<String, Doctor> activeDoctors;
     
     public DoctorManagementControl() {
         this.doctorDao = new DoctorDao();
+        this.addressDao = new AddressDao();
         this.activeDoctors = new ArrayBucketList<String, Doctor>();
         loadActiveDoctors();
     }
@@ -38,21 +41,29 @@ public class DoctorManagementControl {
                                 String phoneNumber, Address address, String medicalSpecialty,
                                 String licenseNumber, int expYears) {
         try {
-            // Get new doctor ID from database
-            String doctorId = doctorDao.getNewId();
+            // First, insert the address and get the generated address ID
+            boolean addressInserted = addressDao.insertAndReturnId(address);
+            if (!addressInserted) {
+                System.err.println("Failed to insert address");
+                return false;
+            }
             
-            // Create new doctor
+            // Create new doctor with the generated address ID
             Doctor doctor = new Doctor(fullName, icNumber, email, phoneNumber, 
-                                     address, new Date(), doctorId, medicalSpecialty, 
+                                     address, new Date(), null, medicalSpecialty, 
                                      licenseNumber, expYears);
             
-            // Save to database
-            boolean saved = doctorDao.insert(doctor);
-            if (saved) {
-                activeDoctors.add(doctor.getDoctorId(), doctor);
-                return true;
+            // Insert doctor and get the generated doctor ID
+            boolean doctorInserted = doctorDao.insertAndReturnId(doctor);
+            if (!doctorInserted) {
+                System.err.println("Failed to insert doctor");
+                return false;
             }
-            return false;
+            
+            // Add to active doctors list
+            activeDoctors.add(doctor.getDoctorId(), doctor);
+            return true;
+            
         } catch (Exception exception) {
             System.err.println("Error registering doctor: " + exception.getMessage());
             return false;

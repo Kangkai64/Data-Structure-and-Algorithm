@@ -13,7 +13,6 @@ import dao.DoctorDao;
 import dao.ConsultationDao;
 import utility.ConsoleUtils;
 import java.util.Date;
-import java.text.SimpleDateFormat;
 import java.util.Iterator;
 
 /**
@@ -65,13 +64,8 @@ public class PharmacyManagementControl {
     // Medicine Management Methods
     public boolean addMedicine(Medicine medicine) {
         try {
-            // Get new medicine ID from database
-            String medicineId = medicineDao.getNewId();
-
             // Create new medicine
-            medicine.setMedicineId(medicineId);
-
-            medicineDao.insert(medicine);
+            medicineDao.insertAndReturnId(medicine);
 
             // Add to medicines list
             medicines.add(medicine.getMedicineId(), medicine);
@@ -146,19 +140,16 @@ public class PharmacyManagementControl {
     public boolean createPrescription(String patientId, String doctorId, String consultationId,
             String instructions, Date expiryDate) {
         try {
-            // Get new prescription ID from database
-            String prescriptionId = prescriptionDao.getNewId();
-
             Patient patient = patientDao.findById(patientId);
             Doctor doctor = doctorDao.findById(doctorId);
             Consultation consultation = consultationDao.findById(consultationId);
 
             // Create new prescription
-            Prescription prescription = new Prescription(prescriptionId, patient, doctor,
+            Prescription prescription = new Prescription(null, patient, doctor,
                     consultation, new Date(), instructions, expiryDate);
 
             // Add to prescriptions list
-            prescriptionDao.insert(prescription);
+            prescriptionDao.insertAndReturnId(prescription);
             loadMedicineData();
 
             return true;
@@ -174,10 +165,9 @@ public class PharmacyManagementControl {
             Medicine medicine = findMedicineById(prescribedMedicine.getMedicine().getMedicineId());
 
             if (prescription != null && medicine != null) {
-                prescribedMedicine.setPrescribedMedicineId(prescriptionDao.getNewPrescribedMedicineId());
-                boolean added = prescriptionDao.insertPrescribedMedicine(prescribedMedicine);
+                prescriptionDao.insertPrescribedMedicineAndReturnId(prescribedMedicine);
                 loadMedicineData();
-                return added;
+                return true;
             }
             return false;
         } catch (Exception exception) {

@@ -68,7 +68,7 @@ public class PharmacyManagementUI {
 
     private void addMedicine() {
         ConsoleUtils.printHeader("Add Medicine");
-        Medicine medicine = getAndReplaceMedicineDetailsFromUser(null);
+        Medicine medicine = getMedicineDetailsFromUser();
 
         ConsoleUtils.printHeader("Medicine Overview");
         System.out.println(medicine);
@@ -94,70 +94,22 @@ public class PharmacyManagementUI {
         }
     }
 
-    private Medicine getAndReplaceMedicineDetailsFromUser(Medicine medicine) {
-        int quantity = 0;
-        int minStock = 0;
-        double price = 0.0;
-
+    private Medicine getMedicineDetailsFromUser() {
         String medicineName = ConsoleUtils.getStringInput(scanner, "Enter medicine name: ");
         String genericName = ConsoleUtils.getStringInput(scanner, "Enter generic name: ");
         String manufacturer = ConsoleUtils.getStringInput(scanner, "Enter manufacturer: ");
         String description = ConsoleUtils.getStringInput(scanner, "Enter description: ");
         String dosageForm = ConsoleUtils.getStringInput(scanner, "Enter dosage form: ");
         String strength = ConsoleUtils.getStringInput(scanner, "Enter strength: ");
-        quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", 0, 10000);
-        minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", 0, 1000);
-        price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", 0.0, 10000.0);
+        int quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", 0, 10000);
+        int minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", 0, 10000);
+        double price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", 0.0, 10000.0);
         Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY hh:mm:ss): ");
         String storageLocation = ConsoleUtils.getStringInput(scanner, "Enter storage location: ");
         String requiresPrescriptionInput = (ConsoleUtils.getStringInput(scanner, "Requires prescription (Y / N): "));
-        boolean requiresPrescription = requiresPrescriptionInput.equalsIgnoreCase("Y");
-        System.out.println();
+        boolean requiresPrescription = requiresPrescriptionInput.equalsIgnoreCase("Y") || requiresPrescriptionInput.equalsIgnoreCase("N");
 
-        // Replace empty fields with existing values
-        if (medicine != null) {
-            if (medicineName.isEmpty()) {
-                medicineName = medicine.getMedicineName();
-            }
-            if (genericName.isEmpty()) {
-                genericName = medicine.getGenericName();
-            }
-            if (manufacturer.isEmpty()) {
-                manufacturer = medicine.getManufacturer();
-            }
-            if (description.isEmpty()) {
-                description = medicine.getDescription();
-            }
-            if (dosageForm.isEmpty()) {
-                dosageForm = medicine.getDosageForm();
-            }
-            if (strength.isEmpty()) {
-                strength = medicine.getStrength();
-            }
-            if (quantity == 0) {
-                quantity = medicine.getQuantityInStock();
-            }
-            if (minStock == 0) {
-                minStock = medicine.getMinimumStockLevel();
-            }
-            if (price == 0.0) {
-                price = medicine.getUnitPrice();
-            }
-            if (expiryDate == null) {
-                expiryDate = medicine.getExpiryDate();
-            }
-            if (storageLocation.isEmpty()) {
-                storageLocation = medicine.getStorageLocation();
-            }
-            if (requiresPrescriptionInput.isEmpty()) {
-                requiresPrescription = medicine.getRequiresPrescriptionString().equalsIgnoreCase("Y");
-            }
-        }
-
-        // Create new medicine
-        return new Medicine(medicine.getMedicineId() == null ? medicineName : medicine.getMedicineId(), medicineName,
-                genericName, manufacturer, description, dosageForm, strength, quantity,
-                minStock, price, expiryDate, storageLocation, requiresPrescription);
+        return new Medicine(null, medicineName, genericName, manufacturer, description, dosageForm, strength, quantity, minStock, price, expiryDate, storageLocation, requiresPrescription);
     }
 
     private void updateMedicine() {
@@ -281,6 +233,36 @@ public class PharmacyManagementUI {
         }
     }
 
+    private Medicine getAndReplaceMedicineDetailsFromUser(Medicine medicine) {
+        int quantity = 0;
+        int minStock = 0;
+        double price = 0.0;
+
+        String medicineName = ConsoleUtils.getStringInput(scanner, "Enter medicine name: ", medicine.getMedicineName());
+        String genericName = ConsoleUtils.getStringInput(scanner, "Enter generic name: ", medicine.getGenericName());
+        String manufacturer = ConsoleUtils.getStringInput(scanner, "Enter manufacturer: ", medicine.getManufacturer());
+        String description = ConsoleUtils.getStringInput(scanner, "Enter description: ", medicine.getDescription());
+        String dosageForm = ConsoleUtils.getStringInput(scanner, "Enter dosage form: ", medicine.getDosageForm());
+        String strength = ConsoleUtils.getStringInput(scanner, "Enter strength: ", medicine.getStrength());
+        quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", medicine.getQuantityInStock());
+        minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", medicine.getMinimumStockLevel());
+        price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", medicine.getUnitPrice());
+        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY hh:mm:ss): ",
+                medicine.getExpiryDate());
+        String storageLocation = ConsoleUtils.getStringInput(scanner, "Enter storage location: ",
+                medicine.getStorageLocation());
+        String requiresPrescriptionInput = (ConsoleUtils.getStringInput(scanner, "Requires prescription (Y / N): ",
+                medicine.getRequiresPrescriptionString()));
+        boolean requiresPrescription = requiresPrescriptionInput.equalsIgnoreCase("Y")
+                || requiresPrescriptionInput.equalsIgnoreCase("N");
+        System.out.println();
+
+        // Create new medicine
+        return new Medicine(medicine.getMedicineId() == null ? medicineName : medicine.getMedicineId(), medicineName,
+                genericName, manufacturer, description, dosageForm, strength, quantity,
+                minStock, price, expiryDate, storageLocation, requiresPrescription);
+    }
+
     private void createPrescription() {
         ConsoleUtils.printHeader("Create Prescription");
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
@@ -353,8 +335,7 @@ public class PharmacyManagementUI {
             System.out.println();
         }
 
-        Prescription.PrescribedMedicine prescribedMedicine = getAndReplacePrescribedMedicineDetailsFromUser(
-                new Prescription.PrescribedMedicine(prescriptionId));
+        Prescription.PrescribedMedicine prescribedMedicine = getPrescribedMedicineDetailsFromUser(prescriptionId);
         System.out.println();
 
         if (prescribedMedicine == null) {
@@ -385,8 +366,7 @@ public class PharmacyManagementUI {
         }
     }
 
-    private Prescription.PrescribedMedicine getAndReplacePrescribedMedicineDetailsFromUser(
-            Prescription.PrescribedMedicine prescribedMedicine) {
+    private Prescription.PrescribedMedicine getPrescribedMedicineDetailsFromUser(String prescriptionId) {
         String medicineId = ConsoleUtils.getStringInput(scanner, "Enter medicine ID: ");
         int quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity: ", 1, 100);
         String dosage = ConsoleUtils.getStringInput(scanner, "Enter dosage: ");
@@ -399,25 +379,15 @@ public class PharmacyManagementUI {
             return null;
         }
 
-        if (prescribedMedicine.getPrescribedMedicineId() != null) {
-            if (quantity == 0) {
-                quantity = prescribedMedicine.getQuantity();
-            }
-            if (dosage.isEmpty()) {
-                dosage = prescribedMedicine.getDosage();
-            }
-            if (frequency.isEmpty()) {
-                frequency = prescribedMedicine.getFrequency();
-            }
-            if (duration == 0) {
-                duration = prescribedMedicine.getDuration();
-            }
-        }
         return new Prescription.PrescribedMedicine(
-                prescribedMedicine.getPrescribedMedicineId() == null ? ""
-                        : prescribedMedicine.getPrescribedMedicineId(),
-                prescribedMedicine.getPrescriptionId(), medicine, quantity, dosage, frequency, duration,
-                prescribedMedicine.getUnitPrice());
+                null,
+                prescriptionId,
+                medicine,
+                quantity,
+                dosage,
+                frequency,
+                duration,
+                medicine.getUnitPrice());
     }
 
     private void displayPrescribedMedicineDetails(Prescription.PrescribedMedicine prescribedMedicine) {
@@ -539,6 +509,28 @@ public class PharmacyManagementUI {
             System.out.println("Medicine not updated in prescription.");
             ConsoleUtils.waitMessage();
         }
+    }
+
+    private Prescription.PrescribedMedicine getAndReplacePrescribedMedicineDetailsFromUser(
+            Prescription.PrescribedMedicine prescribedMedicine) {
+        String medicineId = ConsoleUtils.getStringInput(scanner, "Enter medicine ID: ",
+                prescribedMedicine.getMedicine().getMedicineId());
+        int quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity: ", prescribedMedicine.getQuantity());
+        String dosage = ConsoleUtils.getStringInput(scanner, "Enter dosage: ", prescribedMedicine.getDosage());
+        String frequency = ConsoleUtils.getStringInput(scanner, "Enter frequency: ", prescribedMedicine.getFrequency());
+        int duration = ConsoleUtils.getIntInput(scanner, "Enter duration (days): ", prescribedMedicine.getDuration());
+
+        Medicine medicine = pharmacyControl.findMedicineById(medicineId);
+        if (medicine == null) {
+            System.out.println("\nMedicine not found.");
+            return null;
+        }
+
+        return new Prescription.PrescribedMedicine(
+                prescribedMedicine.getPrescribedMedicineId() == null ? ""
+                        : prescribedMedicine.getPrescribedMedicineId(),
+                prescribedMedicine.getPrescriptionId(), medicine, quantity, dosage, frequency, duration,
+                prescribedMedicine.getUnitPrice());
     }
 
     private void dispensePrescription() {

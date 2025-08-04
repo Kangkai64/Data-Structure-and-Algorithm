@@ -63,43 +63,41 @@ public class MedicineDao extends DaoTemplate<Medicine> {
     }
 
     @Override
-    public String getNewId() throws SQLException {
-        String tempInsertSql = "INSERT INTO medicine (medicineId, medicineName, genericName, manufacturer, " +
-                              "description, dosageForm, strength, quantityInStock, minimumStockLevel, unitPrice, " +
-                              "expiryDate, storageLocation, requiresPrescription, status) " +
-                              "VALUES (NULL, 'TEMP', 'TEMP', 'TEMP', 'TEMP', 'TEMP', 'TEMP', 0, 0, 0.0, " +
-                              "DATE_ADD(CURDATE(), INTERVAL 1 YEAR), 'TEMP', false, 'AVAILABLE')";
-        String tempDeleteSql = "DELETE FROM medicine WHERE medicineName = 'TEMP' AND genericName = 'TEMP'";
-        return getNextIdFromDatabase("medicine", "medicineId", tempInsertSql, tempDeleteSql);
-    }
-
-    @Override
-    public boolean insert(Medicine medicine) throws SQLException {
-        String sql = "INSERT INTO medicine (medicineId, medicineName, genericName, manufacturer, " +
+    public boolean insertAndReturnId(Medicine medicine) throws SQLException {
+        String sql = "INSERT INTO medicine (medicineName, genericName, manufacturer, " +
                 "description, dosageForm, strength, quantityInStock, minimumStockLevel, unitPrice, " +
                 "expiryDate, storageLocation, requiresPrescription, status) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preparedStatement.setString(1, medicine.getMedicineId());
-            preparedStatement.setString(2, medicine.getMedicineName());
-            preparedStatement.setString(3, medicine.getGenericName());
-            preparedStatement.setString(4, medicine.getManufacturer());
-            preparedStatement.setString(5, medicine.getDescription());
-            preparedStatement.setString(6, medicine.getDosageForm());
-            preparedStatement.setString(7, medicine.getStrength());
-            preparedStatement.setInt(8, medicine.getQuantityInStock());
-            preparedStatement.setInt(9, medicine.getMinimumStockLevel());
-            preparedStatement.setDouble(10, medicine.getUnitPrice());
-            preparedStatement.setDate(11, new java.sql.Date(medicine.getExpiryDate().getTime()));
-            preparedStatement.setString(12, medicine.getStorageLocation());
-            preparedStatement.setBoolean(13, medicine.getRequiresPrescription());
-            preparedStatement.setString(14, medicine.getStatus().name());
+            preparedStatement.setString(1, medicine.getMedicineName());
+            preparedStatement.setString(2, medicine.getGenericName());
+            preparedStatement.setString(3, medicine.getManufacturer());
+            preparedStatement.setString(4, medicine.getDescription());
+            preparedStatement.setString(5, medicine.getDosageForm());
+            preparedStatement.setString(6, medicine.getStrength());
+            preparedStatement.setInt(7, medicine.getQuantityInStock());
+            preparedStatement.setInt(8, medicine.getMinimumStockLevel());
+            preparedStatement.setDouble(9, medicine.getUnitPrice());
+            preparedStatement.setDate(10, new java.sql.Date(medicine.getExpiryDate().getTime()));
+            preparedStatement.setString(11, medicine.getStorageLocation());
+            preparedStatement.setBoolean(12, medicine.getRequiresPrescription());
+            preparedStatement.setString(13, medicine.getStatus().name());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedMedicineId(connection);
+                if (generatedId != null) {
+                    medicine.setMedicineId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
 
         } catch (SQLException e) {
             System.err.println("Error inserting medicine: " + e.getMessage());
@@ -226,5 +224,25 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             System.err.println("Error mapping result set to Medicine: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * Get the ID of the last inserted medicine
+     * @param connection The database connection
+     * @return The generated medicine ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedMedicineId(Connection connection) throws SQLException {
+        String sql = "SELECT medicineId FROM medicine ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("medicineId");
+            }
+        }
+        
+        return null;
     }
 } 

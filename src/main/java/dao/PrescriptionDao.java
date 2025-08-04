@@ -73,7 +73,6 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
                 Prescription prescription = mapResultSet(resultSet);
                 if (prescription != null) {
                     prescriptions.add(prescription.getPrescriptionId(), prescription);
-                    prescription.setPrescribedMedicines(findPrescribedMedicines(prescription.getPrescriptionId()));
                 }
             }
         } catch (SQLException e) {
@@ -84,79 +83,62 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         return prescriptions;
     }
 
-    public ArrayBucketList<String, Prescription.PrescribedMedicine> findPrescribedMedicines(String prescriptionId)
-            throws SQLException {
-        ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = new ArrayBucketList<String, Prescription.PrescribedMedicine>();
-        String prescribedMedicineSql = "SELECT * FROM prescribed_medicine WHERE prescriptionId = ?";
+    @Override
+    public boolean insertAndReturnId(Prescription prescription) throws SQLException {
+        String sql = "INSERT INTO prescription (patientId, doctorId, consultationId, " +
+                "prescriptionDate, instructions, expiryDate, status, totalCost) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-                PreparedStatement prescribedMedicinePreparedStatement = connection
-                        .prepareStatement(prescribedMedicineSql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            prescribedMedicinePreparedStatement.setString(1, prescriptionId);
-            ResultSet prescribedMedicineResultSet = prescribedMedicinePreparedStatement.executeQuery();
-
-            while (prescribedMedicineResultSet.next()) {
-                Prescription.PrescribedMedicine prescribedMedicine = mapPrescribedMedicineResultSet(
-                        prescribedMedicineResultSet);
-                if (prescribedMedicine != null) {
-                    prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(), prescribedMedicine);
-                }
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error finding prescribed medicines: " + e.getMessage());
-            throw e;
-        }
-
-        return prescribedMedicines;
-    }
-
-    @Override
-    public String getNewId() throws SQLException {
-        String tempInsertSql = "INSERT INTO prescription (prescriptionId, patientId, doctorId, consultationId, " +
-                "prescriptionDate, instructions, expiryDate, status, totalCost) " +
-                "VALUES (NULL, 'P000000001', 'D000000001', NULL, " +
-                "NOW(), 'TEMP', DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'ACTIVE', 0.0)";
-        String tempDeleteSql = "DELETE FROM prescription WHERE instructions = 'TEMP'";
-        return getNextIdFromDatabase("prescription", "prescriptionId", tempInsertSql, tempDeleteSql);
-    }
-
-    public String getNewPrescribedMedicineId() throws SQLException {
-        String tempInsertSql = "INSERT INTO prescribed_medicine (prescribedMedicineId, prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice) "
-                +
-                "VALUES (NULL, 'PR00000001', 'M000000001', 1, 'TEMP', 'TEMP', 1, 0.0)";
-        String tempDeleteSql = "DELETE FROM prescribed_medicine WHERE medicineId = 'M000000001'";
-        return getNextIdFromDatabase("prescribed_medicine", "prescribedMedicineId", tempInsertSql, tempDeleteSql);
-    }
-
-    @Override
-    public boolean insert(Prescription prescription) throws SQLException {
-        String sql = "INSERT INTO prescription (prescriptionId, patientId, doctorId, consultationId, " +
-                "prescriptionDate, instructions, expiryDate, status, totalCost) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, prescription.getPrescriptionId());
-            preparedStatement.setString(2, prescription.getPatient().getPatientId());
-            preparedStatement.setString(3, prescription.getDoctor().getDoctorId());
-            preparedStatement.setString(4,
+            preparedStatement.setString(1, prescription.getPatient().getPatientId());
+            preparedStatement.setString(2, prescription.getDoctor().getDoctorId());
+            preparedStatement.setString(3,
                     prescription.getConsultation() != null ? prescription.getConsultation().getConsultationId() : null);
-            preparedStatement.setTimestamp(5, new Timestamp(prescription.getPrescriptionDate().getTime()));
-            preparedStatement.setString(6, prescription.getInstructions());
-            preparedStatement.setDate(7, new Date(prescription.getExpiryDate().getTime()));
-            preparedStatement.setString(8, prescription.getStatus().name());
-            preparedStatement.setDouble(9, prescription.getTotalCost());
+            preparedStatement.setTimestamp(4, new Timestamp(prescription.getPrescriptionDate().getTime()));
+            preparedStatement.setString(5, prescription.getInstructions());
+            preparedStatement.setDate(6, new Date(prescription.getExpiryDate().getTime()));
+            preparedStatement.setString(7, prescription.getStatus().name());
+            preparedStatement.setDouble(8, prescription.getTotalCost());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedPrescriptionId(connection);
+                if (generatedId != null) {
+                    prescription.setPrescriptionId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
 
         } catch (SQLException e) {
             System.err.println("Error inserting prescription: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * Get the ID of the last inserted prescription
+     * @param connection The database connection
+     * @return The generated prescription ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedPrescriptionId(Connection connection) throws SQLException {
+        String sql = "SELECT prescriptionId FROM prescription ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("prescriptionId");
+            }
+        }
+        
+        return null;
     }
 
     @Override
@@ -187,27 +169,84 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         }
     }
 
-    public boolean insertPrescribedMedicine(Prescription.PrescribedMedicine prescribedMedicine) throws SQLException {
-        String sql = "INSERT INTO prescribed_medicine (prescribedMedicineId, prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    public ArrayBucketList<String, Prescription.PrescribedMedicine> findPrescribedMedicines(String prescriptionId)
+            throws SQLException {
+        ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = new ArrayBucketList<String, Prescription.PrescribedMedicine>();
+        String prescribedMedicineSql = "SELECT * FROM prescribed_medicine WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement prescribedMedicinePreparedStatement = connection
+                        .prepareStatement(prescribedMedicineSql)) {
 
-            preparedStatement.setString(1, prescribedMedicine.getPrescribedMedicineId());
-            preparedStatement.setString(2, prescribedMedicine.getPrescriptionId());
-            preparedStatement.setString(3, prescribedMedicine.getMedicine().getMedicineId());
-            preparedStatement.setInt(4, prescribedMedicine.getQuantity());
-            preparedStatement.setString(5, prescribedMedicine.getDosage());
-            preparedStatement.setString(6, prescribedMedicine.getFrequency());
-            preparedStatement.setInt(7, prescribedMedicine.getDuration());
-            preparedStatement.setDouble(8, prescribedMedicine.getMedicine().getUnitPrice());
+            prescribedMedicinePreparedStatement.setString(1, prescriptionId);
+            ResultSet prescribedMedicineResultSet = prescribedMedicinePreparedStatement.executeQuery();
+
+            while (prescribedMedicineResultSet.next()) {
+                Prescription.PrescribedMedicine prescribedMedicine = mapPrescribedMedicineResultSet(
+                        prescribedMedicineResultSet);
+                if (prescribedMedicine != null) {
+                    prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(), prescribedMedicine);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error finding prescribed medicines: " + e.getMessage());
+            throw e;
+        }
+
+        return prescribedMedicines;
+    }
+
+    public boolean insertPrescribedMedicineAndReturnId(Prescription.PrescribedMedicine prescribedMedicine) throws SQLException {
+        String sql = "INSERT INTO prescribed_medicine (prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            preparedStatement.setString(1, prescribedMedicine.getPrescriptionId());
+            preparedStatement.setString(2, prescribedMedicine.getMedicine().getMedicineId());
+            preparedStatement.setInt(3, prescribedMedicine.getQuantity());
+            preparedStatement.setString(4, prescribedMedicine.getDosage());
+            preparedStatement.setString(5, prescribedMedicine.getFrequency());
+            preparedStatement.setInt(6, prescribedMedicine.getDuration());
+            preparedStatement.setDouble(7, prescribedMedicine.getMedicine().getUnitPrice());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedPrescribedMedicineId(connection);
+                if (generatedId != null) {
+                    prescribedMedicine.setPrescribedMedicineId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
         } catch (SQLException e) {
             System.err.println("Error inserting prescribed medicine: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * Get the ID of the last inserted prescribed medicine
+     * @param connection The database connection
+     * @return The generated prescribed medicine ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedPrescribedMedicineId(Connection connection) throws SQLException {
+        String sql = "SELECT prescribedMedicineId FROM prescribed_medicine ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("prescribedMedicineId");
+            }
+        }
+        
+        return null;
     }
 
     public boolean updatePrescribedMedicine(Prescription prescription,

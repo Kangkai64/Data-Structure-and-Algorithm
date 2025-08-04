@@ -4,7 +4,7 @@ import dao.AddressDao;
 import entity.Address;
 import java.sql.SQLException;
 
-public class AddressMaintenance {
+public class AddressManagementControl {
 
     private static final AddressDao ADDRESS_DAO = new AddressDao();
 
@@ -15,7 +15,7 @@ public class AddressMaintenance {
      * @throws IllegalArgumentException if addressId is null or empty
      * @throws SQLException if there is a database error
      */
-    public static Address getAddressById(String addressId) throws SQLException {
+    public Address getAddressById(String addressId) throws SQLException {
         if (addressId == null || addressId.trim().isEmpty()) {
             throw new IllegalArgumentException("Address ID cannot be null or empty");
         }
@@ -34,13 +34,13 @@ public class AddressMaintenance {
      * @throws IllegalArgumentException if address is null or invalid
      * @throws SQLException if there is a database error
      */
-    public static boolean addAddress(Address address) throws SQLException {
+    public boolean addAddress(Address address) throws SQLException {
         if (address == null) {
             throw new IllegalArgumentException("Address cannot be null");
         }
 
         try {
-            return ADDRESS_DAO.insert(address);
+            return ADDRESS_DAO.insertAndReturnId(address);
         } catch (SQLException e) {
             throw new SQLException("Failed to add address: " + e.getMessage(), e);
         }
@@ -53,7 +53,7 @@ public class AddressMaintenance {
      * @throws IllegalArgumentException if address is null or invalid
      * @throws SQLException if there is a database error
      */
-    public static boolean updateAddress(Address address) throws SQLException {
+    public boolean updateAddress(Address address) throws SQLException {
         if (address == null) {
             throw new IllegalArgumentException("Address cannot be null");
         }
@@ -75,7 +75,7 @@ public class AddressMaintenance {
      * @throws IllegalArgumentException if addressId is null or empty
      * @throws SQLException if there is a database error
      */
-    public static boolean deleteAddress(String addressId) throws SQLException {
+    public boolean deleteAddress(String addressId) throws SQLException {
         if (addressId == null || addressId.trim().isEmpty()) {
             throw new IllegalArgumentException("Address ID cannot be null or empty");
         }

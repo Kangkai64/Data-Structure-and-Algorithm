@@ -69,39 +69,38 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     }
 
     @Override
-    public String getNewId() throws SQLException {
-        String tempInsertSql = "INSERT INTO consultation (consultationId, patientId, doctorId, consultationDate, " +
-                              "symptoms, diagnosis, treatment, notes, status, nextVisitDate, consultationFee) " +
-                              "VALUES (NULL, 'P000000001', 'D000000001', NOW(), " +
-                              "'TEMP', 'TEMP', 'TEMP', 'TEMP', 'SCHEDULED', NULL, 0.0)";
-        String tempDeleteSql = "DELETE FROM consultation WHERE symptoms = 'TEMP' AND diagnosis = 'TEMP'";
-        return getNextIdFromDatabase("consultation", "consultationId", tempInsertSql, tempDeleteSql);
-    }
-
-    @Override
-    public boolean insert(Consultation consultation) throws SQLException {
-        String sql = "INSERT INTO consultation (consultationId, patientId, doctorId, consultationDate, " +
+    public boolean insertAndReturnId(Consultation consultation) throws SQLException {
+        String sql = "INSERT INTO consultation (patientId, doctorId, consultationDate, " +
                 "symptoms, diagnosis, treatment, notes, status, nextVisitDate, consultationFee) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preparedStatement.setString(1, consultation.getConsultationId());
-            preparedStatement.setString(2, consultation.getPatient().getPatientId());
-            preparedStatement.setString(3, consultation.getDoctor().getDoctorId());
-            preparedStatement.setTimestamp(4, new Timestamp(consultation.getConsultationDate().getTime()));
-            preparedStatement.setString(5, consultation.getSymptoms());
-            preparedStatement.setString(6, consultation.getDiagnosis());
-            preparedStatement.setString(7, consultation.getTreatment());
-            preparedStatement.setString(8, consultation.getNotes());
-            preparedStatement.setString(9, consultation.getStatus().name());
-            preparedStatement.setDate(10, consultation.getNextVisitDate() != null ? 
+            preparedStatement.setString(1, consultation.getPatient().getPatientId());
+            preparedStatement.setString(2, consultation.getDoctor().getDoctorId());
+            preparedStatement.setTimestamp(3, new Timestamp(consultation.getConsultationDate().getTime()));
+            preparedStatement.setString(4, consultation.getSymptoms());
+            preparedStatement.setString(5, consultation.getDiagnosis());
+            preparedStatement.setString(6, consultation.getTreatment());
+            preparedStatement.setString(7, consultation.getNotes());
+            preparedStatement.setString(8, consultation.getStatus().name());
+            preparedStatement.setDate(9, consultation.getNextVisitDate() != null ? 
                     new Date(consultation.getNextVisitDate().getTime()) : null);
-            preparedStatement.setDouble(11, consultation.getConsultationFee());
+            preparedStatement.setDouble(10, consultation.getConsultationFee());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedConsultationId(connection);
+                if (generatedId != null) {
+                    consultation.setConsultationId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
 
         } catch (SQLException e) {
             System.err.println("Error inserting consultation: " + e.getMessage());
@@ -296,5 +295,25 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             System.err.println("Error mapping result set to Consultation: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * Get the ID of the last inserted consultation
+     * @param connection The database connection
+     * @return The generated consultation ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedConsultationId(Connection connection) throws SQLException {
+        String sql = "SELECT consultationId FROM consultation ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("consultationId");
+            }
+        }
+        
+        return null;
     }
 } 

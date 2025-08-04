@@ -59,30 +59,31 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
     }
 
     @Override
-    public String getNewId() throws SQLException {
-        String tempInsertSql = "INSERT INTO schedule (scheduleId, doctorId, dayOfWeek, fromTime, toTime, isAvailable) " +
-                              "VALUES (NULL, 'D000000001', 'MONDAY', '09:00:00', '10:00:00', false)";
-        String tempDeleteSql = "DELETE FROM schedule WHERE doctorId = 'D000000001' AND dayOfWeek = 'MONDAY' AND fromTime = '09:00:00'";
-        return getNextIdFromDatabase("schedule", "scheduleId", tempInsertSql, tempDeleteSql);
-    }
-
-    @Override
-    public boolean insert(Schedule schedule) throws SQLException {
-        String sql = "INSERT INTO schedule (scheduleId, doctorId, dayOfWeek, fromTime, toTime, isAvailable) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+    public boolean insertAndReturnId(Schedule schedule) throws SQLException {
+        String sql = "INSERT INTO schedule (doctorId, dayOfWeek, fromTime, toTime, isAvailable) " +
+                "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preparedStatement.setString(1, schedule.getScheduleId());
-            preparedStatement.setString(2, schedule.getDoctorId());
-            preparedStatement.setString(3, schedule.getDayOfWeek().name());
-            preparedStatement.setTime(4, Time.valueOf(schedule.getFromTime()));
-            preparedStatement.setTime(5, Time.valueOf(schedule.getToTime()));
-            preparedStatement.setBoolean(6, schedule.isAvailable());
+            preparedStatement.setString(1, schedule.getDoctorId());
+            preparedStatement.setString(2, schedule.getDayOfWeek().name());
+            preparedStatement.setTime(3, Time.valueOf(schedule.getFromTime()));
+            preparedStatement.setTime(4, Time.valueOf(schedule.getToTime()));
+            preparedStatement.setBoolean(5, schedule.isAvailable());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedScheduleId(connection);
+                if (generatedId != null) {
+                    schedule.setScheduleId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
 
         } catch (SQLException e) {
             System.err.println("Error inserting schedule: " + e.getMessage());
@@ -162,5 +163,25 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
             System.err.println("Error mapping result set to Schedule: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * Get the ID of the last inserted schedule
+     * @param connection The database connection
+     * @return The generated schedule ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedScheduleId(Connection connection) throws SQLException {
+        String sql = "SELECT scheduleId FROM schedule ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("scheduleId");
+            }
+        }
+        
+        return null;
     }
 } 

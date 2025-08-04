@@ -65,38 +65,37 @@ public class DoctorDao extends DaoTemplate<Doctor> {
     }
 
     @Override
-    public String getNewId() throws SQLException {
-        String tempInsertSql = "INSERT INTO doctor (doctorId, fullName, ICNumber, email, phoneNumber, " +
-                              "addressId, registrationDate, medicalSpecialty, licenseNumber, expYears, isAvailable) " +
-                              "VALUES (NULL, 'TEMP', '000000-00-0000', 'temp@temp.com', '000-0000000', " +
-                              "'A000000001', CURDATE(), 'TEMP', 'TEMP000', 0, false)";
-        String tempDeleteSql = "DELETE FROM doctor WHERE fullName = 'TEMP' AND ICNumber = '000000-00-0000'";
-        return getNextIdFromDatabase("doctor", "doctorId", tempInsertSql, tempDeleteSql);
-    }
-
-    @Override
-    public boolean insert(Doctor doctor) throws SQLException {
-        String sql = "INSERT INTO doctor (doctorId, fullName, ICNumber, email, phoneNumber, " +
+    public boolean insertAndReturnId(Doctor doctor) throws SQLException {
+        String sql = "INSERT INTO doctor (fullName, ICNumber, email, phoneNumber, " +
                 "addressId, registrationDate, medicalSpecialty, licenseNumber, expYears, isAvailable) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preparedStatement.setString(1, doctor.getDoctorId());
-            preparedStatement.setString(2, doctor.getFullName());
-            preparedStatement.setString(3, doctor.getICNumber());
-            preparedStatement.setString(4, doctor.getEmail());
-            preparedStatement.setString(5, doctor.getPhoneNumber());
-            preparedStatement.setString(6, doctor.getAddress() != null ? doctor.getAddress().getAddressId() : null);
-            preparedStatement.setDate(7, new Date(doctor.getRegistrationDate().getTime()));
-            preparedStatement.setString(8, doctor.getMedicalSpecialty());
-            preparedStatement.setString(9, doctor.getLicenseNumber());
-            preparedStatement.setInt(10, doctor.getExpYears());
-            preparedStatement.setBoolean(11, doctor.isAvailable());
+            preparedStatement.setString(1, doctor.getFullName());
+            preparedStatement.setString(2, doctor.getICNumber());
+            preparedStatement.setString(3, doctor.getEmail());
+            preparedStatement.setString(4, doctor.getPhoneNumber());
+            preparedStatement.setString(5, doctor.getAddress() != null ? doctor.getAddress().getAddressId() : null);
+            preparedStatement.setDate(6, new Date(doctor.getRegistrationDate().getTime()));
+            preparedStatement.setString(7, doctor.getMedicalSpecialty());
+            preparedStatement.setString(8, doctor.getLicenseNumber());
+            preparedStatement.setInt(9, doctor.getExpYears());
+            preparedStatement.setBoolean(10, doctor.isAvailable());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedDoctorId(connection);
+                if (generatedId != null) {
+                    doctor.setDoctorId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
 
         } catch (SQLException e) {
             System.err.println("Error inserting doctor: " + e.getMessage());
@@ -179,6 +178,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                         resultSet.getString("postalCode"),
                         resultSet.getString("country")
                 );
+                address.setAddressId(resultSet.getString("addressId"));
             }
 
             // Create Doctor object
@@ -203,5 +203,25 @@ public class DoctorDao extends DaoTemplate<Doctor> {
             System.err.println("Error mapping result set to Doctor: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * Get the ID of the last inserted doctor
+     * @param connection The database connection
+     * @return The generated doctor ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedDoctorId(Connection connection) throws SQLException {
+        String sql = "SELECT doctorId FROM doctor ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("doctorId");
+            }
+        }
+        
+        return null;
     }
 }

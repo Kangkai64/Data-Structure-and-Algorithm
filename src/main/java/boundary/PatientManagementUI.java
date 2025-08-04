@@ -5,8 +5,10 @@ import entity.Address;
 import entity.BloodType;
 import adt.ArrayBucketList;
 import utility.ConsoleUtils;
+import control.AddressManagementControl;
 
 import java.util.Scanner;
+import java.sql.SQLException;
 
 /**
  * Patient Management User Interface
@@ -15,10 +17,12 @@ import java.util.Scanner;
 public class PatientManagementUI {
     private Scanner scanner;
     private PatientManagementControl patientControl;
+    private AddressManagementControl addressControl;
 
     public PatientManagementUI() {
         this.scanner = new Scanner(System.in);
         this.patientControl = new PatientManagementControl();
+        this.addressControl = new AddressManagementControl();
     }
 
     public void displayPatientManagementMenu() {
@@ -79,9 +83,7 @@ public class PatientManagementUI {
         String state = ConsoleUtils.getStringInput(scanner, "Enter state: ");
         String postalCode = ConsoleUtils.getStringInput(scanner, "Enter postal code: ");
         String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
-        
-        Address address = new Address(street, city, state, postalCode, country);
-        
+
         String wardNumber = ConsoleUtils.getStringInput(scanner, "Enter ward number: ");
         
         System.out.println("Select blood type:");
@@ -96,6 +98,15 @@ public class PatientManagementUI {
         String allergies = allergiesInput.equalsIgnoreCase("None") ? "None" : allergiesInput;
         
         String emergencyContact = ConsoleUtils.getStringInput(scanner, "Enter emergency contact (0XX-XXXXXXX): ");
+
+        Address address = new Address(street, city, state, postalCode, country);
+        try {
+            addressControl.addAddress(address);
+            address = addressControl.getAddressById(address.getAddressId());
+            System.out.println("Address added successfully!");
+        } catch (SQLException e) {
+            System.out.println("Failed to add address: " + e.getMessage());
+        }
         
         boolean success = patientControl.registerPatient(fullName, icNumber, email, phoneNumber, 
                                                        address, wardNumber, bloodType, allergiesInput, emergencyContact);

@@ -5,6 +5,7 @@ import entity.Patient;
 import entity.Address;
 import entity.BloodType;
 import dao.PatientDao;
+import dao.AddressDao;
 import java.util.Date;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -17,11 +18,13 @@ import java.util.Iterator;
 public class PatientManagementControl {
     
     private PatientDao patientDao;
+    private AddressDao addressDao;
     private ArrayBucketList<String, Patient> patientList;
     private ArrayBucketList<String, Patient> activePatients;
     
     public PatientManagementControl() {
         this.patientDao = new PatientDao();
+        this.addressDao = new AddressDao();
         this.patientList = new ArrayBucketList<String, Patient>();
         this.activePatients = new ArrayBucketList<String, Patient>();
         loadActivePatients();
@@ -41,21 +44,29 @@ public class PatientManagementControl {
                                  BloodType bloodType, String allergies, 
                                  String emergencyContact) {
         try {
-            // Get new patient ID from database
-            String patientId = patientDao.getNewId();
+            // First, insert the address and get the generated address ID
+            boolean addressInserted = addressDao.insertAndReturnId(address);
+            if (!addressInserted) {
+                System.err.println("Failed to insert address");
+                return false;
+            }
             
-            // Create new patient
+            // Create new patient with the generated address ID
             Patient patient = new Patient(fullName, icNumber, email, phoneNumber, 
-                                        address, new Date(), patientId, wardNumber, 
+                                        address, new Date(), null, wardNumber, 
                                         bloodType, allergies, emergencyContact);
             
-            // Save to database
-            boolean saved = patientDao.insert(patient);
-            if (saved) {
-                activePatients.add(patient.getPatientId(), patient);
-                return true;
+            // Insert patient and get the generated patient ID
+            boolean patientInserted = patientDao.insertAndReturnId(patient);
+            if (!patientInserted) {
+                System.err.println("Failed to insert patient");
+                return false;
             }
-            return false;
+            
+            // Add to active patients list
+            activePatients.add(patient.getPatientId(), patient);
+            return true;
+            
         } catch (Exception exception) {
             System.err.println("Error registering patient: " + exception.getMessage());
             return false;

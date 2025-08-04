@@ -175,7 +175,16 @@ CREATE INDEX idx_prescribed_medicine_prescription ON prescribed_medicine(prescri
 CREATE INDEX idx_prescribed_medicine_medicine ON prescribed_medicine(medicineId);
 CREATE INDEX idx_schedule_doctor ON schedule(doctorId);
 
--- Create triggers for automatic ID generation
+-- Create sequence tables for ID generation (no initialization needed)
+CREATE TABLE address_seq (id INT AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE patient_seq (id INT AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE doctor_seq (id INT AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE schedule_seq (id INT AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE consultation_seq (id INT AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE treatment_seq (id INT AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE medicine_seq (id INT AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE prescription_seq (id INT AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE prescribed_medicine_seq (id INT AUTO_INCREMENT PRIMARY KEY);
 
 -- Trigger for Address ID generation
 DELIMITER //
@@ -184,7 +193,8 @@ BEFORE INSERT ON address
 FOR EACH ROW
 BEGIN
     IF NEW.addressId IS NULL OR NEW.addressId = '' THEN
-        SET NEW.addressId = CONCAT('A', LPAD((SELECT COUNT(*) + 1 FROM address), 9, '0'));
+        INSERT INTO address_seq VALUES ();
+        SET NEW.addressId = CONCAT('A', LPAD(LAST_INSERT_ID(), 9, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -196,7 +206,8 @@ BEFORE INSERT ON patient
 FOR EACH ROW
 BEGIN
     IF NEW.patientId IS NULL OR NEW.patientId = '' THEN
-        SET NEW.patientId = CONCAT('P', LPAD((SELECT COUNT(*) + 1 FROM patient), 9, '0'));
+        INSERT INTO patient_seq VALUES ();
+        SET NEW.patientId = CONCAT('P', LPAD(LAST_INSERT_ID(), 9, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -208,7 +219,8 @@ BEFORE INSERT ON doctor
 FOR EACH ROW
 BEGIN
     IF NEW.doctorId IS NULL OR NEW.doctorId = '' THEN
-        SET NEW.doctorId = CONCAT('D', LPAD((SELECT COUNT(*) + 1 FROM doctor), 9, '0'));
+        INSERT INTO doctor_seq VALUES ();
+        SET NEW.doctorId = CONCAT('D', LPAD(LAST_INSERT_ID(), 9, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -220,7 +232,8 @@ BEFORE INSERT ON schedule
 FOR EACH ROW
 BEGIN
     IF NEW.scheduleId IS NULL OR NEW.scheduleId = '' THEN
-        SET NEW.scheduleId = CONCAT('SCH', LPAD((SELECT COUNT(*) + 1 FROM schedule), 7, '0'));
+        INSERT INTO schedule_seq VALUES ();
+        SET NEW.scheduleId = CONCAT('SCH', LPAD(LAST_INSERT_ID(), 8, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -232,7 +245,8 @@ BEFORE INSERT ON consultation
 FOR EACH ROW
 BEGIN
     IF NEW.consultationId IS NULL OR NEW.consultationId = '' THEN
-        SET NEW.consultationId = CONCAT('C', LPAD((SELECT COUNT(*) + 1 FROM consultation), 9, '0'));
+        INSERT INTO consultation_seq VALUES ();
+        SET NEW.consultationId = CONCAT('C', LPAD(LAST_INSERT_ID(), 9, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -244,7 +258,8 @@ BEFORE INSERT ON medical_treatment
 FOR EACH ROW
 BEGIN
     IF NEW.treatmentId IS NULL OR NEW.treatmentId = '' THEN
-        SET NEW.treatmentId = CONCAT('T', LPAD((SELECT COUNT(*) + 1 FROM medical_treatment), 9, '0'));
+        INSERT INTO treatment_seq VALUES ();
+        SET NEW.treatmentId = CONCAT('T', LPAD(LAST_INSERT_ID(), 9, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -256,7 +271,8 @@ BEFORE INSERT ON medicine
 FOR EACH ROW
 BEGIN
     IF NEW.medicineId IS NULL OR NEW.medicineId = '' THEN
-        SET NEW.medicineId = CONCAT('M', LPAD((SELECT COUNT(*) + 1 FROM medicine), 9, '0'));
+        INSERT INTO medicine_seq VALUES ();
+        SET NEW.medicineId = CONCAT('M', LPAD(LAST_INSERT_ID(), 9, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -268,7 +284,8 @@ BEFORE INSERT ON prescription
 FOR EACH ROW
 BEGIN
     IF NEW.prescriptionId IS NULL OR NEW.prescriptionId = '' THEN
-        SET NEW.prescriptionId = CONCAT('PR', LPAD((SELECT COUNT(*) + 1 FROM prescription), 8, '0'));
+        INSERT INTO prescription_seq VALUES ();
+        SET NEW.prescriptionId = CONCAT('PR', LPAD(LAST_INSERT_ID(), 8, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -280,7 +297,8 @@ BEFORE INSERT ON prescribed_medicine
 FOR EACH ROW
 BEGIN
     IF NEW.prescribedMedicineId IS NULL OR NEW.prescribedMedicineId = '' THEN
-        SET NEW.prescribedMedicineId = CONCAT('PM', LPAD((SELECT COUNT(*) + 1 FROM prescribed_medicine), 8, '0'));
+        INSERT INTO prescribed_medicine_seq VALUES ();
+        SET NEW.prescribedMedicineId = CONCAT('PM', LPAD(LAST_INSERT_ID(), 8, '0'));
     END IF;
 END//
 DELIMITER ;
@@ -444,64 +462,64 @@ JOIN doctor d ON c.doctorId = d.doctorId;
 -- Insert sample data for testing
 
 -- Sample Addresses
-INSERT INTO address (addressId, street, city, state, postalCode) VALUES
-('A000000001', '123 Jalan Utama', 'Kuala Lumpur', 'WP Kuala Lumpur', '50000'),
-('A000000002', '456 Taman Melati', 'Petaling Jaya', 'Selangor', '47400'),
-('A000000003', '789 Bandar Baru', 'Shah Alam', 'Selangor', '40000'),
-('A000000004', '321 Taman Universiti', 'Skudai', 'Johor', '81300'),
-('A000000005', '654 Jalan Hospital', 'Kuala Lumpur', 'WP Kuala Lumpur', '50586');
+INSERT INTO address (street, city, state, postalCode) VALUES
+('123 Jalan Utama', 'Kuala Lumpur', 'WP Kuala Lumpur', '50000'),
+('456 Taman Melati', 'Petaling Jaya', 'Selangor', '47400'),
+('789 Bandar Baru', 'Shah Alam', 'Selangor', '40000'),
+('321 Taman Universiti', 'Skudai', 'Johor', '81300'),
+('654 Jalan Hospital', 'Kuala Lumpur', 'WP Kuala Lumpur', '50586');
 
 -- Sample Patients (with Person fields distributed)
-INSERT INTO patient (patientId, fullName, ICNumber, email, phoneNumber, addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact) VALUES
-('P000000001', 'Ahmad bin Abdullah', '011130-14-5347', 'ahmad.abdullah@email.com', '012-3456789', 'A000000001', '2024-01-15', 'W001', 'A_POSITIVE', 'Penicillin,Peanuts', '019-8765432'),
-('P000000002', 'Siti binti Mohamed', '920220-06-5678', 'siti.mohamed@email.com', '012-3456790', 'A000000002', '2024-01-16', 'W002', 'O_POSITIVE', 'Shellfish', '019-8765433'),
-('P000000003', 'Mohammed bin Ali', '940503-08-8901', 'mohammed.ali@email.com', '012-3456793', 'A000000005', '2024-01-18', 'W003', 'B_POSITIVE', 'None', '019-8765434');
+INSERT INTO patient (fullName, ICNumber, email, phoneNumber, addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact) VALUES
+('Ahmad bin Abdullah', '011130-14-5347', 'ahmad.abdullah@email.com', '012-3456789', 'A000000001', '2024-01-15', 'W001', 'A_POSITIVE', 'Penicillin,Peanuts', '019-8765432'),
+('Siti binti Mohamed', '920220-06-5678', 'siti.mohamed@email.com', '012-3456790', 'A000000002', '2024-01-16', 'W002', 'O_POSITIVE', 'Shellfish', '019-8765433'),
+('Mohammed bin Ali', '940503-08-8901', 'mohammed.ali@email.com', '012-3456793', 'A000000005', '2024-01-18', 'W003', 'B_POSITIVE', 'None', '019-8765434');
 
 -- Sample Doctors (with Person fields distributed)
-INSERT INTO doctor (doctorId, fullName, ICNumber, email, phoneNumber, addressId, registrationDate, medicalSpecialty, licenseNumber, expYears) VALUES
-('D000000001', 'Dr. Lim Wei Chen', '850322-04-6789', 'dr.lim@clinic.com', '012-3456791', 'A000000003', '2024-01-10', 'General Medicine', 'MD001234', 8),
-('D000000002', 'Dr. Sarah Johnson', '880404-04-7890', 'dr.sarah@clinic.com', '012-3456792', 'A000000004', '2024-01-12', 'Cardiology', 'MD001235', 12);
+INSERT INTO doctor (fullName, ICNumber, email, phoneNumber, addressId, registrationDate, medicalSpecialty, licenseNumber, expYears) VALUES
+('Dr. Lim Wei Chen', '850322-04-6789', 'dr.lim@clinic.com', '012-3456791', 'A000000003', '2024-01-10', 'General Medicine', 'MD001234', 8),
+('Dr. Sarah Johnson', '880404-04-7890', 'dr.sarah@clinic.com', '012-3456792', 'A000000004', '2024-01-12', 'Cardiology', 'MD001235', 12);
 
 -- Sample Schedules
-INSERT INTO schedule (scheduleId, doctorId, dayOfWeek, fromTime, toTime) VALUES
-('SCH0000001', 'D000000001', 'MONDAY', '09:00:00', '17:00:00'),
-('SCH0000002', 'D000000001', 'TUESDAY', '09:00:00', '17:00:00'),
-('SCH0000003', 'D000000001', 'WEDNESDAY', '09:00:00', '17:00:00'),
-('SCH0000004', 'D000000002', 'MONDAY', '08:00:00', '16:00:00'),
-('SCH0000005', 'D000000002', 'THURSDAY', '08:00:00', '16:00:00');
+INSERT INTO schedule (doctorId, dayOfWeek, fromTime, toTime) VALUES
+('D000000001', 'MONDAY', '09:00:00', '17:00:00'),
+('D000000001', 'TUESDAY', '09:00:00', '17:00:00'),
+('D000000001', 'WEDNESDAY', '09:00:00', '17:00:00'),
+('D000000002', 'MONDAY', '08:00:00', '16:00:00'),
+('D000000002', 'THURSDAY', '08:00:00', '16:00:00');
 
 -- Sample Medicines
-INSERT INTO `medicine` (`medicineId`, `medicineName`, `genericName`, `manufacturer`, `description`, `dosageForm`, `strength`, `quantityInStock`, `minimumStockLevel`, `unitPrice`, `expiryDate`, `storageLocation`, `requiresPrescription`, `status`, `createdDate`) VALUES
-('M000000001', 'Paracetamol', 'Acetaminophen', 'PharmaCorp', 'Pain reliever and fever reducer', 'Tablet', '500mg', 996, 100, 0.50, '2025-12-31', 'Shelf A1', 0, 'AVAILABLE', '2025-07-14 03:48:53'),
-('M000000002', 'Amoxicillin', 'Amoxicillin', 'MediPharm', 'Antibiotic for bacterial infections', 'Capsule', '250mg', 500, 50, 2.00, '2025-06-30', 'Shelf B2', 1, 'AVAILABLE', '2025-07-14 03:48:53'),
-('M000000003', 'Ibuprofen', 'Ibuprofen', 'HealthCare Ltd', 'Anti-inflammatory pain reliever', 'Tablet', '400mg', 750, 75, 0.75, '2025-09-30', 'Shelf A2', 0, 'AVAILABLE', '2025-07-14 03:48:53'),
-('M000000004', 'Omeprazole', 'Omeprazole', 'GastroMed', 'Proton pump inhibitor for acid reflux', 'Capsule', '20mg', 300, 30, 3.50, '2025-03-31', 'Shelf C1', 1, 'AVAILABLE', '2025-07-14 03:48:53'),
-('M000000005', 'Barbiturate', 'Barbiturate', 'MediPharm', 'Sedative-medicine that makes you sleepy and drowsy', 'Capsule', '30mg', 200, 40, 1.00, '2028-09-30', 'Shelf A2', 0, 'AVAILABLE', '2025-07-15 12:27:10'),
-('M000000006', 'Antacid', 'Antacid', 'Gaviscon', 'Antacids are medicines that counteract (neutralise) the acid in your stomach to relieve indigestion and heartburn.', 'Liquid', '200ml', 80, 30, 38.90, '2027-08-03', 'Shelf A1', 0, 'AVAILABLE', '2025-07-15 13:08:41');
+INSERT INTO `medicine` (`medicineName`, `genericName`, `manufacturer`, `description`, `dosageForm`, `strength`, `quantityInStock`, `minimumStockLevel`, `unitPrice`, `expiryDate`, `storageLocation`, `requiresPrescription`, `status`, `createdDate`) VALUES
+('Paracetamol', 'Acetaminophen', 'PharmaCorp', 'Pain reliever and fever reducer', 'Tablet', '500mg', 996, 100, 0.50, '2025-12-31', 'Shelf A1', 0, 'AVAILABLE', '2025-07-14 03:48:53'),
+('Amoxicillin', 'Amoxicillin', 'MediPharm', 'Antibiotic for bacterial infections', 'Capsule', '250mg', 500, 50, 2.00, '2025-06-30', 'Shelf B2', 1, 'AVAILABLE', '2025-07-14 03:48:53'),
+('Ibuprofen', 'Ibuprofen', 'HealthCare Ltd', 'Anti-inflammatory pain reliever', 'Tablet', '400mg', 750, 75, 0.75, '2025-09-30', 'Shelf A2', 0, 'AVAILABLE', '2025-07-14 03:48:53'),
+('Omeprazole', 'Omeprazole', 'GastroMed', 'Proton pump inhibitor for acid reflux', 'Capsule', '20mg', 300, 30, 3.50, '2025-03-31', 'Shelf C1', 1, 'AVAILABLE', '2025-07-14 03:48:53'),
+('Barbiturate', 'Barbiturate', 'MediPharm', 'Sedative-medicine that makes you sleepy and drowsy', 'Capsule', '30mg', 200, 40, 1.00, '2028-09-30', 'Shelf A2', 0, 'AVAILABLE', '2025-07-15 12:27:10'),
+('Antacid', 'Antacid', 'Gaviscon', 'Antacids are medicines that counteract (neutralise) the acid in your stomach to relieve indigestion and heartburn.', 'Liquid', '200ml', 80, 30, 38.90, '2027-08-03', 'Shelf A1', 0, 'AVAILABLE', '2025-07-15 13:08:41');
 
 -- Sample Consultations
-INSERT INTO consultation (consultationId, patientId, doctorId, consultationDate, symptoms, consultationFee) VALUES
-('C000000001', 'P000000001', 'D000000001', '2024-01-20 10:00:00', 'Fever and headache', 50.00),
-('C000000002', 'P000000002', 'D000000002', '2024-01-21 14:00:00', 'Chest pain and shortness of breath', 80.00),
-('C000000003', 'P000000003', 'D000000001', '2024-01-22 11:00:00', 'Stomach pain and nausea', 50.00);
+INSERT INTO consultation (patientId, doctorId, consultationDate, symptoms, consultationFee) VALUES
+('P000000001', 'D000000001', '2024-01-20 10:00:00', 'Fever and headache', 50.00),
+('P000000002', 'D000000002', '2024-01-21 14:00:00', 'Chest pain and shortness of breath', 80.00),
+('P000000003', 'D000000001', '2024-01-22 11:00:00', 'Stomach pain and nausea', 50.00);
 
 -- Sample Medical Treatments
-INSERT INTO medical_treatment (treatmentId, patientId, doctorId, consultationId, diagnosis, treatmentPlan, treatmentCost) VALUES
-('T000000001', 'P000000001', 'D000000001', 'C000000001', 'Common cold with fever', 'Rest, fluids, and paracetamol for fever', 25.00),
-('T000000002', 'P000000002', 'D000000002', 'C000000002', 'Hypertension', 'Lifestyle changes and medication monitoring', 45.00),
-('T000000003', 'P000000003', 'D000000001', 'C000000003', 'Gastritis', 'Diet modification and omeprazole', 35.00);
+INSERT INTO medical_treatment (patientId, doctorId, consultationId, diagnosis, treatmentPlan, treatmentCost) VALUES
+('P000000001', 'D000000001', 'C000000001', 'Common cold with fever', 'Rest, fluids, and paracetamol for fever', 25.00),
+('P000000002', 'D000000002', 'C000000002', 'Hypertension', 'Lifestyle changes and medication monitoring', 45.00),
+('P000000003', 'D000000001', 'C000000003', 'Gastritis', 'Diet modification and omeprazole', 35.00);
 
 -- Sample Prescriptions
-INSERT INTO prescription (prescriptionId, patientId, doctorId, consultationId, prescriptionDate, instructions, expiryDate) VALUES
-('PR00000001', 'P000000001', 'D000000001', 'C000000001', '2024-01-20 10:30:00', 'Take 2 tablets every 6 hours for fever', '2024-02-20'),
-('PR00000002', 'P000000002', 'D000000002', 'C000000002', '2024-01-21 14:30:00', 'Take 1 capsule daily with food', '2024-03-21'),
-('PR00000003', 'P000000003', 'D000000001', 'C000000003', '2024-01-22 11:30:00', 'Take 1 capsule daily before breakfast', '2024-02-22');
+INSERT INTO prescription (patientId, doctorId, consultationId, prescriptionDate, instructions, expiryDate) VALUES
+('P000000001', 'D000000001', 'C000000001', '2024-01-20 10:30:00', 'Take 2 tablets every 6 hours for fever', '2024-02-20'),
+('P000000002', 'D000000002', 'C000000002', '2024-01-21 14:30:00', 'Take 1 capsule daily with food', '2024-03-21'),
+('P000000003', 'D000000001', 'C000000003', '2024-01-22 11:30:00', 'Take 1 capsule daily before breakfast', '2024-02-22');
 
 -- Sample Prescribed Medicines
-INSERT INTO prescribed_medicine (prescribedMedicineId, prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice, totalCost) VALUES
-('PM00000001', 'PR00000001', 'M000000001', 20, '500mg', 'Every 6 hours', 5, 0.50, 10.00),
-('PM00000002', 'PR00000002', 'M000000002', 14, '250mg', 'Twice daily', 7, 2.00, 28.00),
-('PM00000003', 'PR00000003', 'M000000004', 30, '20mg', 'Once daily', 30, 3.50, 105.00);
+INSERT INTO prescribed_medicine (prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice, totalCost) VALUES
+('PR00000001', 'M000000001', 20, '500mg', 'Every 6 hours', 5, 0.50, 10.00),
+('PR00000002', 'M000000002', 14, '250mg', 'Twice daily', 7, 2.00, 28.00),
+('PR00000003', 'M000000004', 30, '20mg', 'Once daily', 30, 3.50, 105.00);
 
 -- Update consultation status to completed
 UPDATE consultation SET status = 'COMPLETED', diagnosis = 'Common cold with fever', treatment = 'Rest and medication' WHERE consultationId = 'C000000001';

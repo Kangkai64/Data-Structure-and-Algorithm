@@ -60,43 +60,38 @@ public class PatientDao extends DaoTemplate<Patient> {
     }
 
     @Override
-    public String getNewId() throws SQLException {
-        String tempInsertSql = "INSERT INTO patient (patientId, fullName, ICNumber, email, phoneNumber, " +
-                              "addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact, isActive) " +
-                              "VALUES (NULL, 'TEMP', '000000-00-0000', 'temp@temp.com', '000-0000000', " +
-                              "'A000000001', CURDATE(), 'TEMP', 'A_POSITIVE', '', '', false)";
-        String tempDeleteSql = "DELETE FROM patient WHERE fullName = 'TEMP' AND ICNumber = '000000-00-0000'";
-        return getNextIdFromDatabase("patient", "patientId", tempInsertSql, tempDeleteSql);
-    }
-
-    @Override
-    public boolean insert(Patient patient) throws SQLException {
-        String sql = "INSERT INTO patient (patientId, fullName, ICNumber, email, phoneNumber, " +
+    public boolean insertAndReturnId(Patient patient) throws SQLException {
+        String sql = "INSERT INTO patient (fullName, ICNumber, email, phoneNumber, " +
                 "addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact, isActive) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        String addressId = addressDao.getNewId();
-        patient.getAddress().setAddressId(addressId);
-        addressDao.insert(patient.getAddress());
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preparedStatement.setString(1, patient.getPatientId());
-            preparedStatement.setString(2, patient.getFullName());
-            preparedStatement.setString(3, patient.getICNumber());
-            preparedStatement.setString(4, patient.getEmail());
-            preparedStatement.setString(5, patient.getPhoneNumber());
-            preparedStatement.setString(6, addressId);
-            preparedStatement.setDate(7, new Date(patient.getRegistrationDate().getTime()));
-            preparedStatement.setString(8, patient.getWardNumber());
-            preparedStatement.setString(9, patient.getBloodType().name());
-            preparedStatement.setString(10, allergiesToString(patient.getAllergies()));
-            preparedStatement.setString(11, patient.getEmergencyContact());
-            preparedStatement.setBoolean(12, patient.isActive());
+            preparedStatement.setString(1, patient.getFullName());
+            preparedStatement.setString(2, patient.getICNumber());
+            preparedStatement.setString(3, patient.getEmail());
+            preparedStatement.setString(4, patient.getPhoneNumber());
+            preparedStatement.setString(5, patient.getAddress().getAddressId());
+            preparedStatement.setDate(6, new Date(patient.getRegistrationDate().getTime()));
+            preparedStatement.setString(7, patient.getWardNumber());
+            preparedStatement.setString(8, patient.getBloodType().name());
+            preparedStatement.setString(9, allergiesToString(patient.getAllergies()));
+            preparedStatement.setString(10, patient.getEmergencyContact());
+            preparedStatement.setBoolean(11, patient.isActive());
 
             int affectedRows = preparedStatement.executeUpdate();
-            return affectedRows > 0;
+            
+            if (affectedRows > 0) {
+                // Get the generated ID from the database
+                String generatedId = getLastInsertedPatientId(connection);
+                if (generatedId != null) {
+                    patient.setPatientId(generatedId);
+                    return true;
+                }
+            }
+            
+            return false;
 
         } catch (SQLException e) {
             System.err.println("Error inserting patient: " + e.getMessage());
@@ -210,5 +205,25 @@ public class PatientDao extends DaoTemplate<Patient> {
             return allergiesString.split(",").toString();
         }
         return "";
+    }
+
+    /**
+     * Get the ID of the last inserted patient
+     * @param connection The database connection
+     * @return The generated patient ID
+     * @throws SQLException if database error occurs
+     */
+    private String getLastInsertedPatientId(Connection connection) throws SQLException {
+        String sql = "SELECT patientId FROM patient ORDER BY createdDate DESC LIMIT 1";
+        
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            
+            if (resultSet.next()) {
+                return resultSet.getString("patientId");
+            }
+        }
+        
+        return null;
     }
 }

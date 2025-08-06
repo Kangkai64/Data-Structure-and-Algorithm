@@ -6,7 +6,7 @@ import entity.Address;
 import entity.BloodType;
 import dao.PatientDao;
 import dao.AddressDao;
-import java.util.Date;
+import java.time.LocalDate;
 import java.sql.SQLException;
 import java.util.Iterator;
 
@@ -53,7 +53,7 @@ public class PatientManagementControl {
             
             // Create new patient with the generated address ID
             Patient patient = new Patient(fullName, icNumber, email, phoneNumber, 
-                                        address, new Date(), null, wardNumber, 
+                                        address, LocalDate.now(), null, wardNumber, 
                                         bloodType, allergies, emergencyContact);
             
             // Insert patient and get the generated patient ID
@@ -201,7 +201,7 @@ public class PatientManagementControl {
         report.append("=== PATIENT REGISTRATION REPORT ===\n");
         report.append("Total Active Patients: ").append(getTotalActivePatients()).append("\n");
         report.append("Patients in Queue: ").append(getQueueSize()).append("\n");
-        report.append("Report Generated: ").append(new Date()).append("\n\n");
+        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
         
         Iterator<Patient> patientIterator = activePatients.iterator();
         while (patientIterator.hasNext()) {
@@ -221,7 +221,7 @@ public class PatientManagementControl {
         StringBuilder report = new StringBuilder();
         report.append("=== QUEUE STATUS REPORT ===\n");
         report.append("Patients in Queue: ").append(getQueueSize()).append("\n");
-        report.append("Report Generated: ").append(new Date()).append("\n\n");
+        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
         
         if (getQueueSize() > 0) {
             Iterator<Patient> queueIterator = patientList.iterator();

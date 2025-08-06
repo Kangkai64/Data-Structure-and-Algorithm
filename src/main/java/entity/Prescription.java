@@ -1,8 +1,8 @@
 package entity;
 
-import utility.ConsoleUtils;
 import adt.ArrayBucketList;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
 import java.util.Iterator;
 
 public class Prescription {
@@ -10,10 +10,10 @@ public class Prescription {
     private Patient patient;
     private Doctor doctor;
     private Consultation consultation;
-    private Date prescriptionDate;
+    private LocalDate prescriptionDate;
     private ArrayBucketList<String, PrescribedMedicine> prescribedMedicines;
     private String instructions;
-    private Date expiryDate;
+    private LocalDate expiryDate;
     private PrescriptionStatus status;
     private double totalCost;
 
@@ -22,7 +22,7 @@ public class Prescription {
     }
 
     public Prescription(String prescriptionId, Patient patient, Doctor doctor, 
-                       Consultation consultation, Date prescriptionDate, String instructions, Date expiryDate) {
+                       Consultation consultation, LocalDate prescriptionDate, String instructions, LocalDate expiryDate) {
         this.prescriptionId = prescriptionId;
         this.patient = patient;
         this.doctor = doctor;
@@ -48,8 +48,8 @@ public class Prescription {
     public Consultation getConsultation() { return consultation; }
     public void setConsultation(Consultation consultation) { this.consultation = consultation; }
 
-    public Date getPrescriptionDate() { return prescriptionDate; }
-    public void setPrescriptionDate(Date prescriptionDate) { this.prescriptionDate = prescriptionDate; }
+    public LocalDate getPrescriptionDate() { return prescriptionDate; }
+    public void setPrescriptionDate(LocalDate prescriptionDate) { this.prescriptionDate = prescriptionDate; }
 
     public ArrayBucketList<String, PrescribedMedicine> getPrescribedMedicines() { return prescribedMedicines; }
     public void setPrescribedMedicines(ArrayBucketList<String, PrescribedMedicine> prescribedMedicines) { 
@@ -59,8 +59,8 @@ public class Prescription {
     public String getInstructions() { return instructions; }
     public void setInstructions(String instructions) { this.instructions = instructions; }
 
-    public Date getExpiryDate() { return expiryDate; }
-    public void setExpiryDate(Date expiryDate) { this.expiryDate = expiryDate; }
+    public LocalDate getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
 
     public PrescriptionStatus getStatus() { return status; }
     public void setStatus(PrescriptionStatus status) { this.status = status; }
@@ -115,7 +115,7 @@ public class Prescription {
     }
 
     public boolean isExpired() {
-        return new Date().after(expiryDate);
+        return LocalDate.now().isAfter(expiryDate);
     }
 
     public boolean canBeDispensed() {
@@ -136,7 +136,7 @@ public class Prescription {
         return "Prescription ID: " + prescriptionId + "\n" +
                "Patient: " + patient.getFullName() + "\n" +
                "Doctor: " + doctor.getFullName() + "\n" +
-               "Prescription Date: " + ConsoleUtils.dateTimeFormatter(prescriptionDate) + "\n" +
+               "Prescription Date: " + prescriptionDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + "\n" +
                "Status: " + status + "\n" +
                "Total Cost: RM " + String.format("%.2f", totalCost) + "\n";
     }

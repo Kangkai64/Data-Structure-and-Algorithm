@@ -9,6 +9,6 @@ public class PatternChecker {
     public static final Pattern PHONE_PATTERN = Pattern.compile("^0[0-9]{2}-[0-9]{7,8}$");
     // IC number validation pattern
     public static final Pattern IC_PATTERN = Pattern.compile("^\\d{6}-\\d{2}-\\d{4}$");
-    // Date validation pattern
-    public static final Pattern DATE_PATTERN = Pattern.compile("^\\d{2}-\\d{2}-\\d{4}$");
+    // Contains alphabets pattern
+    public static final Pattern CONTAIN_ALPHABETS_PATTERN = Pattern.compile("^.*[a-zA-Z]+.*$");
 }

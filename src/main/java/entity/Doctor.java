@@ -5,7 +5,7 @@ package entity;
  */
 
 import adt.ArrayBucketList;
-import java.util.Date;
+import java.time.LocalDate;
 
 public class Doctor extends Person {
     private String doctorId;
@@ -18,7 +18,7 @@ public class Doctor extends Person {
     private ArrayBucketList<String, Schedule> schedules;
 
     public Doctor(String fullName, String ICNumber, String email, String phoneNumber,
-                  Address address, Date registrationDate, String doctorId, String medicalSpecialty,
+                  Address address, LocalDate registrationDate, String doctorId, String medicalSpecialty,
                   String licenseNumber, int expYears) {
         super(fullName, ICNumber, email, phoneNumber, address, registrationDate);
         this.doctorId = doctorId;

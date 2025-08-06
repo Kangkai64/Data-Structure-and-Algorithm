@@ -1,14 +1,26 @@
 package utility;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
 import java.util.Scanner;
+import java.time.DateTimeException;
 
 public class ConsoleUtils {
     public static String getStringInput(Scanner scanner, String prompt) {
-        System.out.print(prompt);
-        return scanner.nextLine().trim();
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Input cannot be empty");
+            } else if (!PatternChecker.CONTAIN_ALPHABETS_PATTERN.matcher(input).matches()) {
+                System.out.println("Input must contain at least one alphabet");
+            } else {
+                return input;
+            }
+        }
     }
 
     public static int getIntInput(Scanner scanner, String prompt, int min, int max) {
@@ -43,62 +55,91 @@ public class ConsoleUtils {
         }
     }
 
-    public static Date getDateInput(Scanner scanner, String prompt) {
-        String datePattern = "DD-MM-YYYY";
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    public static LocalDate getDateInput(Scanner scanner, String prompt, DateType dateType) {
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy").withResolverStyle(ResolverStyle.STRICT);
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
-            if (input.isEmpty()) {
-                return null;
-            } else if (!PatternChecker.DATE_PATTERN.matcher(input).matches()) {
-                String year = input.substring(6);
-                if (Integer.parseInt(year) < 1900) {
-                    System.out.println("Year must be greater than 1900");
-                    continue;
-                }
-                System.out.println("Invalid date format. Please use " + datePattern);
-                continue;
-            }
             try {
-                return dateFormat.parse(input);
-            } catch (Exception e) {
-                System.out.println("Invalid date format. Please use " + datePattern);
+                LocalDate date = LocalDate.parse(input, dateFormat);
+                if (date.isBefore(LocalDate.of(1900, 1, 1))) {
+                    System.out.println("Year must be greater than 1900");
+                } else if (dateType == DateType.PAST_DATE_ONLY && date.isAfter(LocalDate.now())) {
+                    System.out.println("Date cannot be in the past");
+                } else if (dateType == DateType.FUTURE_DATE_ONLY && date.isBefore(LocalDate.now())) {
+                    System.out.println("Date cannot be in the future");
+                } else {
+                    return date;
+                }
+            } catch (DateTimeException e) {
+                System.out.println("Invalid date format. Please use DD-MM-YYYY");
             }
         }
     }
 
-    public static String dateTimeFormatter(Date date) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-        return dateFormat.format(date);
-    }
-
-    public static String reportDateTimeFormatter(Date date) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss a");
-        return dateFormat.format(date);
+    public static boolean getBooleanInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Input cannot be empty");
+            } else if (input.equalsIgnoreCase("Y") || input.equalsIgnoreCase("N")) {
+                return input.equalsIgnoreCase("Y");
+            } else {
+                System.out.println("Invalid input. Please enter Y or N.");
+            }
+        }
     }
 
     // Get user input with default value
     public static String getStringInput(Scanner scanner, String prompt, String defaultValue) {
-        System.out.print(prompt);
-        String input = scanner.nextLine().trim();
-        return input.isEmpty() ? defaultValue : input;
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                return defaultValue;
+            } else if (!PatternChecker.CONTAIN_ALPHABETS_PATTERN.matcher(input).matches()) {
+                System.out.println("Input must contain at least one alphabet");
+            } else {
+                return input;
+            }
+        }
     }
 
     public static int getIntInput(Scanner scanner, String prompt, int defaultValue) {
-        System.out.print(prompt);
-        String input = scanner.nextLine().trim();
-        return input.isEmpty() ? defaultValue : Integer.parseInt(input);
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                return defaultValue;
+            } else {
+                try {
+                    return Integer.parseInt(input);
+                } catch (NumberFormatException e) {
+                    System.out.println("Please enter a valid number");
+                }
+            }
+        }
     }
 
     public static double getDoubleInput(Scanner scanner, String prompt, double defaultValue) {
-        System.out.print(prompt);
-        String input = scanner.nextLine().trim();
-        return input.isEmpty() ? defaultValue : Double.parseDouble(input);
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                return defaultValue;
+            } else {
+                try {
+                    return Double.parseDouble(input);
+                } catch (NumberFormatException e) {
+                    System.out.println("Please enter a valid number");
+                }
+            }
+        }
     }
 
-    public static Date getDateInput(Scanner scanner, String prompt, Date defaultValue) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    public static LocalDate getDateInput(Scanner scanner, String prompt, DateType dateType, LocalDate defaultValue) {
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
@@ -106,9 +147,32 @@ public class ConsoleUtils {
                 return defaultValue;
             }
             try {
-                return dateFormat.parse(input);
-            } catch (Exception e) {
-                System.out.println("Invalid date format. Please use dd-MM-yyyy");
+                LocalDate date = LocalDate.parse(input, dateFormat);
+                if (date.isBefore(LocalDate.of(1900, 1, 1))) {
+                    System.out.println("Year must be greater than 1900");
+                } else if (dateType == DateType.PAST_DATE_ONLY && date.isAfter(LocalDate.now())) {
+                    System.out.println("Date cannot be in the past");
+                } else if (dateType == DateType.FUTURE_DATE_ONLY && date.isBefore(LocalDate.now())) {
+                    System.out.println("Date cannot be in the future");
+                } else {
+                    return date;
+                }
+            } catch (DateTimeException e) {
+                System.out.println("Invalid date format. Please use DD-MM-YYYY");
+            }
+        }
+    }
+
+    public static boolean getBooleanInput(Scanner scanner, String prompt, boolean defaultValue) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                return defaultValue;
+            } else if (input.equalsIgnoreCase("Y") || input.equalsIgnoreCase("N")) {
+                return input.equalsIgnoreCase("Y");
+            } else {
+                System.out.println("Invalid input. Please enter Y or N.");
             }
         }
     }

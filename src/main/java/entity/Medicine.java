@@ -1,7 +1,7 @@
 package entity;
 
-import utility.ConsoleUtils;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class Medicine {
     private String medicineId;
@@ -14,7 +14,7 @@ public class Medicine {
     private int quantityInStock;
     private int minimumStockLevel;
     private double unitPrice;
-    private Date expiryDate;
+    private LocalDate expiryDate;
     private String storageLocation;
     private boolean requiresPrescription;
     private MedicineStatus status;
@@ -26,7 +26,7 @@ public class Medicine {
     public Medicine(String medicineId, String medicineName, String genericName, 
                    String manufacturer, String description, String dosageForm, 
                    String strength, int quantityInStock, int minimumStockLevel, 
-                   double unitPrice, Date expiryDate, String storageLocation, 
+                   double unitPrice, LocalDate expiryDate, String storageLocation, 
                    boolean requiresPrescription) {
         this.medicineId = medicineId;
         this.medicineName = medicineName;
@@ -48,7 +48,7 @@ public class Medicine {
     public Medicine(String medicineName, String genericName, 
                    String manufacturer, String description, String dosageForm, 
                    String strength, int quantityInStock, int minimumStockLevel, 
-                   double unitPrice, Date expiryDate, String storageLocation, 
+                   double unitPrice, LocalDate expiryDate, String storageLocation, 
                    boolean requiresPrescription) {
         this.medicineId = null; // Will be set by control layer
         this.medicineName = medicineName;
@@ -103,8 +103,8 @@ public class Medicine {
     public double getUnitPrice() { return unitPrice; }
     public void setUnitPrice(double unitPrice) { this.unitPrice = unitPrice; }
 
-    public Date getExpiryDate() { return expiryDate; }
-    public void setExpiryDate(Date expiryDate) { this.expiryDate = expiryDate; }
+    public LocalDate getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
 
     public String getStorageLocation() { return storageLocation; }
     public void setStorageLocation(String storageLocation) { this.storageLocation = storageLocation; }
@@ -117,7 +117,7 @@ public class Medicine {
     public void setStatus(MedicineStatus status) { this.status = status; }
 
     public boolean isExpired() {
-        return new Date().after(expiryDate);
+        return LocalDate.now().isAfter(expiryDate);
     }
 
     public boolean isLowStock() {
@@ -158,7 +158,7 @@ public class Medicine {
                "Quantity In Stock: " + quantityInStock + "\n" +
                "Minimum Stock Level: " + minimumStockLevel + "\n" +
                "Unit Price: RM " + String.format("%.2f", unitPrice) + "\n" +
-               "Expiry Date: " + ConsoleUtils.dateTimeFormatter(expiryDate) + "\n" +
+               "Expiry Date: " + expiryDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + "\n" +
                "Storage Location: " + storageLocation + "\n" +
                "Requires Prescription: " + requiresPrescription + "\n" +
                "Status: " + status + "\n";

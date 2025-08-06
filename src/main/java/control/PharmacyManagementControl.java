@@ -13,7 +13,8 @@ import dao.PatientDao;
 import dao.DoctorDao;
 import dao.ConsultationDao;
 import utility.ConsoleUtils;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Iterator;
 
 /**
@@ -135,7 +136,7 @@ public class PharmacyManagementControl {
 
     // Prescription Management Methods
     public boolean createPrescription(String patientId, String doctorId, String consultationId,
-            String instructions, Date expiryDate) {
+            String instructions, LocalDate expiryDate) {
         try {
             Patient patient = patientDao.findById(patientId);
             Doctor doctor = doctorDao.findById(doctorId);
@@ -143,7 +144,7 @@ public class PharmacyManagementControl {
 
             // Create new prescription
             Prescription prescription = new Prescription(null, patient, doctor,
-                    consultation, new Date(), instructions, expiryDate);
+                    consultation, LocalDate.now(), instructions, expiryDate);
 
             // Add to prescriptions list
             prescriptionDao.insertAndReturnId(prescription);
@@ -376,13 +377,13 @@ public class PharmacyManagementControl {
         return statusPrescriptions;
     }
 
-    public ArrayBucketList<String, Prescription> findPrescriptionsByDateRange(Date startDate, Date endDate) {
+    public ArrayBucketList<String, Prescription> findPrescriptionsByDateRange(LocalDate startDate, LocalDate endDate) {
         ArrayBucketList<String, Prescription> dateRangePrescriptions = new ArrayBucketList<String, Prescription>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
-            if (prescription.getPrescriptionDate().after(startDate)
-                    && prescription.getPrescriptionDate().before(endDate)) {
+            if (prescription.getPrescriptionDate().isAfter(startDate)
+                    && prescription.getPrescriptionDate().isBefore(endDate)) {
                 dateRangePrescriptions.add(prescription.getPrescriptionId(), prescription);
             }
         }
@@ -424,7 +425,7 @@ public class PharmacyManagementControl {
         report.append("Total Medicines: ").append(getTotalMedicines()).append("\n");
         report.append("Low Stock Medicines: ").append(getLowStockMedicines().getSize()).append("\n");
         report.append("Expired Medicines: ").append(getExpiredMedicines().getSize()).append("\n");
-        report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
+        report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(LocalDateTime.now())).append("\n\n");
 
         report.append("----------------------------------------\n");
         Iterator<Medicine> medicineIterator = medicines.iterator();
@@ -443,7 +444,7 @@ public class PharmacyManagementControl {
         report.append("Total Prescriptions: ").append(getTotalPrescriptions()).append("\n");
         report.append("Active Prescriptions: ").append(getActivePrescriptions().getSize()).append("\n");
         report.append("Dispensed Prescriptions: ").append(dispensedPrescriptions.getSize()).append("\n");
-        report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(new Date())).append("\n\n");
+        report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(LocalDateTime.now())).append("\n\n");
 
         report.append("----------------------------------------\n");
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();

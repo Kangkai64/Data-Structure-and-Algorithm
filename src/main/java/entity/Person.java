@@ -1,6 +1,7 @@
 package entity;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import static utility.PatternChecker.*;
 
 /**
@@ -14,9 +15,9 @@ public abstract class Person {
     private String email;
     private String phoneNumber;
     private Address address;
-    private Date registrationDate;
+    private LocalDate registrationDate;
 
-    public Person(String fullName, String ICNumber, String email, String phoneNumber, Address address,Date registrationDate) {
+    public Person(String fullName, String ICNumber, String email, String phoneNumber, Address address,LocalDate registrationDate) {
         this.fullName = fullName;
         this.ICNumber = ICNumber;
         this.email = email;
@@ -94,11 +95,11 @@ public abstract class Person {
         this.address = address;
     }
 
-    public Date getRegistrationDate() {
+    public LocalDate getRegistrationDate() {
         return registrationDate;
     }
 
-    public void setRegistrationDate(Date registrationDate) {
+    public void setRegistrationDate(LocalDate registrationDate) {
         if (registrationDate == null) {
             throw new IllegalArgumentException("Registration date cannot be null");
         }
@@ -111,7 +112,7 @@ public abstract class Person {
                 + ", ICNumber = " + ICNumber + "\n"
                 + ", Email = " + email + "\n"
                 + ", PhoneNumber = " + phoneNumber + "\n"
-                + ", RegistrationDate = " + registrationDate;
+                + ", RegistrationDate = " + registrationDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
     }
 
     @Override

@@ -7,11 +7,11 @@ import entity.DayOfWeek;
 import entity.Address;
 import dao.DoctorDao;
 import dao.AddressDao;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Iterator;
 
 /**
- * @author: Lee Yong Kang
+ * @author: Lee Yong Kang   
  * Doctor Management Control - Module 2
  * Manages doctor information, duty schedules and availability tracking
  */
@@ -50,7 +50,7 @@ public class DoctorManagementControl {
             
             // Create new doctor with the generated address ID
             Doctor doctor = new Doctor(fullName, icNumber, email, phoneNumber, 
-                                     address, new Date(), null, medicalSpecialty, 
+                                     address, LocalDate.now(), null, medicalSpecialty, 
                                      licenseNumber, expYears);
             
             // Insert doctor and get the generated doctor ID
@@ -256,7 +256,7 @@ public class DoctorManagementControl {
         report.append("=== DOCTOR INFORMATION REPORT ===\n");
         report.append("Total Active Doctors: ").append(getTotalActiveDoctors()).append("\n");
         report.append("Available Doctors: ").append(getAvailableDoctors().getSize()).append("\n");
-        report.append("Report Generated: ").append(new Date()).append("\n\n");
+        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
         
         Iterator<Doctor> doctorIterator = activeDoctors.iterator();
         while (doctorIterator.hasNext()) {
@@ -277,7 +277,7 @@ public class DoctorManagementControl {
         StringBuilder report = new StringBuilder();
         report.append("=== DOCTOR SCHEDULE REPORT ===\n");
         report.append("Total Active Doctors: ").append(getTotalActiveDoctors()).append("\n");
-        report.append("Report Generated: ").append(new Date()).append("\n\n");
+        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
         
         Iterator<Doctor> doctorIterator = activeDoctors.iterator();
         while (doctorIterator.hasNext()) {

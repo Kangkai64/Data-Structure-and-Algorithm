@@ -4,8 +4,10 @@ import control.PharmacyManagementControl;
 import entity.Medicine;
 import entity.Prescription;
 import utility.ConsoleUtils;
+import utility.DateType;
 import adt.ArrayBucketList;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 /**
@@ -63,6 +65,7 @@ public class PharmacyManagementUI {
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
+                    ConsoleUtils.waitMessage();
             }
         }
     }
@@ -75,24 +78,17 @@ public class PharmacyManagementUI {
         System.out.println(medicine);
         System.out.println();
 
-        String confirm = ConsoleUtils.getStringInput(scanner, "Are you sure you want to add this medicine? (Y/N): ");
-        if (!confirm.isEmpty()) {
-            if (confirm.charAt(0) == 'Y' || confirm.charAt(0) == 'y') {
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to add this medicine? (Y/N): ");
+        if (confirm) {
                 if (pharmacyControl.addMedicine(medicine)) {
                     System.out.println("Medicine added.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println("Medicine not added.");
-                    ConsoleUtils.waitMessage();
                 }
-            } else {
-                System.out.println("Medicine not added.");
-                ConsoleUtils.waitMessage();
-            }
         } else {
             System.out.println("Medicine not added.");
-            ConsoleUtils.waitMessage();
         }
+        ConsoleUtils.waitMessage();
     }
 
     private Medicine getMedicineDetailsFromUser() {
@@ -105,10 +101,9 @@ public class PharmacyManagementUI {
         int quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", 0, 10000);
         int minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", 0, 300);
         double price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", 0.0, 10000.0);
-        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ");
+        LocalDate expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ", DateType.FUTURE_DATE_ONLY);
         String storageLocation = ConsoleUtils.getStringInput(scanner, "Enter storage location: ");
-        String requiresPrescriptionInput = (ConsoleUtils.getStringInput(scanner, "Requires prescription (Y / N): "));
-        boolean requiresPrescription = requiresPrescriptionInput.equalsIgnoreCase("Y") || requiresPrescriptionInput.equalsIgnoreCase("N");
+        boolean requiresPrescription = ConsoleUtils.getBooleanInput(scanner, "Requires prescription (Y / N): ");
 
         return new Medicine(null, medicineName, genericName, manufacturer, description, dosageForm, strength, quantity, minStock, price, expiryDate, storageLocation, requiresPrescription);
     }
@@ -151,6 +146,7 @@ public class PharmacyManagementUI {
             default:
                 System.out.println("Invalid choice.");
         }
+        ConsoleUtils.waitMessage();
     }
 
     private void updateMedicineStock(String medicineId, Medicine medicine) {
@@ -179,6 +175,7 @@ public class PharmacyManagementUI {
                 break;
             default:
                 System.out.println("Invalid choice.");
+                ConsoleUtils.waitMessage();
         }
     }
 
@@ -187,13 +184,11 @@ public class PharmacyManagementUI {
         double price = ConsoleUtils.getDoubleInput(scanner, "Enter price: ", 0.0, 10000.0);
         pharmacyControl.updateMedicinePrice(medicineId, price);
         System.out.println("Medicine price updated.");
-        ConsoleUtils.waitMessage();
     }
 
     private void discontinueMedicine(String medicineId) {
         pharmacyControl.discontinueMedicine(medicineId);
         System.out.println("Medicine discontinued.");
-        ConsoleUtils.waitMessage();
     }
 
     private void updateMedicineDetails(String medicineId, Medicine medicine) {
@@ -214,24 +209,17 @@ public class PharmacyManagementUI {
         System.out.println(medicine);
         System.out.println();
 
-        String confirm = ConsoleUtils.getStringInput(scanner, "Are you sure you want to update this medicine? (Y/N): ");
-        if (!confirm.isEmpty()) {
-            if (confirm.charAt(0) == 'Y' || confirm.charAt(0) == 'y') {
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to update this medicine? (Y/N): ");
+        if (confirm) {
                 if (pharmacyControl.updateMedicineDetails(medicine)) {
                     System.out.println("Medicine updated.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println("Medicine not updated.");
-                    ConsoleUtils.waitMessage();
                 }
-            } else {
-                System.out.println("Medicine not updated.");
-                ConsoleUtils.waitMessage();
-            }
         } else {
             System.out.println("Medicine not updated.");
-            ConsoleUtils.waitMessage();
         }
+        ConsoleUtils.waitMessage();
     }
 
     private Medicine getAndReplaceMedicineDetailsFromUser(Medicine medicine) {
@@ -248,14 +236,10 @@ public class PharmacyManagementUI {
         quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", medicine.getQuantityInStock());
         minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", medicine.getMinimumStockLevel());
         price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", medicine.getUnitPrice());
-        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ",
-                medicine.getExpiryDate());
+        LocalDate expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ", DateType.FUTURE_DATE_ONLY);
         String storageLocation = ConsoleUtils.getStringInput(scanner, "Enter storage location: ",
                 medicine.getStorageLocation());
-        String requiresPrescriptionInput = (ConsoleUtils.getStringInput(scanner, "Requires prescription (Y / N): ",
-                medicine.getRequiresPrescriptionString()));
-        boolean requiresPrescription = requiresPrescriptionInput.equalsIgnoreCase("Y")
-                || requiresPrescriptionInput.equalsIgnoreCase("N");
+        boolean requiresPrescription = ConsoleUtils.getBooleanInput(scanner, "Requires prescription (Y / N): ", medicine.getRequiresPrescription());
         System.out.println();
 
         // Create new medicine
@@ -270,19 +254,18 @@ public class PharmacyManagementUI {
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
         String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID (optional): ");
         String instructions = ConsoleUtils.getStringInput(scanner, "Enter instructions: ");
-        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ");
+        LocalDate expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ", DateType.FUTURE_DATE_ONLY);
         System.out.println();
         ConsoleUtils.printHeader("Prescription Overview");
         System.out.println("Patient ID: " + patientId + ", Doctor ID: " + doctorId);
         System.out.println("Consultation ID: " + consultationId);
         System.out.println("Instructions: " + instructions);
-        System.out.println("Expiry Date: " + ConsoleUtils.dateTimeFormatter(expiryDate));
+        System.out.println("Expiry Date: " + expiryDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
         System.out.println();
 
-        String confirm = ConsoleUtils.getStringInput(scanner,
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
                 "Are you sure you want to create this prescription? (Y/N): ");
-        if (!confirm.isEmpty()) {
-            if (confirm.charAt(0) == 'Y' || confirm.charAt(0) == 'y') {
+        if (confirm) {
                 if (pharmacyControl.createPrescription(patientId, doctorId, consultationId, instructions, expiryDate)) {
                     System.out.println("Prescription created successfully.");
                     ConsoleUtils.waitMessage();
@@ -290,7 +273,6 @@ public class PharmacyManagementUI {
                     System.out.println("Prescription not created.");
                     ConsoleUtils.waitMessage();
                 }
-            }
         } else {
             System.out.println("Prescription not created.");
             ConsoleUtils.waitMessage();
@@ -349,10 +331,9 @@ public class PharmacyManagementUI {
         displayPrescribedMedicineDetails(prescribedMedicine);
         System.out.println();
 
-        String confirm = ConsoleUtils.getStringInput(scanner,
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
                 "Are you sure you want to add this medicine to this prescription? (Y/N): ");
-        if (!confirm.isEmpty()) {
-            if (confirm.charAt(0) == 'Y' || confirm.charAt(0) == 'y') {
+        if (confirm) {
                 if (pharmacyControl.addMedicineToPrescription(prescribedMedicine)) {
                     System.out.println("Medicine added to prescription successfully.");
                     ConsoleUtils.waitMessage();
@@ -360,7 +341,6 @@ public class PharmacyManagementUI {
                     System.out.println("Medicine not added to prescription.");
                     ConsoleUtils.waitMessage();
                 }
-            }
         } else {
             System.out.println("Medicine not added to prescription.");
             ConsoleUtils.waitMessage();
@@ -419,10 +399,9 @@ public class PharmacyManagementUI {
         }
 
         String prescribedMedicineId = ConsoleUtils.getStringInput(scanner, "Enter prescribed medicine ID: ");
-        String confirm = ConsoleUtils.getStringInput(scanner,
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
                 "Are you sure you want to remove this medicine from this prescription? (Y/N): ");
-        if (!confirm.isEmpty()) {
-            if (confirm.charAt(0) == 'Y' || confirm.charAt(0) == 'y') {
+        if (confirm) {
                 if (pharmacyControl.removeMedicineFromPrescription(prescriptionId, prescribedMedicineId)) {
                     System.out.println("Medicine removed from prescription successfully.");
                     ConsoleUtils.waitMessage();
@@ -430,7 +409,6 @@ public class PharmacyManagementUI {
                     System.out.println("Medicine not removed from prescription.");
                     ConsoleUtils.waitMessage();
                 }
-            }
         } else {
             System.out.println("Medicine not removed from prescription.");
             ConsoleUtils.waitMessage();
@@ -466,9 +444,8 @@ public class PharmacyManagementUI {
             return;
         }
 
-        String confirm = ConsoleUtils.getStringInput(scanner, "Do you want to update the prescribed medicine? (Y/N): ");
-        if (!confirm.isEmpty()) {
-            if (confirm.charAt(0) == 'Y' || confirm.charAt(0) == 'y') {
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Do you want to update the prescribed medicine? (Y/N): ");
+        if (confirm) {
                 System.out.println();
                 prescribedMedicine = getAndReplacePrescribedMedicineDetailsFromUser(prescribedMedicine);
                 if (prescribedMedicine == null) {
@@ -476,10 +453,6 @@ public class PharmacyManagementUI {
                     ConsoleUtils.waitMessage();
                     return;
                 }
-            } else {
-                System.out.println("Medicine not updated in prescription.");
-                ConsoleUtils.waitMessage();
-            }
         } else {
             System.out.println("Medicine not updated in prescription.");
             ConsoleUtils.waitMessage();
@@ -491,10 +464,9 @@ public class PharmacyManagementUI {
         displayPrescribedMedicineDetails(prescribedMedicine);
         System.out.println();
 
-        confirm = ConsoleUtils.getStringInput(scanner,
+        confirm = ConsoleUtils.getBooleanInput(scanner,
                 "Are you sure you want to update this medicine in this prescription? (Y/N): ");
-        if (!confirm.isEmpty()) {
-            if (confirm.charAt(0) == 'Y' || confirm.charAt(0) == 'y') {
+        if (confirm) {
                 if (pharmacyControl.updateMedicineInPrescription(prescribedMedicine)) {
                     System.out.println("Medicine updated in prescription successfully.");
                     ConsoleUtils.waitMessage();
@@ -502,10 +474,6 @@ public class PharmacyManagementUI {
                     System.out.println("Medicine not updated in prescription.");
                     ConsoleUtils.waitMessage();
                 }
-            } else {
-                System.out.println("Medicine not updated in prescription.");
-                ConsoleUtils.waitMessage();
-            }
         } else {
             System.out.println("Medicine not updated in prescription.");
             ConsoleUtils.waitMessage();
@@ -552,10 +520,9 @@ public class PharmacyManagementUI {
             System.out.println();
         }
 
-        String confirm = ConsoleUtils.getStringInput(scanner,
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
                 "Are you sure you want to dispense this prescription? (Y/N): ");
-        if (!confirm.isEmpty()) {
-            if (confirm.charAt(0) == 'Y' || confirm.charAt(0) == 'y') {
+        if (confirm) {
                 if (pharmacyControl.dispensePrescription(prescriptionId)) {
                     System.out.println("Prescription dispensed successfully.");
                     ConsoleUtils.waitMessage();
@@ -563,10 +530,6 @@ public class PharmacyManagementUI {
                     System.out.println("Prescription not dispensed.");
                     ConsoleUtils.waitMessage();
                 }
-            } else {
-                System.out.println("Prescription not dispensed.");
-                ConsoleUtils.waitMessage();
-            }
         } else {
             System.out.println("Prescription not dispensed.");
             ConsoleUtils.waitMessage();
@@ -612,7 +575,6 @@ public class PharmacyManagementUI {
                 medicine = pharmacyControl.findMedicineById(medicineId);
                 if (medicine == null) {
                     System.out.println("Medicine not found.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
@@ -624,7 +586,6 @@ public class PharmacyManagementUI {
                 medicine = pharmacyControl.findMedicineByName(medicineName);
                 if (medicine == null) {
                     System.out.println("Medicine not found.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
@@ -636,7 +597,6 @@ public class PharmacyManagementUI {
                 medicine = pharmacyControl.findMedicineByGenericName(genericName);
                 if (medicine == null) {
                     System.out.println("Medicine not found.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
@@ -648,7 +608,6 @@ public class PharmacyManagementUI {
                 ArrayBucketList<String, Medicine> medicines = pharmacyControl.findMedicineByManufacturer(manufacturer);
                 if (medicines.isEmpty()) {
                     System.out.println("No medicines found.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
@@ -662,7 +621,6 @@ public class PharmacyManagementUI {
                 medicines = pharmacyControl.findMedicineByStatus(statusChoice);
                 if (medicines.isEmpty()) {
                     System.out.println("No medicines found.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
@@ -710,7 +668,6 @@ public class PharmacyManagementUI {
                 prescriptions = pharmacyControl.findPrescriptionsByPatient(patientId);
                 if (prescriptions.isEmpty()) {
                     System.out.println("No prescriptions found.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
@@ -722,7 +679,6 @@ public class PharmacyManagementUI {
                 prescriptions = pharmacyControl.findPrescriptionsByDoctor(doctorId);
                 if (prescriptions.isEmpty()) {
                     System.out.println("No prescriptions found.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
@@ -735,8 +691,7 @@ public class PharmacyManagementUI {
                 int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
                 prescriptions = pharmacyControl.findPrescriptionsByStatus(statusChoice);
                 if (prescriptions.isEmpty()) {
-                    System.out.println("No prescriptions found.");
-                    ConsoleUtils.waitMessage();
+                    System.out.println("No prescriptions found.");  
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
@@ -744,12 +699,11 @@ public class PharmacyManagementUI {
                 }
                 break;
             case 5:
-                Date startDate = ConsoleUtils.getDateInput(scanner, "Enter start date (DD-MM-YYYY): ");
-                Date endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ");
+                LocalDate startDate = ConsoleUtils.getDateInput(scanner, "Enter start date (DD-MM-YYYY): ", DateType.PAST_DATE_ONLY);
+                LocalDate endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ", DateType.PAST_DATE_ONLY);
                 prescriptions = pharmacyControl.findPrescriptionsByDateRange(startDate, endDate);
                 if (prescriptions.isEmpty()) {
                     System.out.println("No prescriptions found.");
-                    ConsoleUtils.waitMessage();
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");

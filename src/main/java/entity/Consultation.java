@@ -1,18 +1,19 @@
 package entity;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class Consultation {
     private String consultationId;
     private Patient patient;
     private Doctor doctor;
-    private Date consultationDate;
+    private LocalDate consultationDate;
     private String symptoms;
     private String diagnosis;
     private String treatment;
     private String notes;
     private ConsultationStatus status;
-    private Date nextVisitDate;
+    private LocalDate nextVisitDate;
     private double consultationFee;
 
     public enum ConsultationStatus {
@@ -20,7 +21,7 @@ public class Consultation {
     }
 
     public Consultation(String consultationId, Patient patient, Doctor doctor, 
-                       Date consultationDate, String symptoms, double consultationFee) {
+                       LocalDate consultationDate, String symptoms, double consultationFee) {
         this.consultationId = consultationId;
         this.patient = patient;
         this.doctor = doctor;
@@ -40,8 +41,8 @@ public class Consultation {
     public Doctor getDoctor() { return doctor; }
     public void setDoctor(Doctor doctor) { this.doctor = doctor; }
 
-    public Date getConsultationDate() { return consultationDate; }
-    public void setConsultationDate(Date consultationDate) { this.consultationDate = consultationDate; }
+    public LocalDate getConsultationDate() { return consultationDate; }
+    public void setConsultationDate(LocalDate consultationDate) { this.consultationDate = consultationDate; }
 
     public String getSymptoms() { return symptoms; }
     public void setSymptoms(String symptoms) { this.symptoms = symptoms; }
@@ -58,8 +59,8 @@ public class Consultation {
     public ConsultationStatus getStatus() { return status; }
     public void setStatus(ConsultationStatus status) { this.status = status; }
 
-    public Date getNextVisitDate() { return nextVisitDate; }
-    public void setNextVisitDate(Date nextVisitDate) { this.nextVisitDate = nextVisitDate; }
+    public LocalDate getNextVisitDate() { return nextVisitDate; }
+    public void setNextVisitDate(LocalDate nextVisitDate) { this.nextVisitDate = nextVisitDate; }
 
     public double getConsultationFee() { return consultationFee; }
     public void setConsultationFee(double consultationFee) { this.consultationFee = consultationFee; }
@@ -70,7 +71,7 @@ public class Consultation {
                 "consultationId='" + consultationId + '\'' +
                 ", patient=" + patient.getFullName() +
                 ", doctor=" + doctor.getFullName() +
-                ", consultationDate=" + consultationDate +
+                ", consultationDate=" + consultationDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) +
                 ", status=" + status +
                 ", consultationFee=" + consultationFee +
                 '}';

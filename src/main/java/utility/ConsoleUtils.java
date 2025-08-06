@@ -44,17 +44,26 @@ public class ConsoleUtils {
     }
 
     public static Date getDateInput(Scanner scanner, String prompt) {
+        String datePattern = "DD-MM-YYYY";
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) {
                 return null;
+            } else if (!PatternChecker.DATE_PATTERN.matcher(input).matches()) {
+                String year = input.substring(6);
+                if (Integer.parseInt(year) < 1900) {
+                    System.out.println("Year must be greater than 1900");
+                    continue;
+                }
+                System.out.println("Invalid date format. Please use " + datePattern);
+                continue;
             }
             try {
                 return dateFormat.parse(input);
             } catch (Exception e) {
-                System.out.println("Invalid date format. Please use dd-MM-yyyy");
+                System.out.println("Invalid date format. Please use " + datePattern);
             }
         }
     }

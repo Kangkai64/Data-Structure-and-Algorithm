@@ -103,9 +103,9 @@ public class PharmacyManagementUI {
         String dosageForm = ConsoleUtils.getStringInput(scanner, "Enter dosage form: ");
         String strength = ConsoleUtils.getStringInput(scanner, "Enter strength: ");
         int quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", 0, 10000);
-        int minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", 0, 10000);
+        int minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", 0, 300);
         double price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", 0.0, 10000.0);
-        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY hh:mm:ss): ");
+        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ");
         String storageLocation = ConsoleUtils.getStringInput(scanner, "Enter storage location: ");
         String requiresPrescriptionInput = (ConsoleUtils.getStringInput(scanner, "Requires prescription (Y / N): "));
         boolean requiresPrescription = requiresPrescriptionInput.equalsIgnoreCase("Y") || requiresPrescriptionInput.equalsIgnoreCase("N");
@@ -248,7 +248,7 @@ public class PharmacyManagementUI {
         quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", medicine.getQuantityInStock());
         minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", medicine.getMinimumStockLevel());
         price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", medicine.getUnitPrice());
-        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY hh:mm:ss): ",
+        Date expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ",
                 medicine.getExpiryDate());
         String storageLocation = ConsoleUtils.getStringInput(scanner, "Enter storage location: ",
                 medicine.getStorageLocation());

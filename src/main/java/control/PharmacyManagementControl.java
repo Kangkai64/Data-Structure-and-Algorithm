@@ -9,6 +9,7 @@ import entity.Consultation;
 import dao.MedicineDao;
 import dao.PrescriptionDao;
 import dao.PatientDao;
+
 import dao.DoctorDao;
 import dao.ConsultationDao;
 import utility.ConsoleUtils;
@@ -18,8 +19,8 @@ import java.util.Iterator;
 /**
  * @author: Ho Kang Kai
  *          Pharmacy Management Control - Module 5
- *          Manages medicine dispensing after doctor consultation and maintain
- *          medicine stock control
+ *          Manages prescription, medicine dispensing after doctor consultation
+ *          and maintain medicine stock control
  */
 
 public class PharmacyManagementControl {

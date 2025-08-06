@@ -11,7 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Date;
+import java.time.LocalDate;
 
 public class PatientDao extends DaoTemplate<Patient> {
     private final AddressDao addressDao = new AddressDao();
@@ -73,7 +73,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setString(3, patient.getEmail());
             preparedStatement.setString(4, patient.getPhoneNumber());
             preparedStatement.setString(5, patient.getAddress().getAddressId());
-            preparedStatement.setDate(6, new Date(patient.getRegistrationDate().getTime()));
+            preparedStatement.setObject(6, patient.getRegistrationDate());
             preparedStatement.setString(7, patient.getWardNumber());
             preparedStatement.setString(8, patient.getBloodType().name());
             preparedStatement.setString(9, allergiesToString(patient.getAllergies()));
@@ -162,7 +162,7 @@ public class PatientDao extends DaoTemplate<Patient> {
                     resultSet.getString("email"),
                     resultSet.getString("phoneNumber"),
                     address,
-                    resultSet.getDate("registrationDate"),
+                    resultSet.getObject("registrationDate", LocalDate.class),
                     resultSet.getString("patientId"),
                     resultSet.getString("wardNumber"),
                     BloodType.valueOf(resultSet.getString("bloodType")),

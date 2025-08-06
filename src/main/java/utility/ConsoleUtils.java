@@ -56,18 +56,18 @@ public class ConsoleUtils {
     }
 
     public static LocalDate getDateInput(Scanner scanner, String prompt, DateType dateType) {
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy").withResolverStyle(ResolverStyle.STRICT);
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-uuuu").withResolverStyle(ResolverStyle.STRICT);
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
             try {
                 LocalDate date = LocalDate.parse(input, dateFormat);
                 if (date.isBefore(LocalDate.of(1900, 1, 1))) {
-                    System.out.println("Year must be greater than 1900");
+                    System.out.println("Year should be greater than 1900");
                 } else if (dateType == DateType.PAST_DATE_ONLY && date.isAfter(LocalDate.now())) {
-                    System.out.println("Date cannot be in the past");
+                    System.out.println("Date should be in the past");
                 } else if (dateType == DateType.FUTURE_DATE_ONLY && date.isBefore(LocalDate.now())) {
-                    System.out.println("Date cannot be in the future");
+                    System.out.println("Date should be in the future");
                 } else {
                     return date;
                 }
@@ -139,7 +139,7 @@ public class ConsoleUtils {
     }
 
     public static LocalDate getDateInput(Scanner scanner, String prompt, DateType dateType, LocalDate defaultValue) {
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-uuuu");
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
@@ -149,11 +149,11 @@ public class ConsoleUtils {
             try {
                 LocalDate date = LocalDate.parse(input, dateFormat);
                 if (date.isBefore(LocalDate.of(1900, 1, 1))) {
-                    System.out.println("Year must be greater than 1900");
+                    System.out.println("Year should be greater than 1900");
                 } else if (dateType == DateType.PAST_DATE_ONLY && date.isAfter(LocalDate.now())) {
-                    System.out.println("Date cannot be in the past");
+                    System.out.println("Date should be in the past");
                 } else if (dateType == DateType.FUTURE_DATE_ONLY && date.isBefore(LocalDate.now())) {
-                    System.out.println("Date cannot be in the future");
+                    System.out.println("Date should be in the future");
                 } else {
                     return date;
                 }

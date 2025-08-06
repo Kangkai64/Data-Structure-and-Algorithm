@@ -13,8 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Date;
-import java.sql.Timestamp;
+import java.time.LocalDate;
 
 /**
  * @author: Ho Kang Kai
@@ -97,9 +96,9 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             preparedStatement.setString(2, prescription.getDoctor().getDoctorId());
             preparedStatement.setString(3,
                     prescription.getConsultation() != null ? prescription.getConsultation().getConsultationId() : null);
-            preparedStatement.setTimestamp(4, new Timestamp(prescription.getPrescriptionDate().getTime()));
+            preparedStatement.setObject(4, prescription.getPrescriptionDate());
             preparedStatement.setString(5, prescription.getInstructions());
-            preparedStatement.setDate(6, new Date(prescription.getExpiryDate().getTime()));
+            preparedStatement.setObject(6, prescription.getExpiryDate());
             preparedStatement.setString(7, prescription.getStatus().name());
             preparedStatement.setDouble(8, prescription.getTotalCost());
 
@@ -155,9 +154,9 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             preparedStatement.setString(2, prescription.getDoctor().getDoctorId());
             preparedStatement.setString(3,
                     prescription.getConsultation() != null ? prescription.getConsultation().getConsultationId() : null);
-            preparedStatement.setTimestamp(4, new Timestamp(prescription.getPrescriptionDate().getTime()));
+            preparedStatement.setObject(4, prescription.getPrescriptionDate());
             preparedStatement.setString(5, prescription.getInstructions());
-            preparedStatement.setDate(6, new Date(prescription.getExpiryDate().getTime()));
+            preparedStatement.setObject(6, prescription.getExpiryDate());
             preparedStatement.setString(7, prescription.getStatus().name());
             preparedStatement.setDouble(8, prescription.getTotalCost());
             preparedStatement.setString(9, prescription.getPrescriptionId());
@@ -368,9 +367,9 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
                     patient,
                     doctor,
                     consultation,
-                    resultSet.getTimestamp("prescriptionDate"),
+                    resultSet.getObject("prescriptionDate", LocalDate.class),
                     resultSet.getString("instructions"),
-                    resultSet.getDate("expiryDate"));
+                    resultSet.getObject("expiryDate", LocalDate.class));
 
             // Set additional fields
             prescription.setStatus(Prescription.PrescriptionStatus.valueOf(resultSet.getString("status")));

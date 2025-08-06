@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 
 /**
  * @author: Ho Kang Kai
@@ -81,7 +82,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             preparedStatement.setInt(7, medicine.getQuantityInStock());
             preparedStatement.setInt(8, medicine.getMinimumStockLevel());
             preparedStatement.setDouble(9, medicine.getUnitPrice());
-            preparedStatement.setDate(10, new java.sql.Date(medicine.getExpiryDate().getTime()));
+            preparedStatement.setObject(10, medicine.getExpiryDate());
             preparedStatement.setString(11, medicine.getStorageLocation());
             preparedStatement.setBoolean(12, medicine.getRequiresPrescription());
             preparedStatement.setString(13, medicine.getStatus().name());
@@ -124,7 +125,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             preparedStatement.setInt(7, medicine.getQuantityInStock());
             preparedStatement.setInt(8, medicine.getMinimumStockLevel());
             preparedStatement.setDouble(9, medicine.getUnitPrice());
-            preparedStatement.setDate(10, new java.sql.Date(medicine.getExpiryDate().getTime()));
+            preparedStatement.setObject(10, medicine.getExpiryDate());
             preparedStatement.setString(11, medicine.getStorageLocation());
             preparedStatement.setBoolean(12, medicine.getRequiresPrescription());
             preparedStatement.setString(13, medicine.getStatus().name());
@@ -216,7 +217,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
                     resultSet.getInt("quantityInStock"),
                     resultSet.getInt("minimumStockLevel"),
                     resultSet.getDouble("unitPrice"),
-                    resultSet.getDate("expiryDate"),
+                    resultSet.getObject("expiryDate", LocalDate.class),
                     resultSet.getString("storageLocation"),
                     resultSet.getBoolean("requiresPrescription")
             );

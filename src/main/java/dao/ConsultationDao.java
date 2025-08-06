@@ -12,7 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Date;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class ConsultationDao extends DaoTemplate<Consultation> {
 
@@ -79,14 +79,13 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
 
             preparedStatement.setString(1, consultation.getPatient().getPatientId());
             preparedStatement.setString(2, consultation.getDoctor().getDoctorId());
-            preparedStatement.setTimestamp(3, new Timestamp(consultation.getConsultationDate().getTime()));
+            preparedStatement.setObject(3, consultation.getConsultationDate());
             preparedStatement.setString(4, consultation.getSymptoms());
             preparedStatement.setString(5, consultation.getDiagnosis());
             preparedStatement.setString(6, consultation.getTreatment());
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
-            preparedStatement.setDate(9, consultation.getNextVisitDate() != null ? 
-                    new Date(consultation.getNextVisitDate().getTime()) : null);
+            preparedStatement.setObject(9, consultation.getNextVisitDate());
             preparedStatement.setDouble(10, consultation.getConsultationFee());
 
             int affectedRows = preparedStatement.executeUpdate();
@@ -119,14 +118,13 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
 
             preparedStatement.setString(1, consultation.getPatient().getPatientId());
             preparedStatement.setString(2, consultation.getDoctor().getDoctorId());
-            preparedStatement.setTimestamp(3, new Timestamp(consultation.getConsultationDate().getTime()));
+            preparedStatement.setObject(3, consultation.getConsultationDate());
             preparedStatement.setString(4, consultation.getSymptoms());
             preparedStatement.setString(5, consultation.getDiagnosis());
             preparedStatement.setString(6, consultation.getTreatment());
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
-            preparedStatement.setDate(9, consultation.getNextVisitDate() != null ? 
-                    new Date(consultation.getNextVisitDate().getTime()) : null);
+            preparedStatement.setObject(9, consultation.getNextVisitDate());
             preparedStatement.setDouble(10, consultation.getConsultationFee());
             preparedStatement.setString(11, consultation.getConsultationId());
 
@@ -274,7 +272,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     resultSet.getString("consultationId"),
                     patient,
                     doctor,
-                    resultSet.getTimestamp("consultationDate"),
+                    resultSet.getObject("consultationDate", LocalDateTime.class),
                     resultSet.getString("symptoms"),
                     resultSet.getDouble("consultationFee")
             );
@@ -285,7 +283,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             consultation.setNotes(resultSet.getString("notes"));
             consultation.setStatus(Consultation.ConsultationStatus.valueOf(resultSet.getString("status")));
             
-            Date nextVisitDate = resultSet.getDate("nextVisitDate");
+            LocalDateTime nextVisitDate = resultSet.getObject("nextVisitDate", LocalDateTime.class);
             if (nextVisitDate != null) {
                 consultation.setNextVisitDate(nextVisitDate);
             }

@@ -12,8 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Date;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
 
@@ -88,9 +87,8 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             preparedStatement.setString(5, treatment.getTreatmentPlan());
             preparedStatement.setString(6, treatment.getPrescribedMedications());
             preparedStatement.setString(7, treatment.getTreatmentNotes());
-            preparedStatement.setTimestamp(8, new Timestamp(treatment.getTreatmentDate().getTime()));
-            preparedStatement.setDate(9, treatment.getFollowUpDate() != null ? 
-                    new Date(treatment.getFollowUpDate().getTime()) : null);
+            preparedStatement.setObject(8, treatment.getTreatmentDate());
+            preparedStatement.setObject(9, treatment.getFollowUpDate());
             preparedStatement.setString(10, treatment.getStatus().name());
             preparedStatement.setDouble(11, treatment.getTreatmentCost());
 
@@ -131,9 +129,8 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             preparedStatement.setString(5, treatment.getTreatmentPlan());
             preparedStatement.setString(6, treatment.getPrescribedMedications());
             preparedStatement.setString(7, treatment.getTreatmentNotes());
-            preparedStatement.setTimestamp(8, new Timestamp(treatment.getTreatmentDate().getTime()));
-            preparedStatement.setDate(9, treatment.getFollowUpDate() != null ? 
-                    new Date(treatment.getFollowUpDate().getTime()) : null);
+            preparedStatement.setObject(8, treatment.getTreatmentDate());
+            preparedStatement.setObject(9, treatment.getFollowUpDate());
             preparedStatement.setString(10, treatment.getStatus().name());
             preparedStatement.setDouble(11, treatment.getTreatmentCost());
             preparedStatement.setString(12, treatment.getTreatmentId());
@@ -180,13 +177,13 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         }
     }
 
-    public boolean updateFollowUpDate(String treatmentId, Date followUpDate) throws SQLException {
+    public boolean updateFollowUpDate(String treatmentId, LocalDateTime followUpDate) throws SQLException {
         String sql = "UPDATE medical_treatment SET followUpDate = ? WHERE treatmentId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-            preparedStatement.setDate(1, new Date(followUpDate.getTime()));
+            preparedStatement.setObject(1, followUpDate);
             preparedStatement.setString(2, treatmentId);
 
             int affectedRows = preparedStatement.executeUpdate();
@@ -246,12 +243,12 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
                     resultSet.getString("treatmentPlan"),
                     resultSet.getString("prescribedMedications"),
                     resultSet.getString("treatmentNotes"),
-                    resultSet.getDate("treatmentDate"),
+                    resultSet.getObject("treatmentDate", LocalDateTime.class),
                     resultSet.getDouble("treatmentCost")
             );
 
             // Set additional fields
-            Date followUpDate = resultSet.getDate("followUpDate");
+            LocalDateTime followUpDate = resultSet.getObject("followUpDate", LocalDateTime.class);
             if (followUpDate != null) {
                 treatment.setFollowUpDate(followUpDate);
             }

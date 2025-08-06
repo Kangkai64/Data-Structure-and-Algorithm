@@ -12,10 +12,10 @@ import dao.PatientDao;
 
 import dao.DoctorDao;
 import dao.ConsultationDao;
-import utility.ConsoleUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author: Ho Kang Kai
@@ -425,7 +425,7 @@ public class PharmacyManagementControl {
         report.append("Total Medicines: ").append(getTotalMedicines()).append("\n");
         report.append("Low Stock Medicines: ").append(getLowStockMedicines().getSize()).append("\n");
         report.append("Expired Medicines: ").append(getExpiredMedicines().getSize()).append("\n");
-        report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(LocalDateTime.now())).append("\n\n");
+        report.append("Report Generated: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"))).append("\n\n");
 
         report.append("----------------------------------------\n");
         Iterator<Medicine> medicineIterator = medicines.iterator();
@@ -444,7 +444,7 @@ public class PharmacyManagementControl {
         report.append("Total Prescriptions: ").append(getTotalPrescriptions()).append("\n");
         report.append("Active Prescriptions: ").append(getActivePrescriptions().getSize()).append("\n");
         report.append("Dispensed Prescriptions: ").append(dispensedPrescriptions.getSize()).append("\n");
-        report.append("Report Generated: ").append(ConsoleUtils.reportDateTimeFormatter(LocalDateTime.now())).append("\n\n");
+        report.append("Report Generated: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"))).append("\n\n");
 
         report.append("----------------------------------------\n");
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();

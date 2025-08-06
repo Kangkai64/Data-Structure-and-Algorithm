@@ -219,7 +219,6 @@ public class PharmacyManagementUI {
         } else {
             System.out.println("Medicine not updated.");
         }
-        ConsoleUtils.waitMessage();
     }
 
     private Medicine getAndReplaceMedicineDetailsFromUser(Medicine medicine) {
@@ -236,7 +235,7 @@ public class PharmacyManagementUI {
         quantity = ConsoleUtils.getIntInput(scanner, "Enter quantity in stock: ", medicine.getQuantityInStock());
         minStock = ConsoleUtils.getIntInput(scanner, "Enter minimum stock level: ", medicine.getMinimumStockLevel());
         price = ConsoleUtils.getDoubleInput(scanner, "Enter unit price: ", medicine.getUnitPrice());
-        LocalDate expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ", DateType.FUTURE_DATE_ONLY);
+        LocalDate expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ", DateType.FUTURE_DATE_ONLY, medicine.getExpiryDate());
         String storageLocation = ConsoleUtils.getStringInput(scanner, "Enter storage location: ",
                 medicine.getStorageLocation());
         boolean requiresPrescription = ConsoleUtils.getBooleanInput(scanner, "Requires prescription (Y / N): ", medicine.getRequiresPrescription());

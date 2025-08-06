@@ -10,7 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Date;
+import java.time.LocalDate;
 
 public class DoctorDao extends DaoTemplate<Doctor> {
 
@@ -78,7 +78,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
             preparedStatement.setString(3, doctor.getEmail());
             preparedStatement.setString(4, doctor.getPhoneNumber());
             preparedStatement.setString(5, doctor.getAddress() != null ? doctor.getAddress().getAddressId() : null);
-            preparedStatement.setDate(6, new Date(doctor.getRegistrationDate().getTime()));
+            preparedStatement.setObject(6, doctor.getRegistrationDate());
             preparedStatement.setString(7, doctor.getMedicalSpecialty());
             preparedStatement.setString(8, doctor.getLicenseNumber());
             preparedStatement.setInt(9, doctor.getExpYears());
@@ -188,7 +188,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                     resultSet.getString("email"),
                     resultSet.getString("phoneNumber"),
                     address,
-                    resultSet.getDate("registrationDate"),
+                    resultSet.getObject("registrationDate", LocalDate.class),
                     resultSet.getString("doctorId"),
                     resultSet.getString("medicalSpecialty"),
                     resultSet.getString("licenseNumber"),

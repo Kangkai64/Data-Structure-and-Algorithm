@@ -1,6 +1,6 @@
 package entity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class MedicalTreatment {
@@ -12,8 +12,8 @@ public class MedicalTreatment {
     private String treatmentPlan;
     private String prescribedMedications;
     private String treatmentNotes;
-    private LocalDate treatmentDate;
-    private LocalDate followUpDate;
+    private LocalDateTime treatmentDate;
+    private LocalDateTime followUpDate;
     private TreatmentStatus status;
     private double treatmentCost;
 
@@ -23,7 +23,7 @@ public class MedicalTreatment {
 
     public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor, 
                            Consultation consultation, String diagnosis, 
-                           String treatmentPlan, LocalDate treatmentDate, double treatmentCost) {
+                           String treatmentPlan, LocalDateTime treatmentDate, double treatmentCost) {
         this.treatmentId = treatmentId;
         this.patient = patient;
         this.doctor = doctor;
@@ -39,7 +39,7 @@ public class MedicalTreatment {
     public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor, 
                            Consultation consultation, String diagnosis, 
                            String treatmentPlan, String prescribedMedications, 
-                           String treatmentNotes, LocalDate treatmentDate, double treatmentCost) {
+                           String treatmentNotes, LocalDateTime treatmentDate, double treatmentCost) {
         this(treatmentId, patient, doctor, consultation, diagnosis, treatmentPlan, treatmentDate, treatmentCost);
         this.prescribedMedications = prescribedMedications;
         this.treatmentNotes = treatmentNotes;
@@ -72,11 +72,11 @@ public class MedicalTreatment {
     public String getTreatmentNotes() { return treatmentNotes; }
     public void setTreatmentNotes(String treatmentNotes) { this.treatmentNotes = treatmentNotes; }
 
-    public LocalDate getTreatmentDate() { return treatmentDate; }
-    public void setTreatmentDate(LocalDate treatmentDate) { this.treatmentDate = treatmentDate; }
+    public LocalDateTime getTreatmentDate() { return treatmentDate; }
+    public void setTreatmentDate(LocalDateTime treatmentDate) { this.treatmentDate = treatmentDate; }
 
-    public LocalDate getFollowUpDate() { return followUpDate; }
-    public void setFollowUpDate(LocalDate followUpDate) { this.followUpDate = followUpDate; }
+    public LocalDateTime getFollowUpDate() { return followUpDate; }
+    public void setFollowUpDate(LocalDateTime followUpDate) { this.followUpDate = followUpDate; }
 
     public TreatmentStatus getStatus() { return status; }
     public void setStatus(TreatmentStatus status) { this.status = status; }
@@ -91,7 +91,7 @@ public class MedicalTreatment {
                 ", patient=" + patient.getFullName() +
                 ", doctor=" + doctor.getFullName() +
                 ", diagnosis='" + diagnosis + '\'' +
-                ", treatmentDate=" + treatmentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) +
+                ", treatmentDate=" + treatmentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) +
                 ", status=" + status +
                 ", treatmentCost=" + treatmentCost +
                 '}';

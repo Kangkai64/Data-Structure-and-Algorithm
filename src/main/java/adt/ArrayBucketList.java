@@ -39,7 +39,25 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
      * Hash function (moved from HashUtility)
      */
     private int hashEntity(K key, int bucketCount) {
-        return Math.abs(key.hashCode()) % bucketCount;
+        if (key == null) {
+            return 0;
+        }
+        
+        String keyStr = key.toString();
+        int hash = 0;
+        
+        // Use a prime multiplier and process each character
+        // This helps break up patterns in sequential IDs
+        for (int i = 0; i < keyStr.length(); i++) {
+            hash = hash * 31 + keyStr.charAt(i);
+        }
+        
+        // Additional mixing to improve distribution
+        hash ^= (hash >>> 16);  // XOR with upper bits
+        hash *= 0x85ebca6b;     // Multiply by a large prime-like number
+        hash ^= (hash >>> 13);  // More mixing
+        
+        return Math.abs(hash) % bucketCount;
     }
 
     /**

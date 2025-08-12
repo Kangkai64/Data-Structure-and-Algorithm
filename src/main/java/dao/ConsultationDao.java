@@ -85,7 +85,14 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             preparedStatement.setString(6, consultation.getTreatment());
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
-            preparedStatement.setObject(9, consultation.getNextVisitDate());
+            
+            // Handle nextVisitDate - convert from LocalDateTime to Date for database
+            if (consultation.getNextVisitDate() != null) {
+                preparedStatement.setDate(9, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
+            } else {
+                preparedStatement.setNull(9, java.sql.Types.DATE);
+            }
+            
             preparedStatement.setDouble(10, consultation.getConsultationFee());
 
             int affectedRows = preparedStatement.executeUpdate();
@@ -124,7 +131,14 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             preparedStatement.setString(6, consultation.getTreatment());
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
-            preparedStatement.setObject(9, consultation.getNextVisitDate());
+            
+            // Handle nextVisitDate - convert from LocalDateTime to Date for database
+            if (consultation.getNextVisitDate() != null) {
+                preparedStatement.setDate(9, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
+            } else {
+                preparedStatement.setNull(9, java.sql.Types.DATE);
+            }
+            
             preparedStatement.setDouble(10, consultation.getConsultationFee());
             preparedStatement.setString(11, consultation.getConsultationId());
 
@@ -283,9 +297,10 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             consultation.setNotes(resultSet.getString("notes"));
             consultation.setStatus(Consultation.ConsultationStatus.valueOf(resultSet.getString("status")));
             
-            LocalDateTime nextVisitDate = resultSet.getObject("nextVisitDate", LocalDateTime.class);
+            // Handle nextVisitDate - convert from Date to LocalDateTime
+            java.sql.Date nextVisitDate = resultSet.getDate("nextVisitDate");
             if (nextVisitDate != null) {
-                consultation.setNextVisitDate(nextVisitDate);
+                consultation.setNextVisitDate(nextVisitDate.toLocalDate().atStartOfDay());
             }
 
             return consultation;

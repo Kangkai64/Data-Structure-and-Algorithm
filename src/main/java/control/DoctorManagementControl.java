@@ -76,12 +76,25 @@ public class DoctorManagementControl {
         try {
             Doctor doctor = doctorDao.findById(doctorId);
             if (doctor != null) {
-                doctor.setFullName(fullName);
-                doctor.setEmail(email);
-                doctor.setPhoneNumber(phoneNumber);
-                doctor.setAddress(address);
-                doctor.setMedicalSpecialty(medicalSpecialty);
-                doctor.setExpYears(expYears);
+                if (fullName != null && !fullName.trim().isEmpty()) {
+                    doctor.setFullName(fullName);
+                }
+                if (email != null && !email.trim().isEmpty()) {
+                    doctor.setEmail(email);
+                }
+                if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+                    doctor.setPhoneNumber(phoneNumber);
+                }
+                if (address != null) {
+                    doctor.setAddress(address);
+                }
+                if (medicalSpecialty != null && !medicalSpecialty.trim().isEmpty()) {
+                    doctor.setMedicalSpecialty(medicalSpecialty);
+                }
+                if (expYears > 0) { 
+                    doctor.setExpYears(expYears);
+                }
+                // Note: expYears = -1 means no update needed (from UI)
                 
                 boolean updated = doctorDao.update(doctor);
                 if (updated) {

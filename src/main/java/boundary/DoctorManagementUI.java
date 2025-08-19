@@ -1,9 +1,12 @@
 package boundary;
 
+import java.util.Scanner;
+
 import control.DoctorManagementControl;
 import entity.Address;
+import entity.Doctor;
 import utility.ConsoleUtils;
-import java.util.Scanner;
+import utility.PatternChecker;
 
 /**
  * Doctor Management User Interface
@@ -62,9 +65,9 @@ public class DoctorManagementUI {
     private void registerNewDoctor() {
         System.out.println("\n=== REGISTER NEW DOCTOR ===");
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter full name: ");
-        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number (DDMMYY-XX-XXXX): ");
+        String icNumber = ConsoleUtils.getICInput(scanner, "Enter IC number (YYMMDD-XX-XXXX): ");
         String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
-        String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter phone number: ");
+        String phoneNumber = ConsoleUtils.getPhoneInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
         String specialty = ConsoleUtils.getStringInput(scanner, "Enter medical specialty: ");
         String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter license number: ");
         int expYears = ConsoleUtils.getIntInput(scanner, "Enter experience years: ", 0, 50);
@@ -73,10 +76,10 @@ public class DoctorManagementUI {
         String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
         String city = ConsoleUtils.getStringInput(scanner, "Enter city: ");
         String state = ConsoleUtils.getStringInput(scanner, "Enter state: ");
-        String postalCode = ConsoleUtils.getStringInput(scanner, "Enter postal code: ");
+        Integer postalCode = ConsoleUtils.getIntInput(scanner, "Enter postal code: ", 0, 99999);
         String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
         
-        Address address = new Address(street, city, state, postalCode, country);
+        Address address = new Address(street, city, state, postalCode.toString(), country);
         
         boolean success = doctorControl.registerDoctor(fullName, icNumber, email, phoneNumber, 
                                                      address, specialty, licenseNumber, expYears);
@@ -92,9 +95,84 @@ public class DoctorManagementUI {
         System.out.println("\n=== UPDATE DOCTOR INFORMATION ===");
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID to update: ");
         
-        // For now, just show a placeholder
-        System.out.println("Update Doctor Info - Implementation needed");
-        System.out.println("Doctor ID: " + doctorId);
+        // First, find the doctor to display current information
+        Doctor currentDoctor = doctorControl.findDoctorById(doctorId);
+        if (currentDoctor == null) {
+            System.out.println("Doctor not found with ID: " + doctorId);
+            return;
+        }
+        
+        // Display current doctor information
+        System.out.println("\nCurrent Doctor Information:");
+        System.out.println("Name: " + currentDoctor.getFullName());
+        System.out.println("Email: " + currentDoctor.getEmail());
+        System.out.println("Phone: " + currentDoctor.getPhoneNumber());
+        System.out.println("Specialty: " + currentDoctor.getMedicalSpecialty());
+        System.out.println("Experience: " + currentDoctor.getExpYears() + " years");
+        
+        System.out.println("\nEnter new information (press Enter to skip if no change needed):");
+        
+        // Get updated information (optional fields)
+        System.out.print("Enter new full name (or press Enter to skip): ");
+        String newFullName = scanner.nextLine().trim();
+        
+        System.out.print("Enter new email (or press Enter to skip): ");
+        String newEmail = scanner.nextLine().trim();
+        
+        System.out.print("Enter new phone number (or press Enter to skip): ");
+        String newPhoneNumber = scanner.nextLine().trim();
+        // Validate phone number if provided
+        if (!newPhoneNumber.isEmpty() && !PatternChecker.PHONE_PATTERN.matcher(newPhoneNumber).matches()) {
+            System.out.println("Invalid phone number format. Must be in format: 0XX-XXXXXXX");
+            System.out.println("Skipping phone number update.");
+            newPhoneNumber = "";
+        }
+        
+        System.out.print("Enter new medical specialty (or press Enter to skip): ");
+        String newSpecialty = scanner.nextLine().trim();
+        System.out.print("Enter new experience years (or press Enter to skip): ");
+        String expYearsInput = scanner.nextLine();
+        int newExpYears = -1; 
+        if (!expYearsInput.trim().isEmpty()) {
+            try {
+                newExpYears = Integer.parseInt(expYearsInput.trim());
+                if (newExpYears < 0 || newExpYears > 50) {
+                    System.out.println("Invalid experience years. Must be between 0-50. Skipping this field.");
+                    newExpYears = -1;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid experience years format. Skipping this field.");
+                newExpYears = -1;
+            }
+        }
+        
+        Address newAddress = null;
+        System.out.print("Do you want to update address? (y/n): ");
+        String updateAddress = scanner.nextLine().toLowerCase();
+        if (updateAddress.equals("y") || updateAddress.equals("yes")) {
+            String newStreet = ConsoleUtils.getStringInput(scanner, "Enter new street: ");
+            String newCity = ConsoleUtils.getStringInput(scanner, "Enter new city: ");
+            String newState = ConsoleUtils.getStringInput(scanner, "Enter new state: ");
+            Integer newPostalCode = ConsoleUtils.getIntInput(scanner, "Enter new postal code: ", 0, 99999);
+            String newCountry = ConsoleUtils.getStringInput(scanner, "Enter new country: ");
+            newAddress = new Address(newStreet, newCity, newState, newPostalCode.toString(), newCountry);
+        }
+        
+        String fullNameToUpdate = (newFullName.trim().isEmpty()) ? null : newFullName;
+        String emailToUpdate = (newEmail.trim().isEmpty()) ? null : newEmail;
+        String phoneToUpdate = (newPhoneNumber.trim().isEmpty()) ? null : newPhoneNumber;
+        String specialtyToUpdate = (newSpecialty.trim().isEmpty()) ? null : newSpecialty;
+        int expYearsToUpdate = newExpYears; 
+        
+       
+        boolean success = doctorControl.updateDoctorInfo(doctorId, fullNameToUpdate, emailToUpdate, 
+                                                       phoneToUpdate, newAddress, specialtyToUpdate, expYearsToUpdate);
+        
+        if (success) {
+            System.out.println("Doctor information updated successfully!");
+        } else {
+            System.out.println("Failed to update doctor information.");
+        }
     }
 
     private void addDoctorSchedule() {

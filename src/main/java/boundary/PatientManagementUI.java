@@ -1,14 +1,13 @@
 package boundary;
 
+import java.sql.SQLException;
+import java.util.Scanner;
+
+import control.AddressManagementControl;
 import control.PatientManagementControl;
 import entity.Address;
 import entity.BloodType;
-import adt.ArrayBucketList;
 import utility.ConsoleUtils;
-import control.AddressManagementControl;
-
-import java.util.Scanner;
-import java.sql.SQLException;
 
 /**
  * Patient Management User Interface
@@ -73,15 +72,15 @@ public class PatientManagementUI {
     private void registerNewPatient() {
         System.out.println("\n=== REGISTER NEW PATIENT ===");
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter full name: ");
-        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number (DDMMYY-XX-XXXX): ");
+        String icNumber = ConsoleUtils.getICInput(scanner, "Enter IC number (YYMMDD-XX-XXXX): ");
         String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
-        String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
+        String phoneNumber = ConsoleUtils.getPhoneInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
         
         // Get address details
         String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
         String city = ConsoleUtils.getStringInput(scanner, "Enter city: ");
         String state = ConsoleUtils.getStringInput(scanner, "Enter state: ");
-        String postalCode = ConsoleUtils.getStringInput(scanner, "Enter postal code: ");
+        Integer postalCode = ConsoleUtils.getIntInput(scanner, "Enter postal code: ", 0, 99999);
         String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
 
         String wardNumber = ConsoleUtils.getStringInput(scanner, "Enter ward number: ");
@@ -99,7 +98,7 @@ public class PatientManagementUI {
         
         String emergencyContact = ConsoleUtils.getStringInput(scanner, "Enter emergency contact (0XX-XXXXXXX): ");
 
-        Address address = new Address(street, city, state, postalCode, country);
+        Address address = new Address(street, city, state, postalCode.toString(), country);
         try {
             addressControl.addAddress(address);
             address = addressControl.getAddressById(address.getAddressId());

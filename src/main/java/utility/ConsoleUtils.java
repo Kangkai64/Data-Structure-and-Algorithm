@@ -1,12 +1,11 @@
 package utility;
 
 import java.io.IOException;
+import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.ResolverStyle;
 import java.util.Scanner;
-import java.time.DateTimeException;
 
 public class ConsoleUtils {
     public static String getStringInput(Scanner scanner, String prompt) {
@@ -18,6 +17,38 @@ public class ConsoleUtils {
             } else if (!PatternChecker.CONTAIN_ALPHABETS_PATTERN.matcher(input).matches()) {
                 System.out.println("Input must contain at least one alphabet");
             } else {
+                return input;
+            }
+        }
+    }
+
+    public static String getICInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("IC number cannot be empty");
+            }
+            else if (!PatternChecker.IC_PATTERN.matcher(input).matches()) {
+                System.out.println("Invalid IC number format");
+            }             
+            else {
+                return input;
+            }
+        }
+    }
+
+    public static String getPhoneInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Phone number cannot be empty");
+            }
+            else if (!PatternChecker.PHONE_PATTERN.matcher(input).matches()) {
+                System.out.println("Invalid phone number format");
+            }       
+            else {
                 return input;
             }
         }

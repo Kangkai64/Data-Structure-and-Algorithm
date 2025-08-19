@@ -54,6 +54,22 @@ public class ConsoleUtils {
         }
     }
 
+    public static String getTimeInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Time cannot be empty");
+            }
+            else if (!PatternChecker.TIME_PATTERN.matcher(input).matches()) {
+                System.out.println("Invalid time format");
+            }
+            else {
+                return input;
+            }
+        }
+    }
+
     public static int getIntInput(Scanner scanner, String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt);

@@ -7,6 +7,7 @@ import entity.DayOfWeek;
 import entity.Address;
 import dao.DoctorDao;
 import dao.AddressDao;
+import dao.ScheduleDao;
 import java.time.LocalDate;
 import java.util.Iterator;
 
@@ -19,11 +20,13 @@ public class DoctorManagementControl {
     
     private DoctorDao doctorDao;
     private AddressDao addressDao;
+    private ScheduleDao scheduleDao;
     private ArrayBucketList<String, Doctor> activeDoctors;
     
     public DoctorManagementControl() {
         this.doctorDao = new DoctorDao();
         this.addressDao = new AddressDao();
+        this.scheduleDao = new ScheduleDao();
         this.activeDoctors = new ArrayBucketList<String, Doctor>();
         loadActiveDoctors();
     }
@@ -71,8 +74,8 @@ public class DoctorManagementControl {
     }
     
     public boolean updateDoctorInfo(String doctorId, String fullName, String email, 
-                                  String phoneNumber, Address address, String medicalSpecialty,
-                                  int expYears) {
+                                  String phoneNumber, String medicalSpecialty,
+                                  int expYears, Address address) {
         try {
             Doctor doctor = doctorDao.findById(doctorId);
             if (doctor != null) {
@@ -85,16 +88,29 @@ public class DoctorManagementControl {
                 if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
                     doctor.setPhoneNumber(phoneNumber);
                 }
-                if (address != null) {
-                    doctor.setAddress(address);
-                }
                 if (medicalSpecialty != null && !medicalSpecialty.trim().isEmpty()) {
                     doctor.setMedicalSpecialty(medicalSpecialty);
                 }
-                if (expYears > 0) { 
+                if (expYears >= 0) { 
                     doctor.setExpYears(expYears);
                 }
                 // Note: expYears = -1 means no update needed (from UI)
+                if (address != null) {
+                    Address currentAddress = doctor.getAddress();
+                    boolean addressPersisted;
+                    if (currentAddress != null && currentAddress.getAddressId() != null) {
+                        // Update existing address record
+                        address.setAddressId(currentAddress.getAddressId());
+                        addressPersisted = addressDao.update(address);
+                    } else {
+                        // Insert new address record and assign generated ID
+                        addressPersisted = addressDao.insertAndReturnId(address);
+                    }
+                    if (!addressPersisted) {
+                        return false;
+                    }
+                    doctor.setAddress(address);
+                }
                 
                 boolean updated = doctorDao.update(doctor);
                 if (updated) {
@@ -133,16 +149,14 @@ public class DoctorManagementControl {
         try {
             Doctor doctor = doctorDao.findById(doctorId);
             if (doctor != null) {
-                String scheduleId = "SCH" + System.currentTimeMillis();
-                Schedule schedule = new Schedule(scheduleId, doctorId, dayOfWeek, startTime, endTime, true);
-                boolean added = doctor.addSchedule(schedule);
-                if (added) {
-                    boolean updated = doctorDao.update(doctor);
-                    if (updated) {
-                        updateActiveDoctorsList(doctor);
-                        return true;
-                    }
-                }
+                boolean scheduleAvailability = doctor.isAvailable();
+                Schedule schedule = new Schedule(null, doctorId, dayOfWeek, startTime, endTime, scheduleAvailability);
+                boolean inserted = scheduleDao.insertAndReturnId(schedule);
+                if (!inserted) return false;
+                // keep in-memory cache in sync for reports
+                doctor.addSchedule(schedule);
+                updateActiveDoctorsList(doctor);
+                return true;
             }
             return false;
         } catch (Exception exception) {

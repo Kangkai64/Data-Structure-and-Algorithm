@@ -11,4 +11,6 @@ public class PatternChecker {
     public static final Pattern IC_PATTERN = Pattern.compile("^\\d{6}-\\d{2}-\\d{4}$");
     // Contains alphabets pattern
     public static final Pattern CONTAIN_ALPHABETS_PATTERN = Pattern.compile("^.*[a-zA-Z]+.*$");
+    // Time validation pattern
+    public static final Pattern TIME_PATTERN = Pattern.compile("^([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$");
 }

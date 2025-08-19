@@ -183,28 +183,20 @@ public class PatientDao extends DaoTemplate<Patient> {
      * Helper method to convert ArrayList of allergies to comma-separated string
      */
     private String allergiesToString(String allergies) {
-        if (allergies == null || allergies.isEmpty()) {
+        if (allergies == null) {
             return "";
         }
-
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < allergies.split(",").length; i++) {
-            if (i > 0) {
-                stringBuilder.append(",");
-            }
-            stringBuilder.append(allergies.split(",")[i]);
-        }
-        return stringBuilder.toString();
+        return allergies.trim();
     }
 
     /**
      * Helper method to parse comma-separated string to ArrayList of allergies
      */
     private String parseAllergies(String allergiesString) {
-        if (allergiesString != null && !allergiesString.trim().isEmpty()) {
-            return allergiesString.split(",").toString();
+        if (allergiesString == null) {
+            return "";
         }
-        return "";
+        return allergiesString.trim();
     }
 
     /**

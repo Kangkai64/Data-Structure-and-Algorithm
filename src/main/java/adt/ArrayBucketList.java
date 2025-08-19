@@ -30,10 +30,25 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         this.bucketCount = bucketCount;
         this.numberOfEntries = 0;
         this.buckets = (LinkedList[]) new ArrayBucketList<?,?>.LinkedList[bucketCount];
+        this.queueData = new LinkedList();
+
         for (int index = 0; index < bucketCount; index++) {
             buckets[index] = new LinkedList();
         }
     }
+    /**
+     * Returns the current number of elements in the queue.
+     *
+     * This method safely checks if the queue's internal data structure (queueData) is initialized
+     * before attempting to access its size. This prevents a NullPointerException if the queue has not
+     * been instantiated.
+     *
+     * @return The number of elements in the queue, or 0 if the queue is not initialized.
+     */
+    public int getQueueSize() {
+            return queueData != null ? queueData.size : 0;
+        }
+    
 
     /**
      * Hash function (moved from HashUtility)
@@ -87,13 +102,37 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
             return null;
         }
     }
-
+    /**
+     * Adds a key-value pair to the queue if it is valid and not already present.
+     * - Ignores insertion if the key or value is null.
+     * - Prevents duplicate entries by checking if the key already exists.
+     *
+     * @param key   the unique identifier (e.g., patient ID)
+     * @param value the object associated with the key (e.g., patient record)
+     */
     public void addToQueue(K key, V value) {
         if (key == null || value == null) {
             return;
         }
+        // Avoid duplicate entries with same key in the queue
+        if (queueData.getNodeByKey(key) != null) {
+            return;
+        }
         queueData.add(key, value);
-    }   
+    }
+    
+    /**
+     * Checks whether a given key already exists in the queue.
+     *
+     * @param key the unique identifier to look for
+     * @return true if the key exists, false otherwise
+     */
+    public boolean queueContains(K key) {
+        if (queueData == null || key == null) {
+            return false;
+        }
+        return queueData.getNodeByKey(key) != null;
+    }
 
     /**
      * Removes a specific entry from the dictionary.

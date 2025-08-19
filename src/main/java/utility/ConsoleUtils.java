@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.ResolverStyle;
 import java.util.Scanner;
 import java.time.DateTimeException;
+import java.util.regex.Pattern;
 
 public class ConsoleUtils {
     public static String getStringInput(Scanner scanner, String prompt) {
@@ -15,14 +16,97 @@ public class ConsoleUtils {
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) {
                 System.out.println("Input cannot be empty");
-            } else if (!PatternChecker.CONTAIN_ALPHABETS_PATTERN.matcher(input).matches()) {
-                System.out.println("Input must contain at least one alphabet");
+            } else {
+                return input;
+            }
+
+        }
+    }
+    
+
+    public static String getInputMatching(Scanner scanner, String prompt, Pattern pattern, String invalidMessage) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Input cannot be empty");
+            } else if (!pattern.matcher(input).matches()) {
+                System.out.println(invalidMessage);
             } else {
                 return input;
             }
         }
     }
 
+    public static String getICInput(Scanner scanner, String prompt) {
+        return getInputMatching(scanner, prompt, PatternChecker.IC_PATTERN, "IC must be in format: XXXXXX-XX-XXXX");
+    }
+
+    public static String getEmailInput(Scanner scanner, String prompt) {
+        return getInputMatching(scanner, prompt, PatternChecker.EMAIL_PATTERN, "Please enter a valid email address");
+    }
+
+    public static String getPhoneInput(Scanner scanner, String prompt) {
+        return getInputMatching(scanner, prompt, PatternChecker.PHONE_PATTERN, "Phone must be in format: 0XX-XXXXXXX or 0XX-XXXXXXXX");
+    }
+
+    public static String getInputMatchingWithDefault(Scanner scanner, String prompt, Pattern pattern, String invalidMessage, String defaultValue) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                return defaultValue;
+            } else if (!pattern.matcher(input).matches()) {
+                System.out.println(invalidMessage);
+            } else {
+                return input;
+            }
+        }
+    }
+
+    public static String getICInput(Scanner scanner, String prompt, String defaultValue) {
+        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.IC_PATTERN, "IC must be in format: XXXXXX-XX-XXXX", defaultValue);
+    }
+
+    public static String getEmailInput(Scanner scanner, String prompt, String defaultValue) {
+        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.EMAIL_PATTERN, "Please enter a valid email address", defaultValue);
+    }
+
+    public static String getPhoneInput(Scanner scanner, String prompt, String defaultValue) {
+        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.PHONE_PATTERN, "Phone must be in format: 0XX-XXXXXXX or 0XX-XXXXXXXX", defaultValue);
+    }
+
+    public static String getPostalCodeInput(Scanner scanner, String prompt) {
+        Pattern postalPattern = Pattern.compile("^\\d{5}$");
+        return getInputMatching(scanner, prompt, postalPattern, "Postal code must be 5 digits").trim();
+    }
+
+    public static String getPostalCodeInput(Scanner scanner, String prompt, String defaultValue) {
+        Pattern postalPattern = Pattern.compile("^\\d{5}$");
+        return getInputMatchingWithDefault(scanner, prompt, postalPattern, "Postal code must be 5 digits", defaultValue).trim();
+    }
+
+    public static String getWardNumberInput(Scanner scanner, String prompt) {
+        Pattern wardPattern = Pattern.compile("^W\\d{1,19}$");
+        return getInputMatching(
+            scanner, 
+            prompt, 
+            wardPattern, 
+            "Must start with 'W' followed by up to 19 digits (e.g., W1, W123)"
+        );
+    }
+    
+    public static String getWardNumberInput(Scanner scanner, String prompt, String defaultValue) {
+        Pattern wardPattern = Pattern.compile("^W\\d{1,19}$");
+        return getInputMatchingWithDefault(
+            scanner, 
+            prompt, 
+            wardPattern, 
+            "Must start with 'W' followed by up to 19 digits (e.g., W1, W123)", 
+            defaultValue
+        );
+    }
+    
     public static int getIntInput(Scanner scanner, String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt);

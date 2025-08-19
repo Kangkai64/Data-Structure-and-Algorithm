@@ -1,14 +1,15 @@
 package control;
 
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.Iterator;
+
 import adt.ArrayBucketList;
-import entity.Patient;
+import dao.AddressDao;
+import dao.PatientDao;
 import entity.Address;
 import entity.BloodType;
-import dao.PatientDao;
-import dao.AddressDao;
-import java.time.LocalDate;
-import java.sql.SQLException;
-import java.util.Iterator;
+import entity.Patient;
 
 /**
  * @author: Lai Yoke Hong
@@ -72,7 +73,7 @@ public class PatientManagementControl {
             return false;
         }
     }
-    
+
     public boolean updatePatientRecord(String patientId, String fullName, String email, 
                                      String phoneNumber, Address address, String wardNumber,
                                      BloodType bloodType, String allergies, 
@@ -122,11 +123,15 @@ public class PatientManagementControl {
     
     // Queuing Management Methods
     public boolean addPatientToQueue(Patient patient) {
-        if (patient != null && patient.isActive()) {
-            patientList.addToQueue(patient.getPatientId(), patient);
-            return true;
+        if (patient == null || !patient.isActive()) {
+            return false;
         }
-        return false;
+        // Prevent duplicate entries in the queue by patient ID
+        if (patientList.queueContains(patient.getPatientId())) {
+            return false;
+        }
+        patientList.addToQueue(patient.getPatientId(), patient);
+        return true;
     }
     
     public Patient getNextPatientFromQueue() {
@@ -138,11 +143,12 @@ public class PatientManagementControl {
     }
     
     public int getQueueSize() {
-        return patientList.getSize();
+        return patientList.getQueueSize();
     }
     
     public boolean isPatientInQueue(Patient patient) {
-        return patientList.contains(patient.getPatientId());
+        if (patient == null) return false;
+        return patientList.queueContains(patient.getPatientId());
     }
     
     public void clearQueue() {
@@ -240,26 +246,13 @@ public class PatientManagementControl {
     }
     
     private void updateActivePatientsList(Patient updatedPatient) {
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            if (patient.getPatientId().equals(updatedPatient.getPatientId())) {
-                // Remove old entry and add updated one
-                activePatients.remove(patient.getPatientId());
-                activePatients.add(updatedPatient.getPatientId(), updatedPatient);
-                break;
-            }
-        }
+        activePatients.remove(updatedPatient.getPatientId());
+        activePatients.add(updatedPatient.getPatientId(), updatedPatient);
     }
-    
+
+        
     private void removeFromActivePatients(Patient patient) {
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient currentPatient = patientIterator.next();
-            if (currentPatient.getPatientId().equals(patient.getPatientId())) {
-                activePatients.remove(currentPatient.getPatientId());
-                break;
-            }
-        }
+        // Simply remove by patient ID - no iteration needed
+        activePatients.remove(patient.getPatientId());
     }
 } 

@@ -1,14 +1,14 @@
 package boundary;
 
+import java.sql.SQLException;
+import java.util.Scanner;
+
+import control.AddressManagementControl;
 import control.PatientManagementControl;
 import entity.Address;
 import entity.BloodType;
-import adt.ArrayBucketList;
+import entity.Patient;
 import utility.ConsoleUtils;
-import control.AddressManagementControl;
-
-import java.util.Scanner;
-import java.sql.SQLException;
 
 /**
  * Patient Management User Interface
@@ -73,18 +73,18 @@ public class PatientManagementUI {
     private void registerNewPatient() {
         System.out.println("\n=== REGISTER NEW PATIENT ===");
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter full name: ");
-        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number (DDMMYY-XX-XXXX): ");
-        String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
-        String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
+        String icNumber = ConsoleUtils.getICInput(scanner, "Enter IC number (DDMMYY-XX-XXXX): ");
+        String email = ConsoleUtils.getEmailInput(scanner, "Enter email: ");
+        String phoneNumber = ConsoleUtils.getPhoneInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
         
         // Get address details
         String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
         String city = ConsoleUtils.getStringInput(scanner, "Enter city: ");
         String state = ConsoleUtils.getStringInput(scanner, "Enter state: ");
-        String postalCode = ConsoleUtils.getStringInput(scanner, "Enter postal code: ");
+        String postalCode = ConsoleUtils.getPostalCodeInput(scanner, "Enter postal code (5 digits): ");
         String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
 
-        String wardNumber = ConsoleUtils.getStringInput(scanner, "Enter ward number: ");
+        String wardNumber = ConsoleUtils.getWardNumberInput(scanner, "Enter ward number (WXXXX): ");
         
         System.out.println("Select blood type:");
         System.out.println("1. A_POSITIVE  2. A_NEGATIVE  3. B_POSITIVE  4. B_NEGATIVE");
@@ -97,7 +97,7 @@ public class PatientManagementUI {
         String allergiesInput = ConsoleUtils.getStringInput(scanner, "Enter allergies (comma-separated, or 'None'): ");
         String allergies = allergiesInput.equalsIgnoreCase("None") ? "None" : allergiesInput;
         
-        String emergencyContact = ConsoleUtils.getStringInput(scanner, "Enter emergency contact (0XX-XXXXXXX): ");
+        String emergencyContact = ConsoleUtils.getPhoneInput(scanner, "Enter emergency contact (0XX-XXXXXXX): ");
 
         Address address = new Address(street, city, state, postalCode, country);
         try {
@@ -113,8 +113,10 @@ public class PatientManagementUI {
         
         if (success) {
             System.out.println("Patient registered successfully!");
+            scanner.nextLine();
         } else {
             System.out.println("Failed to register patient.");
+            scanner.nextLine();
         }
     }
 
@@ -122,34 +124,194 @@ public class PatientManagementUI {
         System.out.println("\n=== UPDATE PATIENT RECORD ===");
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID to update: ");
         
-        // For now, just show a placeholder
-        System.out.println("Update Patient Record - Implementation needed");
-        System.out.println("Patient ID: " + patientId);
+        entity.Patient patient = patientControl.findPatientById(patientId);
+        if (patient == null) {
+            System.out.println("Patient not found.");
+            scanner.nextLine();
+            return;
+        }
+
+        System.out.println("Press [Enter] to accept the default value");
+
+        String fullName = ConsoleUtils.getStringInput(scanner, "Full name [" + patient.getFullName() + "]: ", patient.getFullName());
+        String email = ConsoleUtils.getEmailInput(scanner, "Email [" + patient.getEmail() + "]: ", patient.getEmail());
+        String phoneNumber = ConsoleUtils.getPhoneInput(scanner, "Phone [" + patient.getPhoneNumber() + "]: ", patient.getPhoneNumber());
+
+        Address address = patient.getAddress();
+        String street = ConsoleUtils.getStringInput(scanner, "Street [" + address.getStreet() + "]: ", address.getStreet());
+        String city = ConsoleUtils.getStringInput(scanner, "City [" + address.getCity() + "]: ", address.getCity());
+        String state = ConsoleUtils.getStringInput(scanner, "State [" + address.getState() + "]: ", address.getState());
+        String postalCode = ConsoleUtils.getPostalCodeInput(scanner, "Postal code [" + address.getZipCode() + "]: ", address.getZipCode());
+        String country = ConsoleUtils.getStringInput(scanner, "Country [" + address.getCountry() + "]: ", address.getCountry());
+
+        Address updatedAddress = new Address(street, city, state, postalCode, country);
+        updatedAddress.setAddressId(address.getAddressId());
+
+        String wardNumber = ConsoleUtils.getWardNumberInput(scanner, "Ward number [" + patient.getWardNumber() + "]: ", patient.getWardNumber());
+
+        System.out.println("Select blood type (Enter to keep current):");
+        System.out.println("1. A_POSITIVE  2. A_NEGATIVE  3. B_POSITIVE  4. B_NEGATIVE");
+        System.out.println("5. AB_POSITIVE 6. AB_NEGATIVE 7. O_POSITIVE  8. O_NEGATIVE  9. OTHERS");
+        System.out.println("\n>>> Current: " + patient.getBloodType());
+        int defaultChoice;
+        switch (patient.getBloodType()) {
+            case A_POSITIVE: defaultChoice = 1; break;
+            case A_NEGATIVE: defaultChoice = 2; break;
+            case B_POSITIVE: defaultChoice = 3; break;
+            case B_NEGATIVE: defaultChoice = 4; break;
+            case AB_POSITIVE: defaultChoice = 5; break;
+            case AB_NEGATIVE: defaultChoice = 6; break;
+            case O_POSITIVE: defaultChoice = 7; break;
+            case O_NEGATIVE: defaultChoice = 8; break;
+            case OTHERS: defaultChoice = 9; break;
+            default: defaultChoice = 1;
+        }
+        int bloodTypeChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-9): ", defaultChoice);
+        BloodType bloodType = getBloodTypeFromChoice(bloodTypeChoice);
+
+        String allergiesInput = ConsoleUtils.getStringInput(scanner, "Allergies [" + patient.getAllergies() + "]: ", patient.getAllergies());
+        String emergencyContact = ConsoleUtils.getPhoneInput(scanner, "Emergency contact [" + patient.getEmergencyContact() + "]: ", patient.getEmergencyContact());
+
+        try {
+            addressControl.updateAddress(updatedAddress);
+        } catch (SQLException e) {
+            System.out.println("Failed to update address: " + e.getMessage());
+            return;
+        }
+
+        boolean success = patientControl.updatePatientRecord(
+            patient.getPatientId(),
+            fullName,
+            email,
+            phoneNumber,
+            updatedAddress,
+            wardNumber,
+            bloodType,
+            allergiesInput,
+            emergencyContact
+        );
+
+        if (success) {
+            System.out.println("Patient updated successfully!");
+            scanner.nextLine();
+        } else {
+            System.out.println("Failed to update patient.");
+            scanner.nextLine();
+        }
     }
 
     private void deactivatePatient() {
         System.out.println("\n=== DEACTIVATE PATIENT ===");
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID to deactivate: ");
         
-        // For now, just show a placeholder
-        System.out.println("Deactivate Patient - Implementation needed");
-        System.out.println("Patient ID: " + patientId);
+            entity.Patient patient = patientControl.findPatientById(patientId);
+            if (patient == null) {
+                System.out.println("Patient not found.");
+                scanner.nextLine();
+                return;
+            }
+
+            System.out.println("Patient found: " + patient.getFullName() + " (ID: " + patient.getPatientId() + ")");
+            String confirm = ConsoleUtils.getStringInput(scanner, "Are you sure you want to deactivate this patient? (Y/N): ").trim().toUpperCase();
+
+            if (!confirm.equals("Y")) {
+                System.out.println("Deactivation cancelled.");
+                scanner.nextLine();
+                return;
+            }
+
+            boolean success = patientControl.deactivatePatient(patientId);
+
+            if (success) {
+                System.out.println("Patient deactivated successfully!");
+                scanner.nextLine();
+            } else {
+                System.out.println("Failed to deactivate patient.");
+                scanner.nextLine();
+            }
     }
 
     private void addPatientToQueue() {
-        System.out.println("\n=== ADD PATIENT TO QUEUE ===");
-        String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID to add to queue: ");
-        
-        // For now, just show a placeholder
-        System.out.println("Add Patient to Queue - Implementation needed");
-        System.out.println("Patient ID: " + patientId);
+        ConsoleUtils.printHeader("QUEUE - ADD PATIENT");
+        while (true) {
+            String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID to add (Press [Enter] to exit): ", "");
+            if (patientId.isEmpty()) {
+                System.out.println("Returning to Patient Management menu.");
+                break;
+            }
+
+            Patient patient = patientControl.findPatientById(patientId);
+            if (patient == null) {
+                System.out.println("Patient not found.");
+                boolean tryAnother = ConsoleUtils.getBooleanInput(scanner, "Try another patient ID? (Y/N): ");
+                if (!tryAnother) {
+                    System.out.println("Stopping add-to-queue.");
+                    break;
+                }
+                continue;
+            }
+
+            if (patientControl.isPatientInQueue(patient)) {
+                System.out.println("Patient is already in the queue.");
+                boolean addMore = ConsoleUtils.getBooleanInput(scanner, "Add another patient? (Y/N): ");
+                if (!addMore) {
+                    System.out.println("Stopping add-to-queue.");
+                    break;
+                }
+                continue;
+            }
+
+            boolean success = patientControl.addPatientToQueue(patient);
+            if (success) {
+                System.out.println("Patient added to queue successfully!");
+                System.out.println(">>> Current Queue Size: " + patientControl.getQueueSize());
+            } else {
+                System.out.println("Failed to add patient. Patient may be inactive.");
+            }
+
+            boolean addAnother = ConsoleUtils.getBooleanInput(scanner, "Add another patient to queue? (Y/N): ");
+            if (!addAnother) {
+                System.out.println("Stopping add-to-queue.");
+                break;
+            }
+        }
+        scanner.nextLine();
     }
 
     private void getNextPatientFromQueue() {
-        System.out.println("\n=== GET NEXT PATIENT FROM QUEUE ===");
-        
-        // For now, just show a placeholder
-        System.out.println("Get Next Patient from Queue - Implementation needed");
+        ConsoleUtils.printHeader("QUEUE - CALL NEXT PATIENT");
+        if (patientControl.getQueueSize() == 0) {
+            System.out.println("No patients in queue. Please add patients first.");
+            scanner.nextLine();
+            return;
+        }
+
+        while (true) {
+            Patient next = patientControl.getNextPatientFromQueue();
+            if (next == null) {
+                System.out.println("No patients in queue.");
+                break;
+            }
+
+            System.out.println("Next Patient:");
+            System.out.println("ID    : " + next.getPatientId());
+            System.out.println("Name  : " + next.getFullName());
+            System.out.println("IC    : " + next.getICNumber());
+            int remaining = patientControl.getQueueSize();
+            System.out.println(">>> Queue Size Remaining: " + remaining);
+
+            if (remaining == 0) {
+                System.out.println("No more patients in the queue.");
+                break;
+            }
+
+            boolean callAnother = ConsoleUtils.getBooleanInput(scanner, "Call next patient? (Y/N): ");
+            if (!callAnother) {
+                System.out.println("Stopping queue processing.");
+                break;
+            }
+        }
+        scanner.nextLine();
     }
 
     private void searchPatient() {

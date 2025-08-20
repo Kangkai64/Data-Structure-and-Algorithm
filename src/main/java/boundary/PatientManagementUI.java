@@ -76,16 +76,14 @@ public class PatientManagementUI {
         String icNumber = ConsoleUtils.getICInput(scanner, "Enter IC number (DDMMYY-XX-XXXX): ");
         String email = ConsoleUtils.getEmailInput(scanner, "Enter email: ");
         String phoneNumber = ConsoleUtils.getPhoneInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
-        String icNumber = ConsoleUtils.getICInput(scanner, "Enter IC number (YYMMDD-XX-XXXX): ");
-        String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
-        String phoneNumber = ConsoleUtils.getPhoneInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
+       
         
         // Get address details
         String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
         String city = ConsoleUtils.getStringInput(scanner, "Enter city: ");
         String state = ConsoleUtils.getStringInput(scanner, "Enter state: ");
         String postalCode = ConsoleUtils.getPostalCodeInput(scanner, "Enter postal code (5 digits): ");
-        Integer postalCode = ConsoleUtils.getIntInput(scanner, "Enter postal code: ", 0, 99999);
+        
         String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
 
         String wardNumber = ConsoleUtils.getWardNumberInput(scanner, "Enter ward number (WXXXX): ");

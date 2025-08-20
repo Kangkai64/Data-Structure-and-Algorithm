@@ -1,8 +1,22 @@
 package boundary;
 
 import control.MedicalTreatmentControl;
+import control.MedicalTreatmentControl;
+import control.PatientManagementControl;
+import control.DoctorManagementControl;
+import control.ConsultationManagementControl;
+import entity.MedicalTreatment;
+import entity.Patient;
+import entity.Doctor;
+import entity.Consultation;
 import utility.ConsoleUtils;
+import utility.DateType;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import java.util.Iterator;
+
+
 
 /**
  * Medical Treatment Management User Interface
@@ -10,11 +24,17 @@ import java.util.Scanner;
  */
 public class MedicalTreatmentUI {
     private Scanner scanner;
+    private PatientManagementControl patientControl;
+    private DoctorManagementControl doctorControl;
+    private ConsultationManagementControl consultationControl;
     private MedicalTreatmentControl treatmentControl;
 
     public MedicalTreatmentUI() {
         this.scanner = new Scanner(System.in);
         this.treatmentControl = new MedicalTreatmentControl();
+        this.patientControl = new PatientManagementControl();
+        this.doctorControl = new DoctorManagementControl();
+        this.consultationControl = new ConsultationManagementControl();
     }
 
     public void displayTreatmentManagementMenu() {
@@ -60,24 +80,48 @@ public class MedicalTreatmentUI {
 
     private void createTreatment() {
         System.out.println("\n=== CREATE TREATMENT ===");
+
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
+        Patient patient = patientControl.findPatientById(patientId);
+        if (patient == null) {
+            System.out.println("Error: Patient not found with ID: " + patientId);
+            return;
+        }
+   
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
-        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID (optional): ");
+        Doctor doctor = doctorControl.findDoctorById(doctorId);
+        if (doctor == null) {
+            System.out.println("Error: Doctor not found with ID: " + doctorId);
+            return;
+        }
+        
+        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID (optional, press Enter to skip): ");
+        Consultation consultation = null;
+        if (!consultationId.trim().isEmpty()) {
+            consultation = consultationControl.findConsultationById(consultationId);
+            if (consultation == null) {
+                System.out.println("Warning: Consultation not found with ID: " + consultationId + ". Continuing without consultation.");
+            }
+        }
+
         String diagnosis = ConsoleUtils.getStringInput(scanner, "Enter diagnosis: ");
         String treatmentPlan = ConsoleUtils.getStringInput(scanner, "Enter treatment plan: ");
         String medications = ConsoleUtils.getStringInput(scanner, "Enter prescribed medications: ");
         String notes = ConsoleUtils.getStringInput(scanner, "Enter treatment notes: ");
         double cost = ConsoleUtils.getDoubleInput(scanner, "Enter treatment cost: ", 0.0, 100000.0);
         
-        // For now, just show a placeholder
-        System.out.println("Create Treatment - Implementation needed");
-        System.out.println("Patient ID: " + patientId + ", Doctor ID: " + doctorId);
-        System.out.println("Consultation ID: " + consultationId);
-        System.out.println("Diagnosis: " + diagnosis);
-        System.out.println("Treatment Plan: " + treatmentPlan);
-        System.out.println("Medications: " + medications);
-        System.out.println("Notes: " + notes);
-        System.out.println("Cost: " + cost);
+        boolean success = treatmentControl.createTreatment(patient, doctor, consultation, diagnosis, treatmentPlan, cost);
+        
+        if (success) {
+            System.out.println("✓ Treatment created successfully!");
+            System.out.println("Patient: " + patient.getFullName());
+            System.out.println("Doctor: " + doctor.getFullName());
+            System.out.println("Diagnosis: " + diagnosis);
+            System.out.println("Cost: RM" + cost);
+        } else {
+            System.out.println("✗ Failed to create treatment. Please try again.");
+        }
+       
     }
 
     private void updateTreatment() {

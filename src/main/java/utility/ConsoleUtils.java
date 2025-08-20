@@ -37,17 +37,11 @@ public class ConsoleUtils {
         }
     }
 
-    public static String getICInput(Scanner scanner, String prompt) {
-        return getInputMatching(scanner, prompt, PatternChecker.IC_PATTERN, "IC must be in format: XXXXXX-XX-XXXX");
-    }
 
     public static String getEmailInput(Scanner scanner, String prompt) {
         return getInputMatching(scanner, prompt, PatternChecker.EMAIL_PATTERN, "Please enter a valid email address");
     }
 
-    public static String getPhoneInput(Scanner scanner, String prompt) {
-        return getInputMatching(scanner, prompt, PatternChecker.PHONE_PATTERN, "Phone must be in format: 0XX-XXXXXXX or 0XX-XXXXXXXX");
-    }
 
     public static String getInputMatchingWithDefault(Scanner scanner, String prompt, Pattern pattern, String invalidMessage, String defaultValue) {
         while (true) {

@@ -4,9 +4,13 @@ import adt.ArrayBucketList;
 import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
+import entity.Schedule;
 import dao.ConsultationDao;
+import dao.ScheduleDao;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 
 /**
@@ -19,11 +23,13 @@ public class ConsultationManagementControl {
     private ArrayBucketList<String, Consultation> consultations;
     private ArrayBucketList<String, Consultation> scheduledConsultations;
     private ConsultationDao consultationDao;
+    private ScheduleDao scheduleDao;
     
     public ConsultationManagementControl() {
         this.consultations = new ArrayBucketList<String, Consultation>();
         this.scheduledConsultations = new ArrayBucketList<String, Consultation>();
         this.consultationDao = new ConsultationDao();
+        this.scheduleDao = new ScheduleDao();
         loadConsultationData();
     }
     
@@ -225,11 +231,13 @@ public class ConsultationManagementControl {
     // Reporting Methods
     public String generateConsultationReport() {
         StringBuilder report = new StringBuilder();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         report.append("=== CONSULTATION REPORT ===\n");
         report.append("Total Consultations: ").append(getTotalConsultations()).append("\n");
         report.append("Scheduled Consultations: ").append(getScheduledConsultationsCount()).append("\n");
         report.append("Completed Consultations: ").append(getCompletedConsultations().getSize()).append("\n");
-        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
+        report.append("Report Generated: ").append(LocalDate.now().format(dateFormatter)).append("\n\n");
         
         Iterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
@@ -237,7 +245,7 @@ public class ConsultationManagementControl {
             report.append("Consultation ID: ").append(consultation.getConsultationId()).append("\n");
             report.append("Patient: ").append(consultation.getPatient().getFullName()).append("\n");
             report.append("Doctor: ").append(consultation.getDoctor().getFullName()).append("\n");
-            report.append("Date: ").append(consultation.getConsultationDate()).append("\n");
+            report.append("Date: ").append(consultation.getConsultationDate().format(dateTimeFormatter)).append("\n");
             report.append("Status: ").append(consultation.getStatus()).append("\n");
             report.append("Fee: RM").append(consultation.getConsultationFee()).append("\n");
             report.append("----------------------------------------\n");
@@ -248,10 +256,12 @@ public class ConsultationManagementControl {
     
     public String generateConsultationHistoryReport() {
         StringBuilder report = new StringBuilder();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         report.append("=== CONSULTATION HISTORY REPORT ===\n");
         report.append("Total Consultations: ").append(getTotalConsultations()).append("\n");
         report.append("Completed Consultations: ").append(getCompletedConsultations().getSize()).append("\n");
-        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
+        report.append("Report Generated: ").append(LocalDate.now().format(dateFormatter)).append("\n\n");
         
         Iterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
@@ -260,7 +270,7 @@ public class ConsultationManagementControl {
                 report.append("Consultation ID: ").append(consultation.getConsultationId()).append("\n");
                 report.append("Patient: ").append(consultation.getPatient().getFullName()).append("\n");
                 report.append("Doctor: ").append(consultation.getDoctor().getFullName()).append("\n");
-                report.append("Date: ").append(consultation.getConsultationDate()).append("\n");
+                report.append("Date: ").append(consultation.getConsultationDate().format(dateTimeFormatter)).append("\n");
                 report.append("Status: ").append(consultation.getStatus()).append("\n");
                 report.append("Fee: RM").append(consultation.getConsultationFee()).append("\n");
                 report.append("----------------------------------------\n");
@@ -279,5 +289,55 @@ public class ConsultationManagementControl {
                 break;
             }
         }
+    }
+
+    // Scheduling utilities
+    public ArrayBucketList<String, Schedule> getAvailableSchedulesByDate(LocalDate date) {
+        ArrayBucketList<String, Schedule> available = new ArrayBucketList<String, Schedule>();
+        try {
+            ArrayBucketList<String, Schedule> all = scheduleDao.findAll();
+            entity.DayOfWeek target = entity.DayOfWeek.valueOf(date.getDayOfWeek().name());
+            for (Schedule schedule : all) {
+                if (schedule.isAvailable() && schedule.getDayOfWeek() == target) {
+                    available.add(schedule.getScheduleId(), schedule);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading schedules: " + e.getMessage());
+        }
+        return available;
+    }
+
+    public boolean isTimeWithinDoctorSchedule(String doctorId, LocalDate date, LocalTime time) {
+        try {
+            ArrayBucketList<String, Schedule> all = scheduleDao.findAll();
+            entity.DayOfWeek target = entity.DayOfWeek.valueOf(date.getDayOfWeek().name());
+            boolean within = false;
+            for (Schedule schedule : all) {
+                if (schedule.isAvailable() && schedule.getDoctorId().equals(doctorId) && schedule.getDayOfWeek() == target) {
+                    LocalTime from = LocalTime.parse(schedule.getFromTime());
+                    LocalTime to = LocalTime.parse(schedule.getToTime());
+                    if (!time.isBefore(from) && !time.isAfter(to)) {
+                        within = true;
+                        break;
+                    }
+                }
+            }
+            return within;
+        } catch (Exception e) {
+            System.err.println("Error validating time within schedule: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean hasDoctorConsultationAt(String doctorId, LocalDateTime dateTime) {
+        Iterator<Consultation> it = consultations.iterator();
+        while (it.hasNext()) {
+            Consultation c = it.next();
+            if (c.getDoctor().getDoctorId().equals(doctorId) && c.getConsultationDate().equals(dateTime)) {
+                return true;
+            }
+        }
+        return false;
     }
 } 

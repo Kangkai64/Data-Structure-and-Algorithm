@@ -62,9 +62,6 @@ public class ConsultationManagementControl {
             consultations.add(consultation.getConsultationId(), consultation);
             scheduledConsultations.add(consultation.getConsultationId(), consultation);
             
-            // Add to doctor's appointment list
-            doctor.addAppointment(null); // We'll need to create an Appointment entity
-            
             return true;
         } catch (Exception exception) {
             System.err.println("Error scheduling consultation: " + exception.getMessage());
@@ -77,6 +74,14 @@ public class ConsultationManagementControl {
             Consultation consultation = findConsultationById(consultationId);
             if (consultation != null && consultation.getStatus() == Consultation.ConsultationStatus.SCHEDULED) {
                 consultation.setStatus(Consultation.ConsultationStatus.IN_PROGRESS);
+                
+                // Update in database
+                boolean updated = consultationDao.updateStatus(consultationId, Consultation.ConsultationStatus.IN_PROGRESS);
+                if (!updated) {
+                    System.err.println("Failed to update consultation status in database");
+                    return false;
+                }
+                
                 return true;
             }
             return false;
@@ -97,6 +102,13 @@ public class ConsultationManagementControl {
                 consultation.setNextVisitDate(nextVisitDate);
                 consultation.setStatus(Consultation.ConsultationStatus.COMPLETED);
                 
+                // Update in database
+                boolean updated = consultationDao.update(consultation);
+                if (!updated) {
+                    System.err.println("Failed to update consultation in database");
+                    return false;
+                }
+                
                 // Remove from scheduled consultations
                 removeFromScheduledConsultations(consultation);
                 
@@ -114,6 +126,13 @@ public class ConsultationManagementControl {
             Consultation consultation = findConsultationById(consultationId);
             if (consultation != null && consultation.getStatus() == Consultation.ConsultationStatus.SCHEDULED) {
                 consultation.setStatus(Consultation.ConsultationStatus.CANCELLED);
+                
+                // Update in database
+                boolean updated = consultationDao.updateStatus(consultationId, Consultation.ConsultationStatus.CANCELLED);
+                if (!updated) {
+                    System.err.println("Failed to update consultation status in database");
+                    return false;
+                }
                 
                 // Remove from scheduled consultations
                 removeFromScheduledConsultations(consultation);

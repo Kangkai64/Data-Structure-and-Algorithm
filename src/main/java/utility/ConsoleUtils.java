@@ -1,12 +1,11 @@
 package utility;
 
 import java.io.IOException;
+import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.ResolverStyle;
 import java.util.Scanner;
-import java.time.DateTimeException;
 import java.util.regex.Pattern;
 
 public class ConsoleUtils {
@@ -63,6 +62,55 @@ public class ConsoleUtils {
             }
         }
     }
+
+    public static String getICInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("IC number cannot be empty");
+            }
+            else if (!PatternChecker.IC_PATTERN.matcher(input).matches()) {
+                System.out.println("Invalid IC number format");
+            }             
+            else {
+                return input;
+            }
+        }
+    }
+
+    public static String getPhoneInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Phone number cannot be empty");
+            }
+            else if (!PatternChecker.PHONE_PATTERN.matcher(input).matches()) {
+                System.out.println("Invalid phone number format");
+            }       
+            else {
+                return input;
+            }
+        }
+    }
+
+    public static String getTimeInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Time cannot be empty");
+            }
+            else if (!PatternChecker.TIME_PATTERN.matcher(input).matches()) {
+                System.out.println("Invalid time format");
+            }
+            else {
+                return input;
+            }
+        }
+    }
+
 
     public static String getICInput(Scanner scanner, String prompt, String defaultValue) {
         return getInputMatchingWithDefault(scanner, prompt, PatternChecker.IC_PATTERN, "IC must be in format: XXXXXX-XX-XXXX", defaultValue);

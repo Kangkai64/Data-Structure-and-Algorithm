@@ -70,6 +70,11 @@ public class Address {
     }
 
     @Override
+    public String toString() {
+        return getFormattedAddress();
+    }
+
+    @Override
     public int hashCode() {
         return Integer.parseInt(addressId.replaceAll("[^0-9]", ""));
     }

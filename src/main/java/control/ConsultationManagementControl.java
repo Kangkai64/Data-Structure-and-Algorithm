@@ -79,16 +79,13 @@ public class ConsultationManagementControl {
         try {
             Consultation consultation = findConsultationById(consultationId);
             if (consultation != null && consultation.getStatus() == Consultation.ConsultationStatus.SCHEDULED) {
-                consultation.setStatus(Consultation.ConsultationStatus.IN_PROGRESS);
-                
-                // Update in database
-                boolean updated = consultationDao.updateStatus(consultationId, Consultation.ConsultationStatus.IN_PROGRESS);
-                if (!updated) {
-                    System.err.println("Failed to update consultation status in database");
-                    return false;
-                }
-                
-                return true;
+                    consultation.setStatus(Consultation.ConsultationStatus.IN_PROGRESS);
+                    boolean updated = consultationDao.updateStatus(consultationId, Consultation.ConsultationStatus.IN_PROGRESS);
+                    if (!updated) {
+                        System.err.println("Failed to update consultation status in database");
+                        return false;
+                    }
+                    return true;
             }
             return false;
         } catch (Exception exception) {
@@ -340,4 +337,123 @@ public class ConsultationManagementControl {
         }
         return false;
     }
+
+    // Slot generation with two 1-hour breaks at +3h and +6h from shift start, 1-hour slots, max 6
+    public ArrayBucketList<String, String> getAvailableSlots(String doctorId, LocalDate date) {
+        ArrayBucketList<String, String> slots = new ArrayBucketList<String, String>();
+        try {
+            // Identify working window from schedule(s)
+            LocalTime windowStart = null;
+            LocalTime windowEnd = null;
+            ArrayBucketList<String, Schedule> all = scheduleDao.findAll();
+            entity.DayOfWeek target = entity.DayOfWeek.valueOf(date.getDayOfWeek().name());
+            for (Schedule schedule : all) {
+                if (schedule.isAvailable() && schedule.getDoctorId().equals(doctorId) && schedule.getDayOfWeek() == target) {
+                    LocalTime from = LocalTime.parse(schedule.getFromTime());
+                    LocalTime to = LocalTime.parse(schedule.getToTime());
+                    windowStart = (windowStart == null || from.isBefore(windowStart)) ? from : windowStart;
+                    windowEnd = (windowEnd == null || to.isAfter(windowEnd)) ? to : windowEnd;
+                }
+            }
+            if (windowStart == null || windowEnd == null) {
+                return slots; // empty
+            }
+
+            // Enforce up to 8 hours from start (if schedule is longer)
+            LocalTime enforcedEnd = windowStart.plusHours(8);
+            if (enforcedEnd.isBefore(windowEnd)) {
+                windowEnd = enforcedEnd;
+            }
+
+            // Define breaks
+            LocalTime break1Start = windowStart.plusHours(3);
+            LocalTime break1End = break1Start.plusHours(1);
+            LocalTime break2Start = windowStart.plusHours(6);
+            LocalTime break2End = break2Start.plusHours(1);
+
+            // Generate 1-hour slots
+            LocalTime cursor = windowStart;
+            int slotIndex = 1;
+            while (cursor.plusHours(1).compareTo(windowEnd) <= 0 && slotIndex <= 6) {
+                // exclude if within break
+                boolean inBreak1 = !cursor.isBefore(break1Start) && cursor.isBefore(break1End);
+                boolean inBreak2 = !cursor.isBefore(break2Start) && cursor.isBefore(break2End);
+                if (!inBreak1 && !inBreak2) {
+                    LocalDateTime candidate = LocalDateTime.of(date, cursor);
+                    if (!hasDoctorConsultationAt(doctorId, candidate)) {
+                        String key = (slotIndex < 10 ? "SLOT_0" : "SLOT_") + slotIndex;
+                        slots.add(key, cursor.toString());
+                        slotIndex++;
+                    }
+                }
+                cursor = cursor.plusHours(1);
+            }
+        } catch (Exception e) {
+            System.err.println("Error generating available slots: " + e.getMessage());
+        }
+        return slots;
+    }
+
+    // Safer variant for UI: returns plain array to avoid ADT iterator quirks
+    public String[] getAvailableSlotTimes(String doctorId, LocalDate date) {
+        String[] temp = new String[6];
+        int count = 0;
+        try {
+            // Identify working window from schedule(s)
+            LocalTime windowStart = null;
+            LocalTime windowEnd = null;
+            ArrayBucketList<String, Schedule> all = scheduleDao.findAll();
+            entity.DayOfWeek target = entity.DayOfWeek.valueOf(date.getDayOfWeek().name());
+            for (Schedule schedule : all) {
+                if (schedule.isAvailable() && schedule.getDoctorId().equals(doctorId) && schedule.getDayOfWeek() == target) {
+                    LocalTime from = LocalTime.parse(schedule.getFromTime());
+                    LocalTime to = LocalTime.parse(schedule.getToTime());
+                    windowStart = (windowStart == null || from.isBefore(windowStart)) ? from : windowStart;
+                    windowEnd = (windowEnd == null || to.isAfter(windowEnd)) ? to : windowEnd;
+                }
+            }
+            if (windowStart == null || windowEnd == null) {
+                return new String[0];
+            }
+
+            // Enforce up to 8 hours from start (if schedule is longer)
+            LocalTime enforcedEnd = windowStart.plusHours(8);
+            if (enforcedEnd.isBefore(windowEnd)) {
+                windowEnd = enforcedEnd;
+            }
+
+            // Define breaks
+            LocalTime break1Start = windowStart.plusHours(3);
+            LocalTime break1End = break1Start.plusHours(1);
+            LocalTime break2Start = windowStart.plusHours(6);
+            LocalTime break2End = break2Start.plusHours(1);
+
+            // Generate 1-hour slots
+            LocalTime cursor = windowStart;
+            int slotIndex = 1;
+            while (cursor.plusHours(1).compareTo(windowEnd) <= 0 && slotIndex <= 6) {
+                boolean inBreak1 = !cursor.isBefore(break1Start) && cursor.isBefore(break1End);
+                boolean inBreak2 = !cursor.isBefore(break2Start) && cursor.isBefore(break2End);
+                if (!inBreak1 && !inBreak2) {
+                    LocalDateTime candidate = LocalDateTime.of(date, cursor);
+                    if (!hasDoctorConsultationAt(doctorId, candidate)) {
+                        temp[count++] = cursor.toString();
+                        slotIndex++;
+                        if (count == temp.length) {
+                            break;
+                        }
+                    }
+                }
+                cursor = cursor.plusHours(1);
+            }
+        } catch (Exception e) {
+            System.err.println("Error generating available slot times: " + e.getMessage());
+        }
+        String[] result = new String[count];
+        if (count > 0) {
+            System.arraycopy(temp, 0, result, 0, count);
+        }
+        return result;
+    }
+
 } 

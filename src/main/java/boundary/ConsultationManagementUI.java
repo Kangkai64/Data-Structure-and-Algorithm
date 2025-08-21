@@ -126,29 +126,22 @@ public class ConsultationManagementUI {
             return;
         }
 
-        // Prompt time and validate within operating hours and conflict-free
-        LocalTime selectedTime;
-        while (true) {
-            System.out.println("Enter consultation time (24-hour format):");
-            int hour = ConsoleUtils.getIntInput(scanner, "Enter hour (0-23): ", 0, 23);
-            int minute = ConsoleUtils.getIntInput(scanner, "Enter minute (0-59): ", 0, 59);
-            selectedTime = LocalTime.of(hour, minute);
-
-            boolean within = consultationControl.isTimeWithinDoctorSchedule(doctorId, consultationDate, selectedTime);
-            if (!within) {
-                System.out.println("The selected time is outside the doctor's operating hours on this date. Please try again.");
-                continue;
-            }
-
-            LocalDateTime candidate = LocalDateTime.of(consultationDate, selectedTime);
-            boolean conflict = consultationControl.hasDoctorConsultationAt(doctorId, candidate);
-            if (conflict) {
-                System.out.println("The doctor already has a consultation at this time. Please choose a different time.");
-                continue;
-            }
-
-            break;
+        // Show available 1-hour slots (breaks excluded) and choose one
+        String[] slotOptions = consultationControl.getAvailableSlotTimes(doctorId, consultationDate);
+        if (slotOptions.length == 0) {
+            System.out.println("No available 1-hour slots for this doctor on the selected date.");
+            ConsoleUtils.waitMessage();
+            return;
         }
+
+        ConsoleUtils.printHeader("Available 1-hour Slots (breaks excluded)");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        for (int index = 0; index < slotOptions.length; index++) {
+            LocalTime t = LocalTime.parse(slotOptions[index]);
+            System.out.println((index + 1) + ". " + t.format(timeFormatter));
+        }
+        int chosenIndex = ConsoleUtils.getIntInput(scanner, "Choose a slot (1-" + slotOptions.length + "): ", 1, slotOptions.length) - 1;
+        LocalTime selectedTime = LocalTime.parse(slotOptions[chosenIndex]);
 
         LocalDateTime consultationDateTime = LocalDateTime.of(consultationDate, selectedTime);
         
@@ -202,8 +195,8 @@ public class ConsultationManagementUI {
         if (confirm) {
             if (consultationControl.startConsultation(consultationId)) {
                 System.out.println("Consultation started successfully.");
-            } else {
-                System.out.println("Consultation not started.");
+                } else {
+                    System.out.println("Consultation not started.");
             }
         } else {
             System.out.println("Consultation not started.");

@@ -3,12 +3,16 @@ package control;
 import adt.ArrayBucketList;
 import entity.Doctor;
 import entity.Schedule;
+import entity.Consultation;
 import entity.DayOfWeek;
 import entity.Address;
 import dao.DoctorDao;
 import dao.AddressDao;
 import dao.ScheduleDao;
+import dao.ConsultationDao;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 
 /**
@@ -22,12 +26,14 @@ public class DoctorManagementControl {
     private AddressDao addressDao;
     private ScheduleDao scheduleDao;
     private ArrayBucketList<String, Doctor> activeDoctors;
+    private ConsultationDao consultationDao;
     
     public DoctorManagementControl() {
         this.doctorDao = new DoctorDao();
         this.addressDao = new AddressDao();
         this.scheduleDao = new ScheduleDao();
         this.activeDoctors = new ArrayBucketList<String, Doctor>();
+        this.consultationDao = new ConsultationDao();
         loadActiveDoctors();
     }
     
@@ -278,50 +284,313 @@ public class DoctorManagementControl {
     }
     
     // Reporting Methods
+    private static final int REPORT_WIDTH = 120;
+
+    private String repeatChar(char ch, int count) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < count; i++) builder.append(ch);
+        return builder.toString();
+    }
+
+    private String centerText(String text, int width) {
+        if (text == null) text = "";
+        if (text.length() >= width) return text;
+        int padding = (width - text.length()) / 2;
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < padding; i++) builder.append(' ');
+        builder.append(text);
+        while (builder.length() < width) builder.append(' ');
+        return builder.toString();
+    }
+
+    private String padRight(String text, int width) {
+        if (text == null) text = "";
+        StringBuilder builder = new StringBuilder(text);
+        while (builder.length() < width) builder.append(' ');
+        if (builder.length() > width) return builder.substring(0, width);
+        return builder.toString();
+    }
+
+    private String padLeft(String text, int width) {
+        if (text == null) text = "";
+        StringBuilder builder = new StringBuilder();
+        while (builder.length() + text.length() < width) builder.append(' ');
+        builder.append(text);
+        if (builder.length() > width) return builder.substring(builder.length() - width);
+        return builder.toString();
+    }
+
     public String generateDoctorInformationReport() {
         StringBuilder report = new StringBuilder();
-        report.append("=== DOCTOR INFORMATION REPORT ===\n");
-        report.append("Total Active Doctors: ").append(getTotalActiveDoctors()).append("\n");
-        report.append("Available Doctors: ").append(getAvailableDoctors().getSize()).append("\n");
-        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
-        
+        String title = "DOCTOR INFORMATION REPORT";
+        String line = repeatChar('=', REPORT_WIDTH);
+        report.append("\n").append(line).append("\n");
+        report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
+
+        report.append("Generated at: ")
+            .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
+            .append("\n");
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
+
+        String h1 = padRight("Doctor ID", 12);
+        String h2 = padRight("Name", 28);
+        String h3 = padRight("Specialty", 22);
+        String h4 = padRight("License", 22);
+        String h5 = padRight("Consultations", 16);
+        report.append(" ")
+            .append(h1).append(" | ")
+            .append(h2).append(" | ")
+            .append(h3).append(" | ")
+            .append(h4).append(" | ")
+            .append(h5)
+            .append("\n");
+        report.append(line).append("\n");
+
         Iterator<Doctor> doctorIterator = activeDoctors.iterator();
         while (doctorIterator.hasNext()) {
             Doctor doctor = doctorIterator.next();
-            report.append("Doctor ID: ").append(doctor.getDoctorId()).append("\n");
-            report.append("Name: ").append(doctor.getFullName()).append("\n");
-            report.append("Specialty: ").append(doctor.getMedicalSpecialty()).append("\n");
-            report.append("License: ").append(doctor.getLicenseNumber()).append("\n");
-            report.append("Experience: ").append(doctor.getExpYears()).append(" years\n");
-            report.append("Status: ").append(doctor.isAvailable() ? "Available" : "Unavailable").append("\n");
-            report.append("----------------------------------------\n");
+            String c1 = padRight(doctor.getDoctorId(), 12);
+            String c2 = padRight(doctor.getFullName(), 28);
+            String c3 = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
+            String c4 = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
+            int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
+            String c5 = padLeft(String.valueOf(consultCount), 16);
+            report.append(" ")
+                .append(c1).append(" | ")
+                .append(c2).append(" | ")
+                .append(c3).append(" | ")
+                .append(c4).append(" | ")
+                .append(c5)
+                .append("\n");
         }
-        
+
+        report.append("\n");
+        report.append("Total active doctors : ").append(getTotalActiveDoctors()).append("\n");
+        report.append("Total available      : ").append(getAvailableDoctors().getSize()).append("\n");
+
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
+        report.append(centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
         return report.toString();
     }
+
+    /**
+     * Generates the Doctor Information Report with optional quick sort.
+     *
+     * @param sortBy    Accepts "name", "specialty", or "experience" (case-insensitive). Any other value disables sorting.
+     * @param ascending true for ascending order, false for descending.
+     * @return formatted report string
+     */
+    public String generateDoctorInformationReport(String sortBy, boolean ascending) {
+        String field = sortBy == null ? "" : sortBy.trim().toLowerCase();
+        boolean doSort = field.equals("name") || field.equals("specialty") || field.equals("experience");
+
+        StringBuilder report = new StringBuilder();
+        String title = "DOCTOR INFORMATION REPORT";
+        String line = repeatChar('=', REPORT_WIDTH);
+        report.append("\n").append(line).append("\n");
+        report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
+
+        report.append("Generated at: ")
+            .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
+            .append("\n");
+        report.append(line).append("\n");
+        
+        String h1 = padRight("Doctor ID", 12);
+        String h2 = padRight("Name", 28);
+        String h3 = padRight("Specialty", 22);
+        String h4 = padRight("License", 22);
+        String h5 = padRight("Consultations", 16);
+        report.append(" ")
+            .append(h1).append(" | ")
+            .append(h2).append(" | ")
+            .append(h3).append(" | ")
+            .append(h4).append(" | ")
+            .append(h5)
+            .append("\n");
+        report.append(line).append("\n");
+
+        if (doSort) {
+            int size = activeDoctors.getSize();
+            Doctor[] doctors = new Doctor[size];
+            int index = 0;
+            Iterator<Doctor> it = activeDoctors.iterator();
+            while (it.hasNext()) {
+                doctors[index++] = it.next();
+            }
+            quickSortDoctors(doctors, 0, size - 1, field, ascending);
+            for (int i = 0; i < size; i++) {
+                Doctor doctor = doctors[i];
+                String c1 = padRight(doctor.getDoctorId(), 12);
+                String c2 = padRight(doctor.getFullName(), 28);
+                String c3 = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
+                String c4 = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
+                int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
+                String c5 = padLeft(String.valueOf(consultCount), 16);
+                report.append(" ")
+                    .append(c1).append(" | ")
+                    .append(c2).append(" | ")
+                    .append(c3).append(" | ")
+                    .append(c4).append(" | ")
+                    .append(c5)
+                    .append("\n");
+            }
+        } else {
+            Iterator<Doctor> it = activeDoctors.iterator();
+            while (it.hasNext()) {
+                Doctor doctor = it.next();
+                String c1 = padRight(doctor.getDoctorId(), 12);
+                String c2 = padRight(doctor.getFullName(), 28);
+                String c3 = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
+                String c4 = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
+                int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
+                String c5 = padLeft(String.valueOf(consultCount), 16);
+                report.append(" ")
+                    .append(c1).append(" | ")
+                    .append(c2).append(" | ")
+                    .append(c3).append(" | ")
+                    .append(c4).append(" | ")
+                    .append(c5)
+                    .append("\n");
+            }
+        }
+
+        report.append("\n");
+        report.append("Total active doctors : ").append(getTotalActiveDoctors()).append("\n");
+        report.append("Total available      : ").append(getAvailableDoctors().getSize()).append("\n");
+
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
+        report.append(centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
+        report.append(repeatChar('=', REPORT_WIDTH));
+        return report.toString();
+    }
+
+    private void appendDoctorLineItems(StringBuilder report, Doctor doctor) {
+        report.append("Doctor ID: ").append(doctor.getDoctorId()).append("\n");
+        report.append("Name: ").append(doctor.getFullName()).append("\n");
+        report.append("Specialty: ").append(doctor.getMedicalSpecialty()).append("\n");
+        report.append("License: ").append(doctor.getLicenseNumber()).append("\n");
+        report.append("Experience: ").append(doctor.getExpYears()).append(" years\n");
+        report.append("Status: ").append(doctor.isAvailable() ? "Available" : "Unavailable").append("\n");
+        report.append("----------------------------------------\n");
+    }
+
+    private void quickSortDoctors(Doctor[] doctors, int low, int high, String sortBy, boolean ascending) {
+        if (low < high) {
+            int partitionIndex = partition(doctors, low, high, sortBy, ascending);
+            quickSortDoctors(doctors, low, partitionIndex - 1, sortBy, ascending);
+            quickSortDoctors(doctors, partitionIndex + 1, high, sortBy, ascending);
+        }
+    }
+
+    private int partition(Doctor[] doctors, int low, int high, String sortBy, boolean ascending) {
+        Doctor pivot = doctors[high];
+        int i = low - 1;
+        for (int j = low; j <= high - 1; j++) {
+            if (compareDoctors(doctors[j], pivot, sortBy, ascending) <= 0) {
+                i++;
+                swap(doctors, i, j);
+            }
+        }
+        swap(doctors, i + 1, high);
+        return i + 1;
+    }
+
+    private void swap(Doctor[] doctors, int a, int b) {
+        Doctor temp = doctors[a];
+        doctors[a] = doctors[b];
+        doctors[b] = temp;
+    }
+
+    private int compareDoctors(Doctor a, Doctor b, String sortBy, boolean ascending) {
+        int result;
+        if ("name".equals(sortBy)) {
+            String an = a.getFullName() == null ? "" : a.getFullName();
+            String bn = b.getFullName() == null ? "" : b.getFullName();
+            result = an.compareToIgnoreCase(bn);
+        } else if ("specialty".equals(sortBy)) {
+            String as = a.getMedicalSpecialty() == null ? "" : a.getMedicalSpecialty();
+            String bs = b.getMedicalSpecialty() == null ? "" : b.getMedicalSpecialty();
+            result = as.compareToIgnoreCase(bs);
+        } else { // "experience" now maps to consultation count in the report context
+            int ae = getConsultationCountForDoctor(a.getDoctorId());
+            int be = getConsultationCountForDoctor(b.getDoctorId());
+            result = Integer.compare(ae, be);
+        }
+        if (!ascending) {
+            result = -result;
+        }
+        // Tie-breaker by Doctor ID to make ordering deterministic
+        if (result == 0) {
+            String aid = a.getDoctorId() == null ? "" : a.getDoctorId();
+            String bid = b.getDoctorId() == null ? "" : b.getDoctorId();
+            result = aid.compareTo(bid);
+        }
+        return result;
+    }
+
+    private int getConsultationCountForDoctor(String doctorId) {
+        try {
+            ArrayBucketList<String, Consultation> allConsultations = consultationDao.findAll();
+            int count = 0;
+            Iterator<Consultation> iterator = allConsultations.iterator();
+            while (iterator.hasNext()) {
+                Consultation c = iterator.next();
+                if (c != null && c.getDoctor() != null && doctorId.equals(c.getDoctor().getDoctorId())) {
+                    count++;
+                }
+            }
+            return count;
+        } catch (Exception e) {
+            System.err.println("Error counting consultations for doctor " + doctorId + ": " + e.getMessage());
+            return 0;
+        }
+    }
+
+    
     
     public String generateScheduleReport() {
         StringBuilder report = new StringBuilder();
-        report.append("=== DOCTOR SCHEDULE REPORT ===\n");
-        report.append("Total Active Doctors: ").append(getTotalActiveDoctors()).append("\n");
-        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
-        
+        String title = "DOCTOR SCHEDULE REPORT";
+        String line = repeatChar('=', REPORT_WIDTH);
+        report.append(centerText(title, REPORT_WIDTH)).append("\n");
+        report.append(line).append("\n\n");
+
+        report.append("Generated at: ")
+            .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
+            .append("\n");
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n\n");
+
+        String h1 = padRight("Doctor", 30);
+        String h2 = padRight("Specialty", 26);
+        String h3 = padRight("Day", 14);
+        String h4 = padRight("From", 12);
+        String h5 = padRight("To", 12);
+        report.append(" " + h1 + "| " + h2 + "| " + h3 + "| " + h4 + "| " + h5 + "\n");
+        report.append(line).append("\n");
+
+        int totalSchedules = 0;
         Iterator<Doctor> doctorIterator = activeDoctors.iterator();
         while (doctorIterator.hasNext()) {
             Doctor doctor = doctorIterator.next();
-            report.append("Doctor: ").append(doctor.getFullName()).append("\n");
-            report.append("Specialty: ").append(doctor.getMedicalSpecialty()).append("\n");
-            report.append("Schedules:\n");
-            
             Iterator<Schedule> scheduleIterator = doctor.getSchedules().iterator();
             while (scheduleIterator.hasNext()) {
                 Schedule schedule = scheduleIterator.next();
-                report.append("  - ").append(schedule.getDayOfWeek()).append(": ")
-                    .append(schedule.getFromTime()).append(" - ").append(schedule.getToTime()).append("\n");
+                String c1 = padRight(doctor.getFullName(), 30);
+                String c2 = padRight(doctor.getMedicalSpecialty(), 26);
+                String c3 = padRight(String.valueOf(schedule.getDayOfWeek()), 14);
+                String c4 = padRight(schedule.getFromTime(), 12);
+                String c5 = padRight(schedule.getToTime(), 12);
+                report.append(" ").append(c1).append("| ").append(c2).append("| ")
+                      .append(c3).append("| ").append(c4).append("| ").append(c5).append("\n");
+                totalSchedules++;
             }
-            report.append("----------------------------------------\n");
         }
-        
+
+        report.append("\nTotal schedules listed : ").append(totalSchedules).append("\n\n");
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
+        report.append(centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
         return report.toString();
     }
     

@@ -14,6 +14,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
+import java.util.Comparator;
+import utility.QuickSort;
 
 /**
  * @author: Lee Yong Kang   
@@ -418,7 +420,13 @@ public class DoctorManagementControl {
             while (it.hasNext()) {
                 doctors[index++] = it.next();
             }
-            quickSortDoctors(doctors, 0, size - 1, field, ascending);
+            Comparator<Doctor> comparator = new Comparator<Doctor>() {
+                @Override
+                public int compare(Doctor a, Doctor b) {
+                    return compareDoctors(a, b, field, ascending);
+                }
+            };
+            QuickSort.sort(doctors, comparator);
             for (int i = 0; i < size; i++) {
                 Doctor doctor = doctors[i];
                 String c1 = padRight(doctor.getDoctorId(), 12);
@@ -475,32 +483,7 @@ public class DoctorManagementControl {
         report.append("----------------------------------------\n");
     }
 
-    private void quickSortDoctors(Doctor[] doctors, int low, int high, String sortBy, boolean ascending) {
-        if (low < high) {
-            int partitionIndex = partition(doctors, low, high, sortBy, ascending);
-            quickSortDoctors(doctors, low, partitionIndex - 1, sortBy, ascending);
-            quickSortDoctors(doctors, partitionIndex + 1, high, sortBy, ascending);
-        }
-    }
-
-    private int partition(Doctor[] doctors, int low, int high, String sortBy, boolean ascending) {
-        Doctor pivot = doctors[high];
-        int i = low - 1;
-        for (int j = low; j <= high - 1; j++) {
-            if (compareDoctors(doctors[j], pivot, sortBy, ascending) <= 0) {
-                i++;
-                swap(doctors, i, j);
-            }
-        }
-        swap(doctors, i + 1, high);
-        return i + 1;
-    }
-
-    private void swap(Doctor[] doctors, int a, int b) {
-        Doctor temp = doctors[a];
-        doctors[a] = doctors[b];
-        doctors[b] = temp;
-    }
+    
 
     private int compareDoctors(Doctor a, Doctor b, String sortBy, boolean ascending) {
         int result;

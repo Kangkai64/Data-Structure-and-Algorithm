@@ -716,7 +716,6 @@ public class PharmacyManagementUI {
     }
 
     private void generatePharmacyReports() {
-        ConsoleUtils.printHeader("Pharmacy Reports");
         System.out.println(pharmacyControl.generateMedicineStockReport());
         ConsoleUtils.waitMessage();
         System.out.println(pharmacyControl.generatePrescriptionReport());

@@ -317,6 +317,29 @@ public class ConsoleUtils {
         System.out.println(separator.toString());
     }
 
+    public static String centerText(String text, int width) {
+        if (text.length() >= width) {
+            return text;
+        }
+        
+        int padding = (width - text.length()) / 2;
+        StringBuilder centered = new StringBuilder();
+        
+        // Add left padding
+        for (int i = 0; i < padding; i++) {
+            centered.append(" ");
+        }
+        
+        centered.append(text);
+        
+        // Add right padding to reach exact width
+        while (centered.length() < width) {
+            centered.append(" ");
+        }
+        
+        return centered.toString();
+    }
+
     public static void waitMessage() {
         System.out.println("\n\n\nPress Enter to continue...");
         try {

@@ -15,6 +15,7 @@ import dao.DoctorDao;
 import dao.ConsultationDao;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.time.format.DateTimeFormatter;
 
@@ -420,7 +421,7 @@ public class PharmacyManagementControl {
     }
 
     // Reporting Methods
-    public String generateMedicineStockReport() {
+    public String generateMedicineStockReport(String sortBy, String sortOrder) {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
@@ -457,9 +458,9 @@ public class PharmacyManagementControl {
 
                 // Find if year already exists
                 int yearIndex = -1;
-                for (int i = 0; i < yearCount; i++) {
-                    if (years[i] == year) {
-                        yearIndex = i;
+                for (int index = 0; index < yearCount; index++) {
+                    if (years[index] == year) {
+                        yearIndex = index;
                         break;
                     }
                 }
@@ -479,9 +480,33 @@ public class PharmacyManagementControl {
         }
 
         report.append("\nSTOCK DISTRIBUTION BY EXPIRY YEAR:\n");
-        for (int i = 0; i < yearCount; i++) {
+        // Sort years in descending order using synchronized bubble sort
+        if (yearCount > 1) {
+            for (int index = 0; index < yearCount - 1; index++) {
+                for (int innerIndex = index + 1; innerIndex < yearCount; innerIndex++) {
+                    if (years[index] < years[innerIndex]) {
+                        // Swap years
+                        int tempYear = years[index];
+                        years[index] = years[innerIndex];
+                        years[innerIndex] = tempYear;
+
+                        // Swap stock quantities
+                        int tempStock = stockByYear[index];
+                        stockByYear[index] = stockByYear[innerIndex];
+                        stockByYear[innerIndex] = tempStock;
+
+                        // Swap values
+                        double tempValue = valueByYear[index];
+                        valueByYear[index] = valueByYear[innerIndex];
+                        valueByYear[innerIndex] = tempValue;
+                    }
+                }
+            }
+        }
+
+        for (int index = 0; index < yearCount; index++) {
             report.append(String.format("Year %d: %,6d units (RM %,12.2f value)\n",
-                    years[i], stockByYear[i], valueByYear[i]));
+                    years[index], stockByYear[index], valueByYear[index]));
         }
 
         // Category analysis using arrays
@@ -496,9 +521,9 @@ public class PharmacyManagementControl {
 
             // Find if status already exists
             int statusIndex = -1;
-            for (int i = 0; i < statusCount; i++) {
-                if (statuses[i].equals(status)) {
-                    statusIndex = i;
+            for (int index = 0; index < statusCount; index++) {
+                if (statuses[index].equals(status)) {
+                    statusIndex = index;
                     break;
                 }
             }
@@ -515,22 +540,37 @@ public class PharmacyManagementControl {
         }
 
         report.append("\nCATEGORY ANALYSIS:\n");
-        for (int i = 0; i < statusCount; i++) {
-            report.append(String.format("%-15s: %d medicines\n", statuses[i], statusCounts[i]));
+        for (int index = 0; index < statusCount; index++) {
+            report.append(String.format("%-15s: %d medicines\n", statuses[index], statusCounts[index]));
         }
 
         report.append("-".repeat(120)).append("\n\n");
 
-        // Detailed medicine table
+        // Detailed medicine table with sorting
         report.append(ConsoleUtils.centerText("DETAILED MEDICINE INVENTORY", 120)).append("\n");
         report.append("-".repeat(120)).append("\n");
+
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
         report.append(String.format("%-10s | %-20s | %-16s | %6s | %6s | %-10s | %12s | %-10s\n",
                 "ID", "Name", "Generic", "Stock", "Min", "Status", "Price", "Expiry"));
         report.append("-".repeat(120)).append("\n");
 
+        // Convert to array for sorting
+        Medicine[] medicineArray = new Medicine[medicines.getSize()];
+        int index = 0;
         medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
-            Medicine medicine = medicineIterator.next();
+            medicineArray[index++] = medicineIterator.next();
+        }
+
+        // Sort the medicine array
+        sortMedicineArray(medicineArray, sortBy, sortOrder);
+
+        // Generate sorted table
+        for (Medicine medicine : medicineArray) {
             String id = medicine.getMedicineId() == null ? "-" : medicine.getMedicineId();
             String name = medicine.getMedicineName() == null ? "-" : medicine.getMedicineName();
             String generic = medicine.getGenericName() == null ? "-" : medicine.getGenericName();
@@ -558,7 +598,7 @@ public class PharmacyManagementControl {
         return report.toString();
     }
 
-    public String generatePrescriptionReport() {
+    public String generatePrescriptionReport(String sortBy, String sortOrder) {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
@@ -584,9 +624,9 @@ public class PharmacyManagementControl {
                 (double) dispensedPrescriptions.getSize() / getTotalPrescriptions() * 100));
 
         // Prescriptions by year analysis using arrays
-        int[] prescriptionYears = new int[50]; // Assuming max 50 different years
-        int[] prescriptionsByYear = new int[50];
-        double[] revenueByYear = new double[50];
+        int[] prescriptionYears = new int[20];
+        int[] prescriptionsByYear = new int[20];
+        double[] revenueByYear = new double[20];
         int prescYearCount = 0;
 
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
@@ -597,9 +637,9 @@ public class PharmacyManagementControl {
 
                 // Find if year already exists
                 int yearIndex = -1;
-                for (int i = 0; i < prescYearCount; i++) {
-                    if (prescriptionYears[i] == year) {
-                        yearIndex = i;
+                for (int index = 0; index < prescYearCount; index++) {
+                    if (prescriptionYears[index] == year) {
+                        yearIndex = index;
                         break;
                     }
                 }
@@ -619,9 +659,44 @@ public class PharmacyManagementControl {
         }
 
         report.append("\nPRESCRIPTIONS BY YEAR:\n");
-        for (int i = 0; i < prescYearCount; i++) {
+        // Sort prescription years in descending order using QuickSort
+        if (prescYearCount > 1) {
+            // Create arrays for sorting
+            Integer[] yearArray = new Integer[prescYearCount];
+            Integer[] countArray = new Integer[prescYearCount];
+            Double[] revenueArray = new Double[prescYearCount];
+
+            for (int index = 0; index < prescYearCount; index++) {
+                yearArray[index] = prescriptionYears[index];
+                countArray[index] = prescriptionsByYear[index];
+                revenueArray[index] = revenueByYear[index];
+            }
+
+            for (int index = 0; index < prescYearCount - 1; index++) {
+                for (int innerIndex = index + 1; innerIndex < prescYearCount; innerIndex++) {
+                    if (prescriptionYears[index] < prescriptionYears[innerIndex]) {
+                        // Swap years
+                        int tempYear = prescriptionYears[index];
+                        prescriptionYears[index] = prescriptionYears[innerIndex];
+                        prescriptionYears[innerIndex] = tempYear;
+
+                        // Swap counts
+                        int tempCount = prescriptionsByYear[index];
+                        prescriptionsByYear[index] = prescriptionsByYear[innerIndex];
+                        prescriptionsByYear[innerIndex] = tempCount;
+
+                        // Swap revenues
+                        double tempRevenue = revenueByYear[index];
+                        revenueByYear[index] = revenueByYear[innerIndex];
+                        revenueByYear[innerIndex] = tempRevenue;
+                    }
+                }
+            }
+        }
+
+        for (int index = 0; index < prescYearCount; index++) {
             report.append(String.format("Year %d: %,6d prescriptions (RM %,12.2f revenue)\n",
-                    prescriptionYears[i], prescriptionsByYear[i], revenueByYear[i]));
+                    prescriptionYears[index], prescriptionsByYear[index], revenueByYear[index]));
         }
 
         // Status distribution using arrays
@@ -636,9 +711,9 @@ public class PharmacyManagementControl {
 
             // Find if status already exists
             int statusIndex = -1;
-            for (int i = 0; i < prescStatusCount; i++) {
-                if (prescStatuses[i].equals(status)) {
-                    statusIndex = i;
+            for (int index = 0; index < prescStatusCount; index++) {
+                if (prescStatuses[index].equals(status)) {
+                    statusIndex = index;
                     break;
                 }
             }
@@ -655,8 +730,8 @@ public class PharmacyManagementControl {
         }
 
         report.append("\nPRESCRIPTION STATUS DISTRIBUTION:\n");
-        for (int i = 0; i < prescStatusCount; i++) {
-            report.append(String.format("%-15s: %d prescriptions\n", prescStatuses[i], prescStatusCounts[i]));
+        for (int index = 0; index < prescStatusCount; index++) {
+            report.append(String.format("%-15s: %d prescriptions\n", prescStatuses[index], prescStatusCounts[index]));
         }
 
         // Monthly trend for current year using arrays
@@ -676,24 +751,39 @@ public class PharmacyManagementControl {
         report.append(String.format("\nMONTHLY TREND FOR %d:\n", currentYear));
         String[] months = { "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-        for (int i = 1; i <= 12; i++) {
-            if (monthlyTrend[i] > 0) {
-                report.append(String.format("%-3s: %d prescriptions\n", months[i], monthlyTrend[i]));
+        for (int index = 1; index <= 12; index++) {
+            if (monthlyTrend[index] > 0) {
+                report.append(String.format("%-3s: %d prescriptions\n", months[index], monthlyTrend[index]));
             }
         }
 
         report.append("-".repeat(120)).append("\n\n");
 
-        // Detailed prescription table
+        // Detailed prescription table with sorting
         report.append(ConsoleUtils.centerText("DETAILED PRESCRIPTION RECORDS", 120)).append("\n");
         report.append("-".repeat(120)).append("\n");
+
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
         report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | %14s\n",
                 "ID", "Patient", "Doctor", "Date", "Status", "Total"));
         report.append("-".repeat(120)).append("\n");
 
+        // Convert to array for sorting
+        Prescription[] prescriptionArray = new Prescription[prescriptions.getSize()];
+        int index = 0;
         prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
-            Prescription prescription = prescriptionIterator.next();
+            prescriptionArray[index++] = prescriptionIterator.next();
+        }
+
+        // Sort the prescription array
+        sortPrescriptionArray(prescriptionArray, sortBy, sortOrder);
+
+        // Generate sorted table
+        for (Prescription prescription : prescriptionArray) {
             String id = prescription.getPrescriptionId() == null ? "-" : prescription.getPrescriptionId();
             String patientName = prescription.getPatient() == null ? "-" : prescription.getPatient().getFullName();
             String doctorName = prescription.getDoctor() == null ? "-" : prescription.getDoctor().getFullName();
@@ -767,5 +857,113 @@ public class PharmacyManagementControl {
         report.append("=".repeat(120)).append("\n");
 
         return report.toString();
+    }
+
+    // Helper methods for sorting
+    private String getSortFieldDisplayName(String sortBy) {
+        switch (sortBy.toLowerCase()) {
+            case "name":
+                return "Medicine Name";
+            case "generic":
+                return "Generic Name";
+            case "stock":
+                return "Stock Quantity";
+            case "price":
+                return "Unit Price";
+            case "expiry":
+                return "Expiry Date";
+            case "status":
+                return "Status";
+            case "date":
+                return "Prescription Date";
+            case "patient":
+                return "Patient Name";
+            case "doctor":
+                return "Doctor Name";
+            case "total":
+                return "Total Cost";
+            case "cost":
+                return "Total Cost";
+            case "id":
+                return "ID";
+            default:
+                return "Default";
+        }
+    }
+
+    private void sortMedicineArray(Medicine[] medicineArray, String sortBy, String sortOrder) {
+        if (medicineArray == null || medicineArray.length < 2)
+            return;
+
+        Comparator<Medicine> comparator = getMedicineComparator(sortBy);
+        if (comparator == null)
+            return;
+
+        // Apply sort order
+        if (sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+
+        utility.QuickSort.sort(medicineArray, comparator);
+    }
+
+    private void sortPrescriptionArray(Prescription[] prescriptionArray, String sortBy, String sortOrder) {
+        if (prescriptionArray == null || prescriptionArray.length < 2)
+            return;
+
+        Comparator<Prescription> comparator = getPrescriptionComparator(sortBy);
+        if (comparator == null)
+            return;
+
+        // Apply sort order
+        if (sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+
+        utility.QuickSort.sort(prescriptionArray, comparator);
+    }
+
+    private Comparator<Medicine> getMedicineComparator(String sortBy) {
+        switch (sortBy.toLowerCase()) {
+            case "name":
+                return Comparator.comparing(m -> m.getMedicineName() != null ? m.getMedicineName() : "");
+            case "generic":
+                return Comparator.comparing(m -> m.getGenericName() != null ? m.getGenericName() : "");
+            case "stock":
+                return Comparator.comparing(Medicine::getQuantityInStock);
+            case "price":
+                return Comparator.comparing(Medicine::getUnitPrice);
+            case "expiry":
+                return Comparator.comparing(m -> m.getExpiryDate() != null ? m.getExpiryDate() : LocalDate.MAX);
+            case "status":
+                return Comparator.comparing(m -> m.getStatus() != null ? m.getStatus().toString() : "");
+            case "id":
+                return Comparator.comparing(m -> m.getMedicineId() != null ? m.getMedicineId() : "");
+            default:
+                return Comparator.comparing(m -> m.getMedicineName() != null ? m.getMedicineName() : "");
+        }
+    }
+
+    private Comparator<Prescription> getPrescriptionComparator(String sortBy) {
+        switch (sortBy.toLowerCase()) {
+            case "date":
+                return Comparator
+                        .comparing(p -> p.getPrescriptionDate() != null ? p.getPrescriptionDate() : LocalDate.MAX);
+            case "patient":
+                return Comparator.comparing(p -> p.getPatient() != null ? p.getPatient().getFullName() : "");
+            case "doctor":
+                return Comparator.comparing(p -> p.getDoctor() != null ? p.getDoctor().getFullName() : "");
+            case "total":
+                return Comparator.comparing(Prescription::getTotalCost);
+            case "cost":
+                return Comparator.comparing(Prescription::getTotalCost);
+            case "status":
+                return Comparator.comparing(p -> p.getStatus() != null ? p.getStatus().toString() : "");
+            case "id":
+                return Comparator.comparing(p -> p.getPrescriptionId() != null ? p.getPrescriptionId() : "");
+            default:
+                return Comparator
+                        .comparing(p -> p.getPrescriptionDate() != null ? p.getPrescriptionDate() : LocalDate.MAX);
+        }
     }
 }

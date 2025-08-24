@@ -1,7 +1,9 @@
 package boundary;
 
 import java.util.Scanner;
+import java.util.Iterator;
 
+import adt.ArrayBucketList;
 import control.DoctorManagementControl;
 import entity.Address;
 import entity.DayOfWeek;
@@ -224,37 +226,278 @@ public class DoctorManagementUI {
     private void searchDoctor() {
         System.out.println("\n=== SEARCH DOCTOR ===");
         System.out.println("1. Search by Doctor ID");
-        System.out.println("2. Search by Full Name");
-        System.out.println("3. Search by Email");
-        System.out.println("4. Search by License Number");
-        System.out.println("5. Search by Specialty");
+        System.out.println("2. Search by IC Number (Last 4 digits)");
+        System.out.println("3. Search by Full Name");
+        System.out.println("4. Search by Email");
+        System.out.println("5. Search by License Number");
+        System.out.println("6. Search by Specialty");
         System.out.print("Enter choice: ");
         
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
         
         switch (choice) {
             case 1:
-                String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
-                System.out.println("Search by Doctor ID - Implementation needed");
+                searchByDoctorId();
                 break;
             case 2:
-                String fullName = ConsoleUtils.getStringInput(scanner, "Enter Full Name: ");
-                System.out.println("Search by Full Name - Implementation needed");
+                searchByIC();
                 break;
             case 3:
-                String email = ConsoleUtils.getStringInput(scanner, "Enter Email: ");
-                System.out.println("Search by Email - Implementation needed");
+                searchByFullName();
                 break;
             case 4:
-                String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter License Number: ");
-                System.out.println("Search by License Number - Implementation needed");
+                searchByEmail();
                 break;
             case 5:
-                String specialty = ConsoleUtils.getStringInput(scanner, "Enter Specialty: ");
-                System.out.println("Search by Specialty - Implementation needed");
+                searchByLicenseNumber();
+                break;
+            case 6:
+                searchBySpecialty();
                 break;
             default:
                 System.out.println("Invalid choice.");
+        }
+    }
+
+    private void searchByDoctorId() {
+        String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
+        Doctor doctor = doctorControl.findDoctorById(doctorId);
+        
+        if (doctor != null) {
+            System.out.println("\n=== DOCTOR FOUND ===");
+            displayDoctorDetails(doctor);
+        } else {
+            System.out.println("Doctor not found with ID: " + doctorId);
+        }
+    }
+
+    private void searchByIC() {
+        String lastFourDigits = ConsoleUtils.getStringInput(scanner, "Enter last 4 digits of IC number: ");
+        
+        // Validate input - should be exactly 4 digits
+        if (lastFourDigits.length() != 4 || !lastFourDigits.matches("\\d{4}")) {
+            System.out.println("Invalid input. Please enter exactly 4 digits.");
+            return;
+        }
+        
+        // Use hash function to find doctors with matching IC last 4 digits
+        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
+        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
+        
+        // Calculate hash for the search input
+        int searchHash = hashLastFourDigits(lastFourDigits);
+        
+        Iterator<Doctor> iterator = allDoctors.iterator();
+        while (iterator.hasNext()) {
+            Doctor doctor = iterator.next();
+            if (doctor.getICNumber() != null) {
+                // Extract last 4 digits from IC number (format: YYMMDD-XX-XXXX)
+                String icNumber = doctor.getICNumber();
+                if (icNumber.length() >= 4) {
+                    String doctorLastFour = icNumber.substring(icNumber.length() - 4);
+                    // Calculate hash for doctor's last 4 digits
+                    int doctorHash = hashLastFourDigits(doctorLastFour);
+                    
+                    // Compare hashes - if they match, then compare the actual strings
+                    if (doctorHash == searchHash && doctorLastFour.equals(lastFourDigits)) {
+                        foundDoctors.add(doctor.getDoctorId(), doctor);
+                    }
+                }
+            }
+        }
+        
+        if (foundDoctors.getSize() > 0) {
+            System.out.println("\n=== DOCTOR FOUND ===");
+            System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with IC ending in " + lastFourDigits + ":");
+            System.out.println();
+            
+            Iterator<Doctor> foundIterator = foundDoctors.iterator();
+            int count = 1;
+            while (foundIterator.hasNext()) {
+                Doctor doctor = foundIterator.next();
+                System.out.println("--- Doctor " + count + " ---");
+                displayDoctorDetails(doctor);
+                System.out.println();
+                count++;
+            }
+        } else {
+            System.out.println("No doctors found with IC number ending in: " + lastFourDigits);
+        }
+    }
+
+    /**
+     * Hash function for the last 4 digits of IC number
+     * Uses the same algorithm as ArrayBucketList's hashEntity method
+     */
+    private int hashLastFourDigits(String lastFourDigits) {
+        if (lastFourDigits == null) {
+            return 0;
+        }
+        
+        int hash = 0;
+        
+        // Use a prime multiplier and process each character
+        // This helps break up patterns in sequential IDs
+        for (int i = 0; i < lastFourDigits.length(); i++) {
+            hash = hash * 31 + lastFourDigits.charAt(i);
+        }
+        
+        // Additional mixing to improve distribution
+        hash ^= (hash >>> 16);  // XOR with upper bits
+        hash *= 0x85ebca6b;     // Multiply by a large prime-like number
+        hash ^= (hash >>> 13);  // More mixing
+        
+        return Math.abs(hash);
+    }
+
+    private void searchByFullName() {
+        String fullName = ConsoleUtils.getStringInput(scanner, "Enter Full Name (or partial name): ");
+        ArrayBucketList<String, Doctor> doctors = doctorControl.findDoctorsByName(fullName);
+        
+        if (doctors.getSize() > 0) {
+            System.out.println("\n=== DOCTORS FOUND ===");
+            System.out.println("Found " + doctors.getSize() + " doctor(s):");
+            System.out.println();
+            
+            Iterator<Doctor> iterator = doctors.iterator();
+            int count = 1;
+            while (iterator.hasNext()) {
+                Doctor doctor = iterator.next();
+                System.out.println("--- Doctor " + count + " ---");
+                displayDoctorDetails(doctor);
+                System.out.println();
+                count++;
+            }
+        } else {
+            System.out.println("No doctors found with name containing: " + fullName);
+        }
+    }
+
+    private void searchByEmail() {
+        String email = ConsoleUtils.getStringInput(scanner, "Enter Email: ");
+        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
+        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
+        
+        Iterator<Doctor> iterator = allDoctors.iterator();
+        while (iterator.hasNext()) {
+            Doctor doctor = iterator.next();
+            if (doctor.getEmail() != null && doctor.getEmail().toLowerCase().contains(email.toLowerCase())) {
+                foundDoctors.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        
+        if (foundDoctors.getSize() > 0) {
+            System.out.println("\n=== DOCTORS FOUND ===");
+            System.out.println("Found " + foundDoctors.getSize() + " doctor(s):");
+            System.out.println();
+            
+            Iterator<Doctor> foundIterator = foundDoctors.iterator();
+            int count = 1;
+            while (foundIterator.hasNext()) {
+                Doctor doctor = foundIterator.next();
+                System.out.println("--- Doctor " + count + " ---");
+                displayDoctorDetails(doctor);
+                System.out.println();
+                count++;
+            }
+        } else {
+            System.out.println("No doctors found with email containing: " + email);
+        }
+    }
+
+    private void searchByLicenseNumber() {
+        String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter License Number: ");
+        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
+        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
+        
+        Iterator<Doctor> iterator = allDoctors.iterator();
+        while (iterator.hasNext()) {
+            Doctor doctor = iterator.next();
+            if (doctor.getLicenseNumber() != null && doctor.getLicenseNumber().toLowerCase().contains(licenseNumber.toLowerCase())) {
+                foundDoctors.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        
+        if (foundDoctors.getSize() > 0) {
+            System.out.println("\n=== DOCTORS FOUND ===");
+            System.out.println("Found " + foundDoctors.getSize() + " doctor(s):");
+            System.out.println();
+            
+            Iterator<Doctor> foundIterator = foundDoctors.iterator();
+            int count = 1;
+            while (foundIterator.hasNext()) {
+                Doctor doctor = foundIterator.next();
+                System.out.println("--- Doctor " + count + " ---");
+                displayDoctorDetails(doctor);
+                System.out.println();
+                count++;
+            }
+        } else {
+            System.out.println("No doctors found with license number containing: " + licenseNumber);
+        }
+    }
+
+    private void searchBySpecialty() {
+        String specialty = ConsoleUtils.getStringInput(scanner, "Enter Specialty: ");
+        ArrayBucketList<String, Doctor> doctors = doctorControl.getDoctorsBySpecialty(specialty);
+        
+        if (doctors.getSize() > 0) {
+            System.out.println("\n=== DOCTORS FOUND ===");
+            System.out.println("Found " + doctors.getSize() + " doctor(s) with specialty: " + specialty);
+            System.out.println();
+            
+            Iterator<Doctor> iterator = doctors.iterator();
+            int count = 1;
+            while (iterator.hasNext()) {
+                Doctor doctor = iterator.next();
+                System.out.println("--- Doctor " + count + " ---");
+                displayDoctorDetails(doctor);
+                System.out.println();
+                count++;
+            }
+        } else {
+            System.out.println("No doctors found with specialty: " + specialty);
+        }
+    }
+
+    private void displayDoctorDetails(Doctor doctor) {
+        System.out.println("Doctor ID: " + doctor.getDoctorId());
+        System.out.println("Full Name: " + doctor.getFullName());
+        System.out.println("IC Number: " + doctor.getICNumber());
+        System.out.println("Email: " + doctor.getEmail());
+        System.out.println("Phone Number: " + doctor.getPhoneNumber());
+        System.out.println("Medical Specialty: " + doctor.getMedicalSpecialty());
+        System.out.println("License Number: " + doctor.getLicenseNumber());
+        System.out.println("Experience Years: " + doctor.getExpYears());
+        System.out.println("Availability: " + (doctor.isAvailable() ? "Available" : "Not Available"));
+        System.out.println("Registration Date: " + doctor.getRegistrationDate());
+        
+        if (doctor.getAddress() != null) {
+            System.out.println("Address: " + doctor.getAddress());
+        }
+        
+        System.out.println("Number of Consultations: " + getConsultationCountForDoctor(doctor.getDoctorId()));
+    }
+
+    private int getConsultationCountForDoctor(String doctorId) {
+        try {
+            // Get all consultations and count those for the specific doctor
+            dao.ConsultationDao consultationDao = new dao.ConsultationDao();
+            ArrayBucketList<String, entity.Consultation> allConsultations = consultationDao.findAll();
+            
+            int count = 0;
+            Iterator<entity.Consultation> iterator = allConsultations.iterator();
+            while (iterator.hasNext()) {
+                entity.Consultation consultation = iterator.next();
+                if (consultation != null && consultation.getDoctor() != null && 
+                    doctorId.equals(consultation.getDoctor().getDoctorId())) {
+                    count++;
+                }
+            }
+            return count;
+        } catch (Exception e) {
+            System.err.println("Error counting consultations for doctor " + doctorId + ": " + e.getMessage());
+            return 0;
         }
     }
 

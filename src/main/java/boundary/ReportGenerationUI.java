@@ -34,8 +34,8 @@ public class ReportGenerationUI {
         System.out.println("\n" + doctorControl.generateScheduleReport());
         System.out.println("\n" + consultationControl.generateConsultationReport());
         System.out.println("\n" + consultationControl.generateConsultationHistoryReport());
-        System.out.println("\n" + treatmentControl.generateTreatmentReport());
-        System.out.println("\n" + treatmentControl.generateTreatmentHistoryReport());
+        System.out.println("\n" + treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
+        System.out.println("\n" + treatmentControl.generateTreatmentStatusReport("id", "asc"));
         System.out.println("\n" + pharmacyControl.generateMedicineStockReport("name", "asc"));
         System.out.println("\n" + pharmacyControl.generatePrescriptionReport("date", "desc"));
         
@@ -169,14 +169,14 @@ public class ReportGenerationUI {
         
         switch (choice) {
             case 1:
-                System.out.println(treatmentControl.generateTreatmentReport());
+                System.out.println(treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
                 break;
             case 2:
-                System.out.println(treatmentControl.generateTreatmentHistoryReport());
+                System.out.println(treatmentControl.generateTreatmentStatusReport("id", "asc"));
                 break;
             case 3:
-                System.out.println(treatmentControl.generateTreatmentReport());
-                System.out.println(treatmentControl.generateTreatmentHistoryReport());
+                System.out.println(treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
+                System.out.println(treatmentControl.generateTreatmentStatusReport("id", "asc"));
                 break;
             default:
                 System.out.println("Invalid choice.");

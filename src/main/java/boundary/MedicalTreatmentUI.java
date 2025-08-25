@@ -93,43 +93,28 @@ public class MedicalTreatmentUI {
     private void createTreatment() {
         System.out.println("\n=== CREATE TREATMENT ===");
 
-        Patient patient = null;
-        String patientId = null;
-        while (true) {
-            patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
-            patient = patientControl.findPatientById(patientId);
-            if (patient == null) {
-                System.out.println("Error: Patient not found with ID: " + patientId);
-                continue;
-            }
-            break;
-        }
-   
-        Doctor doctor = null;
-        String doctorId = null;
-        while (true) {
-            doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
-            doctor = doctorControl.findDoctorById(doctorId);
-            if (doctor == null) {
-                System.out.println("Error: Doctor not found with ID: " + doctorId);
-                continue;
-            }
-            break;
+        // First, show all available completed consultations
+        System.out.println("\n=== AVAILABLE COMPLETED CONSULTATIONS ===");
+        ArrayBucketList<String, Consultation> completedConsultations = consultationControl.getCompletedConsultations();
+        
+        if (completedConsultations.getSize() == 0) {
+            System.out.println("No completed consultations available for treatment creation.");
+            ConsoleUtils.waitMessage();
+            return;
         }
         
+        // Display all completed consultations
+        displayCompletedConsultations(completedConsultations);
+        
+        // Get consultation ID from user
         Consultation consultation = null;
         String consultationId = null;
         while (true) {
-            consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID: ");
+            consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID from the list above: ");
             consultation = consultationControl.findConsultationById(consultationId);
             
             if (consultation == null) {
                 System.out.println("Error: Consultation not found with ID: " + consultationId);
-                continue;
-            }
-            if (!consultation.getPatient().getPatientId().equals(patientId) ||
-                !consultation.getDoctor().getDoctorId().equals(doctorId)) {
-                System.out.println("Error: Consultation does not belong to the specified patient/doctor.");
                 continue;
             }
             if (consultation.getStatus() != Consultation.ConsultationStatus.COMPLETED) {
@@ -142,6 +127,10 @@ public class MedicalTreatmentUI {
             }
             break;
         }
+        
+        // Get patient and doctor from the selected consultation
+        Patient patient = consultation.getPatient();
+        Doctor doctor = consultation.getDoctor();
 
         String diagnosis = ConsoleUtils.getStringInput(scanner, "Enter diagnosis: ");
         String treatmentPlan = ConsoleUtils.getStringInput(scanner, "Enter treatment plan: ");
@@ -237,9 +226,9 @@ public class MedicalTreatmentUI {
         // Convert LocalDate to LocalDateTime for the control layer
         LocalDateTime followUpDateTime = followUpDate != null ? followUpDate.atStartOfDay() : null;
         
-        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "\nAre you sure you want to add this treatment? (Y/N): ");
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "\nAre you sure you want to update this treatment? (Y/N): ");
         if (!confirm) {
-            System.out.println("Action cancelled. Treatment was not created.");
+            System.out.println("Action cancelled. Treatment was not updated.");
             return;
         }
         // Update treatment
@@ -319,6 +308,7 @@ public class MedicalTreatmentUI {
         } else {
             System.out.println("✗ Failed to complete treatment. Please try again.");
         }
+        ConsoleUtils.waitMessage();
     }
 
 
@@ -439,6 +429,71 @@ public class MedicalTreatmentUI {
             System.out.println("Status: " + treatment.getStatus());
             System.out.println("Cost: RM" + treatment.getTreatmentCost());
             System.out.println("----------------------------------------");
+        }
+    }
+    
+    private void displayCompletedConsultations(ArrayBucketList<String, Consultation> consultations) {
+        System.out.println("Total completed consultations: " + consultations.getSize());
+        System.out.println("----------------------------------------");
+        
+        // Convert to list for sorting
+        ArrayBucketList<String, Consultation> sortedConsultations = new ArrayBucketList<String, Consultation>();
+        
+        // First pass: collect all consultations
+        Iterator<Consultation> iterator = consultations.iterator();
+        while (iterator.hasNext()) {
+            Consultation consultation = iterator.next();
+            sortedConsultations.add(consultation.getConsultationId(), consultation);
+        }
+        
+        // Sort by date (most recent first) using bubble sort
+        sortConsultationsByDate(sortedConsultations);
+        
+        // Display sorted consultations
+        Iterator<Consultation> sortedIterator = sortedConsultations.iterator();
+        while (sortedIterator.hasNext()) {
+            Consultation consultation = sortedIterator.next();
+            System.out.println("Consultation ID: " + consultation.getConsultationId());
+            System.out.println("Doctor ID: " + consultation.getDoctor().getDoctorId());
+            System.out.println("Patient ID: " + consultation.getPatient().getPatientId());
+            System.out.println("Patient Name: " + consultation.getPatient().getFullName());
+            System.out.println("Doctor Name: " + consultation.getDoctor().getFullName());
+            System.out.println("Date: " + consultation.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
+            System.out.println("----------------------------------------");
+        }
+    }
+    
+    /**
+     * Sort consultations by date (most recent first) using bubble sort
+     */
+    private void sortConsultationsByDate(ArrayBucketList<String, Consultation> consultations) {
+        int size = consultations.getSize();
+        if (size <= 1) return;
+        
+        // Convert to array for easier sorting
+        Consultation[] consultationArray = new Consultation[size];
+        Iterator<Consultation> iterator = consultations.iterator();
+        int index = 0;
+        while (iterator.hasNext()) {
+            consultationArray[index++] = iterator.next();
+        }
+        
+        // Bubble sort by date (most recent first)
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - i - 1; j++) {
+                if (consultationArray[j].getConsultationDate().isBefore(consultationArray[j + 1].getConsultationDate())) {
+                    // Swap consultations
+                    Consultation temp = consultationArray[j];
+                    consultationArray[j] = consultationArray[j + 1];
+                    consultationArray[j + 1] = temp;
+                }
+            }
+        }
+        
+        // Clear and re-add sorted consultations
+        consultations.clear();
+        for (Consultation consultation : consultationArray) {
+            consultations.add(consultation.getConsultationId(), consultation);
         }
     }
     

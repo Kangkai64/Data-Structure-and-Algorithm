@@ -434,10 +434,92 @@ public class ConsultationManagementUI {
 
     private void generateConsultationReports() {
         ConsoleUtils.printHeader("Consultation Reports");
-        System.out.println(consultationControl.generateConsultationReport());
+        
+        System.out.println("1. Consultation Report");
+        System.out.println("2. Consultation History Report");
+        System.out.println("3. Both Reports");
+        System.out.print("Enter choice: ");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        
+        switch (choice) {
+            case 1:
+                generateConsultationReport();
+                break;
+            case 2:
+                generateConsultationHistoryReport();
+                break;
+            case 3:
+                generateConsultationReport();
+                generateConsultationHistoryReport();
+                break;
+            default:
+                System.out.println("Invalid choice.");
+        }
+    }
+    
+    private void generateConsultationReport() {
+        ConsoleUtils.printHeader("Consultation Report");
+        
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Consultation ID");
+        System.out.println("2. Patient Name");
+        System.out.println("3. Doctor Name");
+        System.out.println("4. Consultation Date");
+        System.out.println("5. Status");
+        System.out.println("6. Consultation Fee");
+        
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        String sortBy = getConsultationSortField(sortFieldChoice);
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(consultationControl.generateConsultationReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
-        System.out.println(consultationControl.generateConsultationHistoryReport());
+    }
+    
+    private void generateConsultationHistoryReport() {
+        ConsoleUtils.printHeader("Consultation History Report");
+        
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Consultation ID");
+        System.out.println("2. Patient Name");
+        System.out.println("3. Doctor Name");
+        System.out.println("4. Consultation Date");
+        System.out.println("5. Status");
+        System.out.println("6. Consultation Fee");
+        
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        String sortBy = getConsultationSortField(sortFieldChoice);
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
+    }
+    
+    private String getConsultationSortField(int choice) {
+        switch (choice) {
+            case 1: return "id";
+            case 2: return "patient";
+            case 3: return "doctor";
+            case 4: return "date";
+            case 5: return "status";
+            case 6: return "fee";
+            default: return "date";
+        }
     }
 
     // Helpers for consistent, report-like output

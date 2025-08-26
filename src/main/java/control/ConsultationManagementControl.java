@@ -1,17 +1,21 @@
 package control;
 
 import adt.ArrayBucketList;
+import utility.ConsoleUtils;
+import utility.QuickSort;
 import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
 import entity.Schedule;
 import dao.ConsultationDao;
+import dao.PatientDao;
+import dao.DoctorDao;
 import dao.ScheduleDao;
-import utility.ConsoleUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Iterator;
 
 /**
@@ -453,6 +457,10 @@ public class ConsultationManagementControl {
     
     // Reporting Methods
     public String generateConsultationReport() {
+        return generateConsultationReport("date", "desc");
+    }
+    
+    public String generateConsultationReport(String sortBy, String sortOrder) {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
@@ -539,16 +547,31 @@ public class ConsultationManagementControl {
 
         report.append("-".repeat(120)).append("\n\n");
 
-        // Detailed consultation table
+        // Detailed consultation table with sorting
         report.append(ConsoleUtils.centerText("DETAILED CONSULTATION RECORDS", 120)).append("\n");
         report.append("-".repeat(120)).append("\n");
+        
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
         report.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | %12s\n",
                 "ID", "Patient", "Doctor", "Date & Time", "Status", "Fee"));
         report.append("-".repeat(120)).append("\n");
 
+        // Convert to array for sorting
+        Consultation[] consultationArray = new Consultation[consultations.getSize()];
+        int index = 0;
         Iterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
+            consultationArray[index++] = consultationIterator.next();
+        }
+
+        // Sort the consultation array
+        sortConsultationArray(consultationArray, sortBy, sortOrder);
+
+        // Generate sorted table
+        for (Consultation consultation : consultationArray) {
             String id = consultation.getConsultationId() == null ? "-" : consultation.getConsultationId();
             String patientName = consultation.getPatient() == null ? "-" : consultation.getPatient().getFullName();
             String doctorName = consultation.getDoctor() == null ? "-" : consultation.getDoctor().getFullName();
@@ -575,6 +598,10 @@ public class ConsultationManagementControl {
     }
     
     public String generateConsultationHistoryReport() {
+        return generateConsultationHistoryReport("date", "desc");
+    }
+    
+    public String generateConsultationHistoryReport(String sortBy, String sortOrder) {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
@@ -652,33 +679,47 @@ public class ConsultationManagementControl {
 
         report.append("-".repeat(120)).append("\n\n");
 
-        // Detailed completed consultation table
+        // Detailed completed consultation table with sorting
         report.append(ConsoleUtils.centerText("DETAILED COMPLETED CONSULTATION RECORDS", 120)).append("\n");
         report.append("-".repeat(120)).append("\n");
+        
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
         report.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | %12s\n",
                 "ID", "Patient", "Doctor", "Date & Time", "Status", "Fee"));
         report.append("-".repeat(120)).append("\n");
 
-        Iterator<Consultation> consultationIterator = consultations.iterator();
+        // Convert to array for sorting (only completed consultations)
+        ArrayBucketList<String, Consultation> completedConsultations = getCompletedConsultations();
+        Consultation[] consultationArray = new Consultation[completedConsultations.getSize()];
+        int index = 0;
+        Iterator<Consultation> consultationIterator = completedConsultations.iterator();
         while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getStatus() == Consultation.ConsultationStatus.COMPLETED) {
-                String id = consultation.getConsultationId() == null ? "-" : consultation.getConsultationId();
-                String patientName = consultation.getPatient() == null ? "-" : consultation.getPatient().getFullName();
-                String doctorName = consultation.getDoctor() == null ? "-" : consultation.getDoctor().getFullName();
-                String dateTime = consultation.getConsultationDate() == null ? "-" :
-                        consultation.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu HH:mm"));
-                String status = consultation.getStatus() == null ? "-" : consultation.getStatus().toString();
+            consultationArray[index++] = consultationIterator.next();
+        }
 
-                // Truncate long names
-                if (patientName.length() > 22)
-                    patientName = patientName.substring(0, 21) + "…";
-                if (doctorName.length() > 22)
-                    doctorName = doctorName.substring(0, 21) + "…";
+        // Sort the consultation array
+        sortConsultationArray(consultationArray, sortBy, sortOrder);
 
-                report.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | RM %10.2f\n",
-                        id, patientName, doctorName, dateTime, status, consultation.getConsultationFee()));
-            }
+        // Generate sorted table
+        for (Consultation consultation : consultationArray) {
+            String id = consultation.getConsultationId() == null ? "-" : consultation.getConsultationId();
+            String patientName = consultation.getPatient() == null ? "-" : consultation.getPatient().getFullName();
+            String doctorName = consultation.getDoctor() == null ? "-" : consultation.getDoctor().getFullName();
+            String dateTime = consultation.getConsultationDate() == null ? "-" :
+                    consultation.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu HH:mm"));
+            String status = consultation.getStatus() == null ? "-" : consultation.getStatus().toString();
+
+            // Truncate long names
+            if (patientName.length() > 22)
+                patientName = patientName.substring(0, 21) + "…";
+            if (doctorName.length() > 22)
+                doctorName = doctorName.substring(0, 21) + "…";
+
+            report.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | RM %10.2f\n",
+                    id, patientName, doctorName, dateTime, status, consultation.getConsultationFee()));
         }
 
         report.append("-".repeat(120)).append("\n");
@@ -866,6 +907,61 @@ public class ConsultationManagementControl {
             System.arraycopy(temp, 0, result, 0, count);
         }
         return result;
+    }
+
+    // Helper methods for sorting
+    private String getSortFieldDisplayName(String sortBy) {
+        switch (sortBy.toLowerCase()) {
+            case "id":
+                return "Consultation ID";
+            case "patient":
+                return "Patient Name";
+            case "doctor":
+                return "Doctor Name";
+            case "date":
+                return "Consultation Date";
+            case "status":
+                return "Status";
+            case "fee":
+                return "Consultation Fee";
+            default:
+                return "Consultation Date";
+        }
+    }
+
+    private void sortConsultationArray(Consultation[] consultationArray, String sortBy, String sortOrder) {
+        if (consultationArray == null || consultationArray.length < 2)
+            return;
+
+        Comparator<Consultation> comparator = getConsultationComparator(sortBy);
+        if (comparator == null)
+            return;
+
+        // Apply sort order
+        if (sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+
+        utility.QuickSort.sort(consultationArray, comparator);
+    }
+
+    private Comparator<Consultation> getConsultationComparator(String sortBy) {
+        switch (sortBy.toLowerCase()) {
+            case "id":
+                return Comparator.comparing(c -> c.getConsultationId() != null ? c.getConsultationId() : "");
+            case "patient":
+                return Comparator.comparing(c -> c.getPatient() != null ? c.getPatient().getFullName() : "");
+            case "doctor":
+                return Comparator.comparing(c -> c.getDoctor() != null ? c.getDoctor().getFullName() : "");
+            case "date":
+                return Comparator.comparing(c -> c.getConsultationDate() != null ? c.getConsultationDate() : LocalDateTime.MAX);
+            case "status":
+                return Comparator.comparing(c -> c.getStatus() != null ? c.getStatus().toString() : "");
+            case "fee":
+                return Comparator.comparing(Consultation::getConsultationFee);
+            default:
+                return Comparator.comparing(c -> c.getConsultationDate() != null ? c.getConsultationDate() : LocalDateTime.MAX);
+        }
     }
 
 } 

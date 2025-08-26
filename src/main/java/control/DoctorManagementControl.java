@@ -195,20 +195,70 @@ public class DoctorManagementControl {
     
     public ArrayBucketList<String, Schedule> getDoctorSchedules(String doctorId) {
         try {
-            Doctor doctor = doctorDao.findById(doctorId);
-            if (doctor != null) {
-                ArrayBucketList<String, Schedule> schedules = new ArrayBucketList<String, Schedule>();
-                Iterator<Schedule> scheduleIterator = doctor.getSchedules().iterator();
-                while (scheduleIterator.hasNext()) {
-                    Schedule schedule = scheduleIterator.next();
-                    schedules.add(schedule.getScheduleId(), schedule);
-                }
-                return schedules;
-            }
-            return new ArrayBucketList<String, Schedule>();
+            return scheduleDao.findByDoctorId(doctorId);
         } catch (Exception exception) {
             System.err.println("Error getting doctor schedules: " + exception.getMessage());
             return new ArrayBucketList<String, Schedule>();
+        }
+    }
+
+    public ArrayBucketList<String, Schedule> getDoctorSchedulesOrdered(String doctorId) {
+        try {
+            ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
+            int size = schedules.getSize();
+            Schedule[] arr = new Schedule[size];
+            int idx = 0;
+            Iterator<Schedule> it = schedules.iterator();
+            while (it.hasNext()) {
+                arr[idx++] = it.next();
+            }
+
+            java.util.Comparator<Schedule> byDay = new java.util.Comparator<Schedule>() {
+                @Override
+                public int compare(Schedule a, Schedule b) {
+                    return Integer.compare(a.getDayOfWeek().ordinal(), b.getDayOfWeek().ordinal());
+                }
+            };
+
+            QuickSort.sort(arr, byDay);
+
+            ArrayBucketList<String, Schedule> sorted = new ArrayBucketList<String, Schedule>();
+            // Note: returning ArrayBucketList here will not preserve iteration order due to hashing.
+            // Prefer getDoctorSchedulesOrderedArray() when display order must be guaranteed.
+            for (int i = 0; i < arr.length; i++) {
+                Schedule s = arr[i];
+                sorted.add(s.getScheduleId(), s);
+            }
+            return sorted;
+        } catch (Exception exception) {
+            System.err.println("Error ordering doctor schedules: " + exception.getMessage());
+            return getDoctorSchedules(doctorId);
+        }
+    }
+
+    public Schedule[] getDoctorSchedulesOrderedArray(String doctorId) {
+        try {
+            ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
+            int size = schedules.getSize();
+            Schedule[] arr = new Schedule[size];
+            int idx = 0;
+            Iterator<Schedule> it = schedules.iterator();
+            while (it.hasNext()) {
+                arr[idx++] = it.next();
+            }
+
+            java.util.Comparator<Schedule> byDay = new java.util.Comparator<Schedule>() {
+                @Override
+                public int compare(Schedule a, Schedule b) {
+                    return Integer.compare(a.getDayOfWeek().ordinal(), b.getDayOfWeek().ordinal());
+                }
+            };
+
+            QuickSort.sort(arr, byDay);
+            return arr;
+        } catch (Exception exception) {
+            System.err.println("Error building ordered schedule array: " + exception.getMessage());
+            return new Schedule[0];
         }
     }
     
@@ -216,17 +266,38 @@ public class DoctorManagementControl {
     public boolean setDoctorAvailability(String doctorId, boolean isAvailable) {
         try {
             Doctor doctor = doctorDao.findById(doctorId);
-            if (doctor != null) {
-                doctor.setAvailable(isAvailable);
-                boolean updated = doctorDao.update(doctor);
-                if (updated) {
-                    updateActiveDoctorsList(doctor);
-                    return true;
+            if (doctor == null) return false;
+
+            boolean updated = doctorDao.updateAvailability(doctorId, isAvailable);
+            if (!updated) return false;
+
+            doctor.setAvailable(isAvailable);
+
+            // Cascade schedules to match doctor availability
+            ArrayBucketList<String, Schedule> schedules = getDoctorSchedules(doctorId);
+            Iterator<Schedule> it = schedules.iterator();
+            while (it.hasNext()) {
+                Schedule s = it.next();
+                try {
+                    scheduleDao.updateAvailability(s.getScheduleId(), isAvailable);
+                } catch (Exception e) {
+                    System.err.println("Failed to update schedule availability for schedule " + s.getScheduleId() + ": " + e.getMessage());
                 }
             }
-            return false;
+
+            updateActiveDoctorsList(doctor);
+            return true;
         } catch (Exception exception) {
             System.err.println("Error setting doctor availability: " + exception.getMessage());
+            return false;
+        }
+    }
+
+    public boolean setScheduleAvailability(String scheduleId, boolean isAvailable) {
+        try {
+            return scheduleDao.updateAvailability(scheduleId, isAvailable);
+        } catch (Exception exception) {
+            System.err.println("Error setting schedule availability: " + exception.getMessage());
             return false;
         }
     }
@@ -578,15 +649,19 @@ public class DoctorManagementControl {
     }
     
     private void updateActiveDoctorsList(Doctor updatedDoctor) {
+        boolean found = false;
         Iterator<Doctor> doctorIterator = activeDoctors.iterator();
         while (doctorIterator.hasNext()) {
             Doctor doctor = doctorIterator.next();
             if (doctor.getDoctorId().equals(updatedDoctor.getDoctorId())) {
-                // Remove old entry and add updated one
                 activeDoctors.remove(doctor.getDoctorId());
                 activeDoctors.add(updatedDoctor.getDoctorId(), updatedDoctor);
+                found = true;
                 break;
             }
+        }
+        if (!found) {
+            activeDoctors.add(updatedDoctor.getDoctorId(), updatedDoctor);
         }
     }
     

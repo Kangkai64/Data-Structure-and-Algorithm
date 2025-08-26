@@ -12,6 +12,7 @@ import utility.ConsoleUtils;
 import utility.PatternChecker;
 
 /**
+ * Author: Lee Yong Kang
  * Doctor Management User Interface
  * Handles all doctor management user interactions
  */

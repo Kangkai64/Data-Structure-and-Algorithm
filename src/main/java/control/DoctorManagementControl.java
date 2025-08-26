@@ -448,9 +448,8 @@ public class DoctorManagementControl {
     }
 
     /**
-     * Generates the Doctor Activity Report with optional quick sort.
      *
-     * @param sortBy    Accepts "name", "specialty", or "experience" (case-insensitive). Any other value disables sorting.
+     * @param sortBy
      * @param ascending true for ascending order, false for descending.
      * @return formatted report string
      */
@@ -566,7 +565,7 @@ public class DoctorManagementControl {
             String as = a.getMedicalSpecialty() == null ? "" : a.getMedicalSpecialty();
             String bs = b.getMedicalSpecialty() == null ? "" : b.getMedicalSpecialty();
             result = as.compareToIgnoreCase(bs);
-        } else { // "experience" now maps to consultation count in the report context
+        } else {
             int ae = getConsultationCountForDoctor(a.getDoctorId());
             int be = getConsultationCountForDoctor(b.getDoctorId());
             result = Integer.compare(ae, be);
@@ -574,7 +573,7 @@ public class DoctorManagementControl {
         if (!ascending) {
             result = -result;
         }
-        // Tie-breaker by Doctor ID to make ordering deterministic
+
         if (result == 0) {
             String aid = a.getDoctorId() == null ? "" : a.getDoctorId();
             String bid = b.getDoctorId() == null ? "" : b.getDoctorId();
@@ -619,7 +618,7 @@ public class DoctorManagementControl {
             .append("\n");
         report.append(repeatChar('=', REPORT_WIDTH)).append("\n\n");
 
-        // Aggregate weekly hours per doctor from schedules in DB (reliable source)
+        // Aggregate weekly hours per doctor from schedules in database
         adt.ArrayBucketList<String, Schedule> allSchedules;
         try {
             allSchedules = scheduleDao.findAll();
@@ -644,11 +643,11 @@ public class DoctorManagementControl {
                 Double current = weeklyTotals.getValue(s.getDoctorId());
                 weeklyTotals.add(s.getDoctorId(), (current == null ? 0.0 : current) + hours);
             } catch (Exception ignore) {
-                // skip malformed time rows
+                // skip error time format rows
             }
         }
 
-        // Build rows for all doctors (even if no schedules: 0 hours)
+        // Build rows for all doctors
         class Row { String doctorId; String name; String specialty; double weekly; double annual; }
         int docCount = activeDoctors.getSize();
         Row[] rows = new Row[docCount];
@@ -699,11 +698,7 @@ public class DoctorManagementControl {
                 return result;
             }
         };
-        if (doSort || true) { // always sort (default annual desc if not specified)
-            // Use QuickSort to sort Row[] via comparator
-            // Convert Row[] to an index-sorted array by repeatedly applying comparator
-            // Implement simple quicksort for rows using existing QuickSort for generic arrays via wrappers is not available
-            // So perform in-place quicksort here
+        if (doSort || true) { // always sort (default annual desc if
             quickSortRows(rows, 0, pos - 1, comparator);
         }
 

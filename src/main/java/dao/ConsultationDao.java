@@ -209,7 +209,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
      * Check if a doctor already has a consultation at the exact date-time
      */
     public boolean existsConsultationAt(String doctorId, LocalDateTime dateTime) throws SQLException {
-        String sql = "SELECT 1 FROM consultation WHERE doctorId = ? AND consultationDate = ? LIMIT 1";
+        String sql = "SELECT 1 FROM consultation WHERE doctorId = ? AND consultationDate = ? " +
+                "AND status IN ('SCHEDULED','IN_PROGRESS') LIMIT 1";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, doctorId);

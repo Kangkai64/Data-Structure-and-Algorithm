@@ -1,8 +1,13 @@
 package boundary;
 
-import control.*;
-import utility.ConsoleUtils;
 import java.util.Scanner;
+
+import control.ConsultationManagementControl;
+import control.DoctorManagementControl;
+import control.MedicalTreatmentControl;
+import control.PatientManagementControl;
+import control.PharmacyManagementControl;
+import utility.ConsoleUtils;
 
 /**
  * Report Generation User Interface
@@ -31,7 +36,7 @@ public class ReportGenerationUI {
         System.out.println("\n" + patientControl.generatePatientRegistrationReport());
         System.out.println("\n" + patientControl.generateQueueStatusReport());
         System.out.println("\n" + doctorControl.generateDoctorInformationReport());
-        System.out.println("\n" + doctorControl.generateScheduleReport());
+        System.out.println("\n" + doctorControl.generateDoctorWorkloadReport());
         System.out.println("\n" + consultationControl.generateConsultationReport("date", "desc"));
         System.out.println("\n" + consultationControl.generateConsultationHistoryReport("date", "desc"));
         System.out.println("\n" + treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
@@ -122,11 +127,11 @@ public class ReportGenerationUI {
                 System.out.println(doctorControl.generateDoctorInformationReport());
                 break;
             case 2:
-                System.out.println(doctorControl.generateScheduleReport());
+                System.out.println(doctorControl.generateDoctorWorkloadReport());
                 break;
             case 3:
                 System.out.println(doctorControl.generateDoctorInformationReport());
-                System.out.println(doctorControl.generateScheduleReport());
+                System.out.println(doctorControl.generateDoctorWorkloadReport());
                 break;
             default:
                 System.out.println("Invalid choice.");

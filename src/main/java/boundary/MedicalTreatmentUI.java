@@ -38,30 +38,24 @@ public class MedicalTreatmentUI {
         this.consultationControl = new ConsultationManagementControl();
     }
 
-    private String getOptionalString(Scanner scanner, String prompt, String defaultValue) {
-        while (true) {
-            System.out.print(prompt);
-            String input = scanner.nextLine().trim();
-            if (input.isEmpty()) {
-                return defaultValue;
-            }
-            return input;
-        }
-    }
+    
 
     public void displayTreatmentManagementMenu() {
         while (true) {
+            consultationControl.loadConsultationData();
+            treatmentControl.loadTreatmentData();
             System.out.println("\n=== MEDICAL TREATMENT MANAGEMENT MODULE ===");
             System.out.println("1. Create Treatment");
             System.out.println("2. Update Treatment");
             System.out.println("3. Start Treatment");
             System.out.println("4. Complete Treatment");
-            System.out.println("5. Search Treatments");
-            System.out.println("6. Generate Treatment Reports");
-            System.out.println("7. Back to Main Menu");
+            System.out.println("5. Cancel Treatment");
+            System.out.println("6. Search Treatments");
+            System.out.println("7. Generate Treatment Reports");
+            System.out.println("8. Back to Main Menu");
             System.out.print("Enter your choice: ");
             
-            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
             
             switch (choice) {
                 case 1:
@@ -77,12 +71,15 @@ public class MedicalTreatmentUI {
                     completeTreatment();
                     break;
                 case 5:
-                    searchTreatments();
+                    cancelTreatment();
                     break;
                 case 6:
-                    generateTreatmentReports();
+                    searchTreatments();
                     break;
                 case 7:
+                    generateTreatmentReports();
+                    break;
+                case 8:
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -91,7 +88,9 @@ public class MedicalTreatmentUI {
     }
 
     private void createTreatment() {
-        System.out.println("\n=== CREATE TREATMENT ===");
+        consultationControl.loadConsultationData();
+        treatmentControl.loadTreatmentData();
+        ConsoleUtils.printHeader("Create Treatment");
 
         // First, show all available completed consultations
         System.out.println("\n=== AVAILABLE COMPLETED CONSULTATIONS ===");
@@ -115,15 +114,15 @@ public class MedicalTreatmentUI {
             
             if (consultation == null) {
                 System.out.println("Error: Consultation not found with ID: " + consultationId);
-                continue;
+                return;
             }
             if (consultation.getStatus() != Consultation.ConsultationStatus.COMPLETED) {
                 System.out.println("Error: Consultation must be COMPLETED before creating treatment.");
-                continue;
+                return;
             }
             if (treatmentControl.hasTreatmentForConsultation(consultationId)) {
                 System.out.println("Error: A treatment already exists for this consultation.");
-                continue;
+                return;
             }
             break;
         }
@@ -140,6 +139,7 @@ public class MedicalTreatmentUI {
         
         // Preview and confirmation
         System.out.println("\nPlease confirm the treatment details:");
+        System.out.println("----------------------------------------");
         System.out.println("Patient: " + patient.getFullName() + " (" + patient.getPatientId() + ")");
         System.out.println("Doctor: " + doctor.getFullName() + " (" + doctor.getDoctorId() + ")");
         System.out.println("Consultation ID: " + consultationId);
@@ -186,7 +186,7 @@ public class MedicalTreatmentUI {
 
     
     private void updateTreatment() {
-        System.out.println("\n=== UPDATE TREATMENT ===");
+        ConsoleUtils.printHeader("Update Treatment");
         MedicalTreatment treatment = null;
         String treatmentId = null;
         while (true) {
@@ -194,7 +194,7 @@ public class MedicalTreatmentUI {
             treatment = treatmentControl.findTreatmentById(treatmentId);
             if (treatment == null) {
                 System.out.println("Error: Treatment not found with ID: " + treatmentId);
-                continue;
+                return;
             }
             break;
         }
@@ -204,6 +204,7 @@ public class MedicalTreatmentUI {
         System.out.println("Doctor: " + treatment.getDoctor().getFullName());
         System.out.println("Diagnosis: " + treatment.getDiagnosis());
         System.out.println("Status: " + treatment.getStatus());
+        System.out.println("Treatment Date: " + treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
         if (treatment.getStatus() != MedicalTreatment.TreatmentStatus.PRESCRIBED) {
             System.out.println("Error: Only treatments in PRESCRIBED status can be updated.");
             return;
@@ -211,13 +212,13 @@ public class MedicalTreatmentUI {
         
         System.out.println("\nEnter new details (press Enter to keep current value):");
         
-        String diagnosis = getOptionalString(scanner, "New diagnosis [" + treatment.getDiagnosis() + "]: ", treatment.getDiagnosis());
+        String diagnosis = ConsoleUtils.getStringInput(scanner, "New diagnosis [" + treatment.getDiagnosis() + "]: ", treatment.getDiagnosis());
         
-        String treatmentPlan = getOptionalString(scanner, "New treatment plan [" + treatment.getTreatmentPlan() + "]: ", treatment.getTreatmentPlan());
+        String treatmentPlan = ConsoleUtils.getStringInput(scanner, "New treatment plan [" + treatment.getTreatmentPlan() + "]: ", treatment.getTreatmentPlan());
         
-        String medications = getOptionalString(scanner, "New medications [" + treatment.getPrescribedMedications() + "]: ", treatment.getPrescribedMedications());
+        String medications = ConsoleUtils.getStringInput(scanner, "New medications [" + treatment.getPrescribedMedications() + "]: ", treatment.getPrescribedMedications());
         
-        String notes = getOptionalString(scanner, "New notes [" + treatment.getTreatmentNotes() + "]: ", treatment.getTreatmentNotes());
+        String notes = ConsoleUtils.getStringInput(scanner, "New notes [" + treatment.getTreatmentNotes() + "]: ", treatment.getTreatmentNotes());
         
         LocalDate existingFollowUp = treatment.getFollowUpDate() != null ? treatment.getFollowUpDate().toLocalDate() : null;
         LocalDate followUpDate = ConsoleUtils.getDateInput(scanner, "New follow-up date (DD-MM-YYYY, press Enter to keep): ", DateType.FUTURE_DATE_ONLY, existingFollowUp);
@@ -251,7 +252,7 @@ public class MedicalTreatmentUI {
 
     
     private void startTreatment() {
-        System.out.println("\n=== START TREATMENT ===");
+        ConsoleUtils.printHeader("Start Treatment");
         String treatmentId = ConsoleUtils.getStringInput(scanner, "Enter treatment ID: ");
         
         MedicalTreatment treatment = treatmentControl.findTreatmentById(treatmentId);
@@ -265,12 +266,27 @@ public class MedicalTreatmentUI {
             return;
         }
         
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "\nAre you sure you want to start this treatment? (Y/N): ");
+        if (!confirm) {
+            System.out.println("Action cancelled. Treatment was not started.");
+            return;
+        }
+
         boolean success = treatmentControl.startTreatment(treatmentId);
         
         if (success) {
             System.out.println("✓ Treatment started successfully!");
-            System.out.println("Treatment ID: " + treatmentId);
-            System.out.println("Status changed to: IN_PROGRESS");
+            System.out.println("----------------------------------------");
+            System.out.println("Treatment ID: " + treatment.getTreatmentId());
+            System.out.println("Patient: " + treatment.getPatient().getFullName() + " (" + treatment.getPatient().getPatientId() + ")");
+            System.out.println("Doctor: " + treatment.getDoctor().getFullName() + " (" + treatment.getDoctor().getDoctorId() + ")");
+            System.out.println("Diagnosis: " + treatment.getDiagnosis());
+            System.out.println("Treatment Plan: " + treatment.getTreatmentPlan());
+            System.out.println("Prescribed Medications: " + treatment.getPrescribedMedications());
+            System.out.println("Notes: " + treatment.getTreatmentNotes());
+            System.out.println("Started: " + treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
+            System.out.println("Status: IN_PROGRESS");
+            System.out.println("----------------------------------------");
         } else {
             System.out.println("✗ Failed to start treatment. Please try again.");
         }
@@ -279,7 +295,7 @@ public class MedicalTreatmentUI {
 
 
     private void completeTreatment() {
-        System.out.println("\n=== COMPLETE TREATMENT ===");
+        ConsoleUtils.printHeader("Complete Treatment");
         String treatmentId = ConsoleUtils.getStringInput(scanner, "Enter treatment ID: ");
         
         MedicalTreatment treatment = treatmentControl.findTreatmentById(treatmentId);
@@ -295,25 +311,84 @@ public class MedicalTreatmentUI {
         
         LocalDate followUpDate = ConsoleUtils.getDateInput(scanner, "Enter follow-up date (DD-MM-YYYY, optional, press Enter to skip): ", DateType.FUTURE_DATE_ONLY);
         
-        // Complete treatment
-        boolean success = treatmentControl.completeTreatment(treatmentId);
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "\nAre you sure you want to complete this treatment? (Y/N): ");
+        if (!confirm) {
+            System.out.println("Action cancelled. Treatment was not completed.");
+            return;
+        }
+        // Complete treatment and persist optional follow-up date
+        boolean success = treatmentControl.completeTreatment(treatmentId, followUpDate != null ? followUpDate.atStartOfDay() : null);
         
         if (success) {
-            System.out.println("✓ Treatment completed successfully!");
-            System.out.println("Treatment ID: " + treatmentId);
-            System.out.println("Status changed to: COMPLETED");
+            System.out.println("Treatment completed successfully!");
+            System.out.println("----------------------------------------");
+            System.out.println("Treatment ID: " + treatment.getTreatmentId());
+            System.out.println("Patient: " + treatment.getPatient().getFullName() + " (" + treatment.getPatient().getPatientId() + ")");
+            System.out.println("Doctor: " + treatment.getDoctor().getFullName() + " (" + treatment.getDoctor().getDoctorId() + ")");
+            System.out.println("Diagnosis: " + treatment.getDiagnosis());
+            System.out.println("Treatment Plan: " + treatment.getTreatmentPlan());
+            System.out.println("Prescribed Medications: " + treatment.getPrescribedMedications());
+            System.out.println("Notes: " + treatment.getTreatmentNotes());
+            System.out.println("Started: " + treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
             if (followUpDate != null) {
                 System.out.println("Follow-up Date: " + followUpDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+            } else if (treatment.getFollowUpDate() != null) {
+                System.out.println("Follow-up Date: " + treatment.getFollowUpDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
             }
+            System.out.println("Status: COMPLETED");
+            System.out.println("----------------------------------------");
         } else {
-            System.out.println("✗ Failed to complete treatment. Please try again.");
+            System.out.println("Failed to complete treatment. Please try again.");
         }
         ConsoleUtils.waitMessage();
     }
 
+    private void cancelTreatment() {
+        ConsoleUtils.printHeader("Cancel Treatment");
+        String treatmentId = ConsoleUtils.getStringInput(scanner, "Enter treatment ID: ");
+        
+        MedicalTreatment treatment = treatmentControl.findTreatmentById(treatmentId);
+        if (treatment == null) {
+            System.out.println("Treatment not found.");
+            ConsoleUtils.waitMessage();
+            return;
+        }
+
+        ConsoleUtils.printHeader("Treatment Overview");
+        displayTreatmentDetails(treatment);
+        System.out.println();
+
+        if (treatment.getStatus() != MedicalTreatment.TreatmentStatus.PRESCRIBED) {
+            System.out.println("Treatment cannot be cancelled. Current status: " + treatment.getStatus());
+            ConsoleUtils.waitMessage();
+            return;
+        }
+
+        String reason = ConsoleUtils.getStringInput(scanner, "Enter cancellation reason: ");
+        
+        ConsoleUtils.printHeader("Cancellation Details");
+        System.out.println("Treatment ID: " + treatmentId);
+        System.out.println("Patient: " + treatment.getPatient().getFullName() + " (" + treatment.getPatient().getPatientId() + ")");
+        System.out.println("Doctor: " + treatment.getDoctor().getFullName() + " (" + treatment.getDoctor().getDoctorId() + ")");
+        System.out.println("Diagnosis: " + treatment.getDiagnosis());
+        System.out.println("Reason: " + reason);
+        System.out.println();
+
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to cancel this treatment? (Y/N): ");
+        if (confirm) {
+            if (treatmentControl.cancelTreatment(treatmentId)) {
+                System.out.println("Treatment cancelled successfully.");
+            } else {
+                System.out.println("Treatment not cancelled.");
+            }
+        } else {
+            System.out.println("Treatment not cancelled.");
+        }
+        ConsoleUtils.waitMessage();
+    }
 
     private void searchTreatments() {
-        System.out.println("\n=== SEARCH TREATMENTS ===");
+        ConsoleUtils.printHeader("Search Treatments");
         System.out.println("1. Search by Treatment ID");
         System.out.println("2. Search by Patient ID");
         System.out.println("3. Search by Doctor ID");
@@ -333,6 +408,7 @@ public class MedicalTreatmentUI {
                 } else {
                     System.out.println("Treatment not found with ID: " + treatmentId);
                 }
+                ConsoleUtils.waitMessage();
                 break;
             case 2:
                 String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
@@ -342,6 +418,7 @@ public class MedicalTreatmentUI {
                 } else {
                     System.out.println("No treatments found for Patient ID: " + patientId);
                 }
+                ConsoleUtils.waitMessage();
                 break;
             case 3:
                 String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
@@ -351,11 +428,17 @@ public class MedicalTreatmentUI {
                 } else {
                     System.out.println("No treatments found for Doctor ID: " + doctorId);
                 }
+                ConsoleUtils.waitMessage();
                 break;
             case 4:
-                ConsoleUtils.getStringInput(scanner, "Enter Consultation ID: ");
-                // This would need to be implemented in the control layer
-                System.out.println("Search by Consultation ID - Implementation needed");
+                String consultationIdSearch = ConsoleUtils.getStringInput(scanner, "Enter Consultation ID: ");
+                ArrayBucketList<String, MedicalTreatment> consultationTreatments = treatmentControl.findTreatmentsByConsultationId(consultationIdSearch);
+                if (consultationTreatments.getSize() > 0) {
+                    displayTreatmentList(consultationTreatments, "Treatments for Consultation ID: " + consultationIdSearch);
+                } else {
+                    System.out.println("No treatments found for Consultation ID: " + consultationIdSearch);
+                }
+                ConsoleUtils.waitMessage();
                 break;
             case 5:
                 System.out.println("Select status:");
@@ -377,12 +460,24 @@ public class MedicalTreatmentUI {
                 } else {
                     System.out.println("No treatments found with status: " + status);
                 }
+                ConsoleUtils.waitMessage();
                 break;
             case 6:
-                ConsoleUtils.getStringInput(scanner, "Enter start date (DD-MM-YYYY): ");
-                ConsoleUtils.getStringInput(scanner, "Enter end date (DD-MM-YYYY): ");
-                // This would need to be implemented in the control layer
-                System.out.println("Search by Date Range - Implementation needed");
+                LocalDate startDate = ConsoleUtils.getDateInput(scanner, "Enter start date (DD-MM-YYYY): ", DateType.NO_RESTRICTION);
+                LocalDate endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ", DateType.NO_RESTRICTION);
+                if (endDate.isBefore(startDate)) {
+                    // Swap to ensure valid range
+                    LocalDate temp = startDate;
+                    startDate = endDate;
+                    endDate = temp;
+                }
+                ArrayBucketList<String, MedicalTreatment> rangeTreatments = treatmentControl.findTreatmentsByDateRange(startDate, endDate);
+                if (rangeTreatments.getSize() > 0) {
+                    displayTreatmentList(rangeTreatments, "Treatments from " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + " to " + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+                } else {
+                    System.out.println("No treatments found in the given date range.");
+                }
+                ConsoleUtils.waitMessage();
                 break;
             default:
                 System.out.println("Invalid choice.");
@@ -391,11 +486,103 @@ public class MedicalTreatmentUI {
 
 
     private void generateTreatmentReports() {
-        System.out.println("\n=== TREATMENT REPORTS ===");
-        System.out.println(treatmentControl.generateTreatmentReport());
-        System.out.println(treatmentControl.generateTreatmentHistoryReport());
+        System.out.println("\n=== Generate Treatment Reports ===");
+        System.out.println("1. Treatment Analysis Report");
+        System.out.println("2. Treatment Status Report");
+        System.out.println("3. Both Reports");
+        System.out.println("4. Back to Medical Treatment");
+        System.out.print("Enter choice: ");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        
+        switch (choice) {
+            case 1:
+                generateTreatmentAnalysisReport();
+                break;
+
+            case 2:
+                generateTreatmentStatusReport();
+                break;
+
+            case 3:
+                generateTreatmentAnalysisReport();
+                generateTreatmentStatusReport();
+                break;
+
+            case 4:
+                return;
+                
+            default:
+                System.out.println("Invalid choice.");
+        }
     }
 
+    private void generateTreatmentAnalysisReport() {
+        ConsoleUtils.printHeader("Treatment Analysis Report");
+        
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Treatment ID");
+        System.out.println("2. Patient Name");
+        System.out.println("3. Doctor Name");
+        System.out.println("4. Diagnosis");
+        System.out.println("5. Status");
+        System.out.println("6. Treatment Cost");
+        System.out.println("7. Treatment Date");
+        
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+        
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        String sortBy = getTreatmentSortField(sortFieldChoice);
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(treatmentControl.generateTreatmentAnalysisReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
+    private void generateTreatmentStatusReport() {
+        ConsoleUtils.printHeader("Treatment Status Report");
+        
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Treatment ID");
+        System.out.println("2. Patient Name");
+        System.out.println("3. Doctor Name");
+        System.out.println("4. Diagnosis");
+        System.out.println("5. Status");
+        System.out.println("6. Treatment Cost");
+        System.out.println("7. Treatment Date");
+        
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+        
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        String sortBy = getTreatmentSortField(sortFieldChoice);
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(treatmentControl.generateTreatmentStatusReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
+    private String getTreatmentSortField(int choice) {
+        switch (choice) {
+            case 1: return "id";
+            case 2: return "patient";
+            case 3: return "doctor";
+            case 4: return "diagnosis";
+            case 5: return "status";
+            case 6: return "cost";
+            case 7: return "date";
+            default: return "id";
+        }
+    }
 
     private void displayTreatmentDetails(MedicalTreatment treatment) {
         System.out.println("\n=== TREATMENT DETAILS ===");
@@ -436,23 +623,21 @@ public class MedicalTreatmentUI {
         System.out.println("Total completed consultations: " + consultations.getSize());
         System.out.println("----------------------------------------");
         
-        // Convert to list for sorting
-        ArrayBucketList<String, Consultation> sortedConsultations = new ArrayBucketList<String, Consultation>();
-        
-        // First pass: collect all consultations
+        // Copy to array for deterministic sorting and iteration
+        int size = consultations.getSize();
+        Consultation[] consultationArray = new Consultation[size];
         Iterator<Consultation> iterator = consultations.iterator();
+        int index = 0;
         while (iterator.hasNext()) {
-            Consultation consultation = iterator.next();
-            sortedConsultations.add(consultation.getConsultationId(), consultation);
+            consultationArray[index++] = iterator.next();
         }
         
-        // Sort by date (most recent first) using bubble sort
-        sortConsultationsByDate(sortedConsultations);
+        // Sort by date (most recent first)
+        sortConsultationsByDate(consultationArray);
         
-        // Display sorted consultations
-        Iterator<Consultation> sortedIterator = sortedConsultations.iterator();
-        while (sortedIterator.hasNext()) {
-            Consultation consultation = sortedIterator.next();
+        // Display sorted consultations from array
+        for (int i = 0; i < consultationArray.length; i++) {
+            Consultation consultation = consultationArray[i];
             System.out.println("Consultation ID: " + consultation.getConsultationId());
             System.out.println("Doctor ID: " + consultation.getDoctor().getDoctorId());
             System.out.println("Patient ID: " + consultation.getPatient().getPatientId());
@@ -466,34 +651,18 @@ public class MedicalTreatmentUI {
     /**
      * Sort consultations by date (most recent first) using bubble sort
      */
-    private void sortConsultationsByDate(ArrayBucketList<String, Consultation> consultations) {
-        int size = consultations.getSize();
+    private void sortConsultationsByDate(Consultation[] consultationArray) {
+        int size = consultationArray.length;
         if (size <= 1) return;
-        
-        // Convert to array for easier sorting
-        Consultation[] consultationArray = new Consultation[size];
-        Iterator<Consultation> iterator = consultations.iterator();
-        int index = 0;
-        while (iterator.hasNext()) {
-            consultationArray[index++] = iterator.next();
-        }
-        
         // Bubble sort by date (most recent first)
         for (int i = 0; i < size - 1; i++) {
             for (int j = 0; j < size - i - 1; j++) {
                 if (consultationArray[j].getConsultationDate().isBefore(consultationArray[j + 1].getConsultationDate())) {
-                    // Swap consultations
                     Consultation temp = consultationArray[j];
                     consultationArray[j] = consultationArray[j + 1];
                     consultationArray[j + 1] = temp;
                 }
             }
-        }
-        
-        // Clear and re-add sorted consultations
-        consultations.clear();
-        for (Consultation consultation : consultationArray) {
-            consultations.add(consultation.getConsultationId(), consultation);
         }
     }
     

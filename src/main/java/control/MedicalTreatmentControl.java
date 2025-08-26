@@ -8,6 +8,10 @@ import entity.Consultation;
 import dao.MedicalTreatmentDao;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import utility.QuickSort;
+import utility.ConsoleUtils;
 
 /**
  * @author: Benjamin Yee Jun Yi
@@ -30,6 +34,8 @@ public class MedicalTreatmentControl {
     public void loadTreatmentData() {
         try {
             treatments = treatmentDao.findAll();
+            // Rebuild active treatments cache4
+            activeTreatments.clear();
             Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
             while (treatmentIterator.hasNext()) {
                 MedicalTreatment treatment = treatmentIterator.next();
@@ -143,14 +149,30 @@ public class MedicalTreatmentControl {
     }
     
     public boolean completeTreatment(String treatmentId) {
+        // Backward-compatible method: complete without changing follow-up date
+        return completeTreatment(treatmentId, null);
+    }
+
+    public boolean completeTreatment(String treatmentId, LocalDateTime followUpDate) {
         try {
             MedicalTreatment treatment = findTreatmentById(treatmentId);
             if (treatment != null && treatment.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
+                // Persist status change
+                boolean persisted = treatmentDao.updateStatus(treatmentId, MedicalTreatment.TreatmentStatus.COMPLETED);
+                if (!persisted) {
+                    return false;
+                }
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.COMPLETED);
-                
+                // Optionally persist follow-up date if provided (can also clear when null)
+                if (followUpDate != null || treatment.getFollowUpDate() != null) {
+                    boolean followUpPersisted = treatmentDao.updateFollowUpDate(treatmentId, followUpDate);
+                    if (!followUpPersisted) {
+                        return false;
+                    }
+                    treatment.setFollowUpDate(followUpDate);
+                }
                 // Remove from active treatments
                 removeFromActiveTreatments(treatment);
-                
                 return true;
             }
             return false;
@@ -164,7 +186,14 @@ public class MedicalTreatmentControl {
         try {
             MedicalTreatment treatment = findTreatmentById(treatmentId);
             if (treatment != null && treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED) {
+                // Persist status change
+                boolean persisted = treatmentDao.updateStatus(treatmentId, MedicalTreatment.TreatmentStatus.IN_PROGRESS);
+                if (!persisted) {
+                    return false;
+                }
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.IN_PROGRESS);
+                // Track as active
+                activeTreatments.add(treatment.getTreatmentId(), treatment);
                 return true;
             }
             return false;
@@ -178,6 +207,11 @@ public class MedicalTreatmentControl {
         try {
             MedicalTreatment treatment = findTreatmentById(treatmentId);
             if (treatment != null && treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED) {
+                // Persist status change to database
+                boolean persisted = treatmentDao.updateStatus(treatmentId, MedicalTreatment.TreatmentStatus.CANCELLED);
+                if (!persisted) {
+                    return false;
+                }
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.CANCELLED);
                 
                 // Remove from active treatments
@@ -238,6 +272,22 @@ public class MedicalTreatmentControl {
         return doctorTreatments;
     }
     
+    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByConsultationId(String consultationId) {
+        ArrayBucketList<String, MedicalTreatment> results = new ArrayBucketList<String, MedicalTreatment>();
+        if (consultationId == null) {
+            return results;
+        }
+        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        while (treatmentIterator.hasNext()) {
+            MedicalTreatment treatment = treatmentIterator.next();
+            Consultation consultation = treatment.getConsultation();
+            if (consultation != null && consultationId.equals(consultation.getConsultationId())) {
+                results.add(treatment.getTreatmentId(), treatment);
+            }
+        }
+        return results;
+    }
+    
     public ArrayBucketList<String, MedicalTreatment> findTreatmentsByDiagnosis(String diagnosis) {
         ArrayBucketList<String, MedicalTreatment> diagnosisTreatments = new ArrayBucketList<String, MedicalTreatment>();
         Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
@@ -252,6 +302,24 @@ public class MedicalTreatmentControl {
     
     public ArrayBucketList<String, MedicalTreatment> getActiveTreatments() {
         return activeTreatments;
+    }
+    
+    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByDateRange(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        ArrayBucketList<String, MedicalTreatment> results = new ArrayBucketList<String, MedicalTreatment>();
+        if (startDate == null && endDate == null) {
+            return results;
+        }
+        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        while (treatmentIterator.hasNext()) {
+            MedicalTreatment treatment = treatmentIterator.next();
+            java.time.LocalDate treatmentLocalDate = treatment.getTreatmentDate().toLocalDate();
+            boolean inLowerBound = (startDate == null) || !treatmentLocalDate.isBefore(startDate);
+            boolean inUpperBound = (endDate == null) || !treatmentLocalDate.isAfter(endDate);
+            if (inLowerBound && inUpperBound) {
+                results.add(treatment.getTreatmentId(), treatment);
+            }
+        }
+        return results;
     }
     
     public ArrayBucketList<String, MedicalTreatment> getCompletedTreatments() {
@@ -279,6 +347,419 @@ public class MedicalTreatmentControl {
     }
     
     // Reporting Methods
+    public String generateTreatmentAnalysisReport(String sortBy, String sortOrder) {
+        StringBuilder report = new StringBuilder();
+
+        // Header with decorative lines (centered)
+        report.append("=".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("MEDICAL TREATMENT SYSTEM - TREATMENT ANALYSIS REPORT", 120))
+                .append("\n");
+        report.append("=".repeat(120)).append("\n\n");
+
+        // Generation info with weekday
+        report.append("Generated at: ")
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append("\n");
+        report.append("*".repeat(120)).append("\n\n");
+
+        // Summary statistics
+        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("SUMMARY STATISTICS", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+        report.append(String.format("Total Treatments: %d\n", getTotalTreatments()));
+        report.append(String.format("Active Treatments: %d\n", getActiveTreatmentsCount()));
+        report.append(String.format("Completed Treatments: %d\n", getCompletedTreatments().getSize()));
+        report.append(String.format("Cancelled Treatments: %d\n", getCancelledTreatments().getSize()));
+        report.append(String.format("Completion Rate: %.1f%%\n",
+                getTotalTreatments() > 0 ? (double) getCompletedTreatments().getSize() / getTotalTreatments() * 100 : 0.0));
+
+        // Treatments by year analysis using arrays
+        int[] treatmentYears = new int[20];
+        int[] treatmentsByYear = new int[20];
+        double[] revenueByYear = new double[20];
+        int yearCount = 0;
+
+        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        while (treatmentIterator.hasNext()) {
+            MedicalTreatment treatment = treatmentIterator.next();
+            if (treatment.getTreatmentDate() != null) {
+                int year = treatment.getTreatmentDate().getYear();
+
+                // Find if year already exists
+                int yearIndex = -1;
+                for (int index = 0; index < yearCount; index++) {
+                    if (treatmentYears[index] == year) {
+                        yearIndex = index;
+                        break;
+                    }
+                }
+
+                // If year doesn't exist, add new entry
+                if (yearIndex == -1) {
+                    treatmentYears[yearCount] = year;
+                    treatmentsByYear[yearCount] = 1;
+                    revenueByYear[yearCount] = treatment.getTreatmentCost();
+                    yearCount++;
+                } else {
+                    // Update existing year data
+                    treatmentsByYear[yearIndex]++;
+                    revenueByYear[yearIndex] += treatment.getTreatmentCost();
+                }
+            }
+        }
+
+        report.append("\nTREATMENTS BY YEAR:\n");
+        // Sort years in descending order using QuickSort
+        if (yearCount > 1) {
+            Integer[] yearArray = new Integer[yearCount];
+            Integer[] countArray = new Integer[yearCount];
+            Double[] revenueArray = new Double[yearCount];
+
+            for (int index = 0; index < yearCount; index++) {
+                yearArray[index] = treatmentYears[index];
+                countArray[index] = treatmentsByYear[index];
+                revenueArray[index] = revenueByYear[index];
+            }
+
+            // Sort by year in descending order
+            QuickSort.sort(yearArray, (a, b) -> b.compareTo(a));
+            
+            // Rebuild arrays in sorted order
+            for (int index = 0; index < yearCount; index++) {
+                int originalIndex = -1;
+                for (int i = 0; i < yearCount; i++) {
+                    if (treatmentYears[i] == yearArray[index]) {
+                        originalIndex = i;
+                        break;
+                    }
+                }
+                if (originalIndex != -1) {
+                    treatmentYears[index] = yearArray[index];
+                    treatmentsByYear[index] = countArray[originalIndex];
+                    revenueByYear[index] = revenueArray[originalIndex];
+                }
+            }
+        }
+
+        for (int index = 0; index < yearCount; index++) {
+            report.append(String.format("Year %d: %,6d treatments (RM %,12.2f revenue)\n",
+                    treatmentYears[index], treatmentsByYear[index], revenueByYear[index]));
+        }
+
+        // Status analysis using arrays
+        String[] statuses = new String[10];
+        int[] statusCounts = new int[10];
+        double[] statusRevenue = new double[10];
+        int statusCount = 0;
+
+        treatmentIterator = treatments.iterator();
+        while (treatmentIterator.hasNext()) {
+            MedicalTreatment treatment = treatmentIterator.next();
+            String status = treatment.getStatus() != null ? treatment.getStatus().toString() : "UNKNOWN";
+
+            // Find if status already exists
+            int statusIndex = -1;
+            for (int index = 0; index < statusCount; index++) {
+                if (statuses[index].equals(status)) {
+                    statusIndex = index;
+                    break;
+                }
+            }
+
+            // If status doesn't exist, add new entry
+            if (statusIndex == -1) {
+                statuses[statusCount] = status;
+                statusCounts[statusCount] = 1;
+                statusRevenue[statusCount] = treatment.getTreatmentCost();
+                statusCount++;
+            } else {
+                // Update existing status count and revenue
+                statusCounts[statusIndex]++;
+                statusRevenue[statusIndex] += treatment.getTreatmentCost();
+            }
+        }
+
+        report.append("\nSTATUS ANALYSIS:\n");
+        for (int index = 0; index < statusCount; index++) {
+            report.append(String.format("%-15s: %d treatments (RM %,10.2f revenue)\n", 
+                    statuses[index], statusCounts[index], statusRevenue[index]));
+        }
+
+        report.append("-".repeat(120)).append("\n\n");
+
+        // Detailed treatment table with sorting
+        report.append(ConsoleUtils.centerText("DETAILED TREATMENT ANALYSIS", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getTreatmentSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
+        report.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | %8s | %-10s\n",
+                "Treatment ID", "Patient Name", "Doctor Name", "Diagnosis", "Status", "Cost", "Date"));
+        report.append("-".repeat(120)).append("\n");
+
+        // Convert to array for sorting
+        MedicalTreatment[] treatmentArray = new MedicalTreatment[treatments.getSize()];
+        int index = 0;
+        Iterator<MedicalTreatment> arrayIterator = treatments.iterator();
+        while (arrayIterator.hasNext()) {
+            treatmentArray[index++] = arrayIterator.next();
+        }
+
+        // Sort the treatment array
+        sortTreatmentArray(treatmentArray, sortBy, sortOrder);
+
+        // Generate sorted table
+        for (MedicalTreatment treatment : treatmentArray) {
+            String id = treatment.getTreatmentId() == null ? "-" : treatment.getTreatmentId();
+            String patientName = treatment.getPatient() == null ? "-" : treatment.getPatient().getFullName();
+            String doctorName = treatment.getDoctor() == null ? "-" : treatment.getDoctor().getFullName();
+            String diagnosis = treatment.getDiagnosis() == null ? "-" : treatment.getDiagnosis();
+            String status = treatment.getStatus() == null ? "-" : treatment.getStatus().toString();
+            String date = treatment.getTreatmentDate() == null
+                    ? "-"
+                    : treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+
+            // Truncate fields to fit
+            if (patientName.length() > 20)
+                patientName = patientName.substring(0, 19) + "…";
+            if (doctorName.length() > 20)
+                doctorName = doctorName.substring(0, 19) + "…";
+            if (diagnosis.length() > 15)
+                diagnosis = diagnosis.substring(0, 14) + "…";
+
+            report.append(String.format("%-10s | %-20s | %-20s | %-15s | %-12s | RM %6.2f | %-10s\n",
+                    id, patientName, doctorName, diagnosis, status, treatment.getTreatmentCost(), date));
+        }
+
+        report.append("-".repeat(120)).append("\n");
+        report.append("*".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF TREATMENT ANALYSIS REPORT", 120)).append("\n");
+        report.append("=".repeat(120)).append("\n");
+
+        return report.toString();
+    }
+
+    public String generateTreatmentStatusReport(String sortBy, String sortOrder) {
+        StringBuilder report = new StringBuilder();
+
+        // Header with decorative lines (centered)
+        report.append("=".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("MEDICAL TREATMENT SYSTEM - TREATMENT STATUS REPORT", 120))
+                .append("\n");
+        report.append("=".repeat(120)).append("\n\n");
+
+        // Generation info with weekday
+        report.append("Generated at: ")
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append("\n");
+        report.append("*".repeat(120)).append("\n\n");
+
+        // Summary statistics
+        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("TREATMENT STATUS SUMMARY", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+        report.append(String.format("Total Treatments: %d\n", getTotalTreatments()));
+        report.append(String.format("Prescribed Treatments: %d\n", getPrescribedTreatments().getSize()));
+        report.append(String.format("In Progress Treatments: %d\n", getActiveTreatmentsCount()));
+        report.append(String.format("Completed Treatments: %d\n", getCompletedTreatments().getSize()));
+        report.append(String.format("Cancelled Treatments: %d\n", getCancelledTreatments().getSize()));
+
+        // Doctor performance analysis
+        report.append("\nDOCTOR PERFORMANCE ANALYSIS:\n");
+        String[] doctorIds = new String[50];
+        String[] doctorNames = new String[50];
+        int[] doctorTreatmentCounts = new int[50];
+        double[] doctorRevenue = new double[50];
+        int doctorCount = 0;
+
+        Iterator<MedicalTreatment> doctorIterator = treatments.iterator();
+        while (doctorIterator.hasNext()) {
+            MedicalTreatment treatment = doctorIterator.next();
+            if (treatment.getDoctor() != null) {
+                String doctorId = treatment.getDoctor().getDoctorId();
+                String doctorName = treatment.getDoctor().getFullName();
+
+                // Find if doctor already exists
+                int doctorIndex = -1;
+                for (int index = 0; index < doctorCount; index++) {
+                    if (doctorIds[index].equals(doctorId)) {
+                        doctorIndex = index;
+                        break;
+                    }
+                }
+
+                // If doctor doesn't exist, add new entry
+                if (doctorIndex == -1) {
+                    doctorIds[doctorCount] = doctorId;
+                    doctorNames[doctorCount] = doctorName;
+                    doctorTreatmentCounts[doctorCount] = 1;
+                    doctorRevenue[doctorCount] = treatment.getTreatmentCost();
+                    doctorCount++;
+                } else {
+                    // Update existing doctor data
+                    doctorTreatmentCounts[doctorIndex]++;
+                    doctorRevenue[doctorIndex] += treatment.getTreatmentCost();
+                }
+            }
+        }
+
+        // Sort doctors by treatment count (descending)
+        if (doctorCount > 1) {
+            for (int index = 0; index < doctorCount - 1; index++) {
+                for (int innerIndex = index + 1; innerIndex < doctorCount; innerIndex++) {
+                    if (doctorTreatmentCounts[index] < doctorTreatmentCounts[innerIndex]) {
+                        // Swap doctor data
+                        String tempId = doctorIds[index];
+                        doctorIds[index] = doctorIds[innerIndex];
+                        doctorIds[innerIndex] = tempId;
+
+                        String tempName = doctorNames[index];
+                        doctorNames[index] = doctorNames[innerIndex];
+                        doctorNames[innerIndex] = tempName;
+
+                        int tempCount = doctorTreatmentCounts[index];
+                        doctorTreatmentCounts[index] = doctorTreatmentCounts[innerIndex];
+                        doctorTreatmentCounts[innerIndex] = tempCount;
+
+                        double tempRevenue = doctorRevenue[index];
+                        doctorRevenue[index] = doctorRevenue[innerIndex];
+                        doctorRevenue[innerIndex] = tempRevenue;
+                    }
+                }
+            }
+        }
+
+        for (int index = 0; index < doctorCount; index++) {
+            report.append(String.format("%-20s: %d treatments (RM %,10.2f revenue)\n",
+                    doctorNames[index], doctorTreatmentCounts[index], doctorRevenue[index]));
+        }
+
+        report.append("-".repeat(120)).append("\n\n");
+
+        // Detailed status table with sorting
+        report.append(ConsoleUtils.centerText("DETAILED TREATMENT STATUS", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getTreatmentSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
+        report.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | %8s | %-10s\n",
+                "Treatment ID", "Patient Name", "Doctor Name", "Diagnosis", "Status", "Cost", "Date"));
+        report.append("-".repeat(120)).append("\n");
+
+        // Convert to array for sorting
+        MedicalTreatment[] treatmentArray = new MedicalTreatment[treatments.getSize()];
+        int index = 0;
+        Iterator<MedicalTreatment> statusIterator = treatments.iterator();
+        while (statusIterator.hasNext()) {
+            treatmentArray[index++] = statusIterator.next();
+        }
+
+        // Sort the treatment array
+        sortTreatmentArray(treatmentArray, sortBy, sortOrder);
+
+        // Generate sorted table
+        for (MedicalTreatment treatment : treatmentArray) {
+            String id = treatment.getTreatmentId() == null ? "-" : treatment.getTreatmentId();
+            String patientName = treatment.getPatient() == null ? "-" : treatment.getPatient().getFullName();
+            String doctorName = treatment.getDoctor() == null ? "-" : treatment.getDoctor().getFullName();
+            String diagnosis = treatment.getDiagnosis() == null ? "-" : treatment.getDiagnosis();
+            String status = treatment.getStatus() == null ? "-" : treatment.getStatus().toString();
+            String date = treatment.getTreatmentDate() == null
+                    ? "-"
+                    : treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+
+            // Truncate fields to fit
+            if (patientName.length() > 20)
+                patientName = patientName.substring(0, 19) + "…";
+            if (doctorName.length() > 20)
+                doctorName = doctorName.substring(0, 19) + "…";
+            if (diagnosis.length() > 15)
+                diagnosis = diagnosis.substring(0, 14) + "…";
+
+            report.append(String.format("%-10s | %-20s | %-20s | %-15s | %-12s | RM %6.2f | %-10s\n",
+                    id, patientName, doctorName, diagnosis, status, treatment.getTreatmentCost(), date));
+        }
+
+        report.append("-".repeat(120)).append("\n");
+        report.append("*".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF TREATMENT STATUS REPORT", 120)).append("\n");
+        report.append("=".repeat(120)).append("\n");
+
+        return report.toString();
+    }
+
+    // Helper methods for sorting
+    private void sortTreatmentArray(MedicalTreatment[] treatments, String sortBy, String sortOrder) {
+        Comparator<MedicalTreatment> comparator = getTreatmentComparator(sortBy);
+        if (sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+        QuickSort.sort(treatments, comparator);
+    }
+
+    private Comparator<MedicalTreatment> getTreatmentComparator(String sortBy) {
+        switch (sortBy.toLowerCase()) {
+            case "id":
+                return Comparator.comparing(t -> t.getTreatmentId() != null ? t.getTreatmentId() : "");
+            case "patient":
+                return Comparator.comparing(t -> t.getPatient() != null ? t.getPatient().getFullName() : "");
+            case "doctor":
+                return Comparator.comparing(t -> t.getDoctor() != null ? t.getDoctor().getFullName() : "");
+            case "diagnosis":
+                return Comparator.comparing(t -> t.getDiagnosis() != null ? t.getDiagnosis() : "");
+            case "status":
+                return Comparator.comparing(t -> t.getStatus() != null ? t.getStatus().toString() : "");
+            case "cost":
+                return Comparator.comparing(MedicalTreatment::getTreatmentCost);
+            case "date":
+                return Comparator.comparing(t -> t.getTreatmentDate() != null ? t.getTreatmentDate() : LocalDateTime.MIN);
+            default:
+                return Comparator.comparing(t -> t.getTreatmentId() != null ? t.getTreatmentId() : "");
+        }
+    }
+
+    private String getTreatmentSortFieldDisplayName(String sortBy) {
+        switch (sortBy.toLowerCase()) {
+            case "id": return "Treatment ID";
+            case "patient": return "Patient Name";
+            case "doctor": return "Doctor Name";
+            case "diagnosis": return "Diagnosis";
+            case "status": return "Status";
+            case "cost": return "Treatment Cost";
+            case "date": return "Treatment Date";
+            default: return "Treatment ID";
+        }
+    }
+
+    // Additional helper methods for reports
+    public ArrayBucketList<String, MedicalTreatment> getPrescribedTreatments() {
+        ArrayBucketList<String, MedicalTreatment> prescribedTreatments = new ArrayBucketList<String, MedicalTreatment>();
+        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        while (treatmentIterator.hasNext()) {
+            MedicalTreatment treatment = treatmentIterator.next();
+            if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED) {
+                prescribedTreatments.add(treatment.getTreatmentId(), treatment);
+            }
+        }
+        return prescribedTreatments;
+    }
+
+    public ArrayBucketList<String, MedicalTreatment> getCancelledTreatments() {
+        ArrayBucketList<String, MedicalTreatment> cancelledTreatments = new ArrayBucketList<String, MedicalTreatment>();
+        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        while (treatmentIterator.hasNext()) {
+            MedicalTreatment treatment = treatmentIterator.next();
+            if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.CANCELLED) {
+                cancelledTreatments.add(treatment.getTreatmentId(), treatment);
+            }
+        }
+        return cancelledTreatments;
+    }
+
     public String generateTreatmentReport() {
         StringBuilder report = new StringBuilder();
         report.append("=== MEDICAL TREATMENT REPORT ===\n");

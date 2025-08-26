@@ -307,14 +307,13 @@ public class ConsoleUtils {
         int headerWidth = title.length();
 
         // Create a repeated string of "=" characters
-        StringBuilder separator = new StringBuilder();
-        for (int i = 0; i < headerWidth; i++) {
-            separator.append("=");
-        }
-
-        System.out.println(separator.toString());
+        printSeparator('=', headerWidth);
         System.out.println(title);
-        System.out.println(separator.toString());
+        printSeparator('=', headerWidth);
+    }
+
+    public static void printSeparator(char separator, int width) {
+        System.out.println(String.valueOf(separator).repeat(width));
     }
 
     public static String centerText(String text, int width) {
@@ -326,9 +325,7 @@ public class ConsoleUtils {
         StringBuilder centered = new StringBuilder();
         
         // Add left padding
-        for (int i = 0; i < padding; i++) {
-            centered.append(" ");
-        }
+        centered.append(" ".repeat(padding));
         
         centered.append(text);
         

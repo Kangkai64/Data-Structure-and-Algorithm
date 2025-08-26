@@ -61,7 +61,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
 
     @Override
     public ArrayBucketList<String, Prescription> findAll() throws SQLException {
-        ArrayBucketList<String, Prescription> prescriptions = new ArrayBucketList<String, Prescription>();
+        ArrayBucketList<String, Prescription> prescriptions = new ArrayBucketList<>();
         String sql = "SELECT * FROM prescription ORDER BY prescriptionDate DESC";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -171,7 +171,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
 
     public ArrayBucketList<String, Prescription.PrescribedMedicine> findPrescribedMedicines(String prescriptionId)
             throws SQLException {
-        ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = new ArrayBucketList<String, Prescription.PrescribedMedicine>();
+        ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = new ArrayBucketList<>();
         String prescribedMedicineSql = "SELECT * FROM prescribed_medicine WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();

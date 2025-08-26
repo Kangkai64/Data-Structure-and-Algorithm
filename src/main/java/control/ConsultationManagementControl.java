@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-// Removed unused Comparator import after simplifying sorting
 
 /**
  * @author: Poh Qi Xuan
@@ -40,7 +39,6 @@ public class ConsultationManagementControl {
     
     public void loadConsultationData() {
         try {
-            // Auto-cancel past-due consultations that never started or are stuck in progress
             try {
                 consultationDao.cancelExpiredConsultations();
             } catch (Exception ignored) {}
@@ -261,7 +259,6 @@ public class ConsultationManagementControl {
         }
     }
 
-    // ECB helpers so boundary never touches DAOs directly
     public Patient getPatientById(String patientId) {
         try {
             return patientDao.findById(patientId);
@@ -506,7 +503,7 @@ public class ConsultationManagementControl {
         return slots;
     }
 
-    // Safer variant for UI: returns plain array to avoid ADT iterator quirks
+    // Returns plain array to avoid ADT iterator quirks
     public String[] getAvailableSlotTimes(String doctorId, LocalDate date) {
         String[] temp = new String[6];
         int count = 0;
@@ -587,7 +584,5 @@ public class ConsultationManagementControl {
                 return "Consultation Date";
         }
     }
-
-    // Sorting handled by SQL ORDER BY in DAO
 
 } 

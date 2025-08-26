@@ -4,7 +4,6 @@ import control.ConsultationManagementControl;
 import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
-// Removed direct DAO usage to comply with ECB; UI interacts only with control
 import utility.ConsoleUtils;
 import utility.DateType;
 import adt.ArrayBucketList;
@@ -15,18 +14,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 /**
+ * @author: Poh Qi Xuan
  * Consultation Management User Interface
  * Handles all consultation management user interactions
  */
 public class ConsultationManagementUI {
     private Scanner scanner;
     private ConsultationManagementControl consultationControl;
-    // No DAOs here: boundary talks only to control
 
     public ConsultationManagementUI() {
         this.scanner = new Scanner(System.in);
         this.consultationControl = new ConsultationManagementControl();
-        // DAOs are accessed by control only
     }
 
     public void displayConsultationManagementMenu() {
@@ -459,7 +457,6 @@ public class ConsultationManagementUI {
         }
     }
 
-    // Helpers for consistent, report-like output
     private void printConsultationDetails(Consultation consultation) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         System.out.println("Consultation ID: " + consultation.getConsultationId());

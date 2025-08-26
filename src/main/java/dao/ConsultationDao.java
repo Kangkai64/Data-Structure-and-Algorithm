@@ -16,6 +16,12 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * @author: Poh Qi Xuan
+ * Consultation DAO - Module 3
+ * Manages consultation data access operations
+ */
+
 public class ConsultationDao extends DaoTemplate<Consultation> {
 
     private final PatientDao patientDao;
@@ -186,13 +192,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         }
     }
 
-    /**
-     * Cancel consultations that are past their scheduled datetime and not completed.
-     * This sets status to CANCELLED for any SCHEDULED or IN_PROGRESS consultations where
-     * consultationDate < NOW().
-     *
-     * @return number of rows updated
-     */
+    // Cancel consultations that are past their scheduled datetime and not completed.
     public int cancelExpiredConsultations() throws SQLException {
         String sql = "UPDATE consultation SET status = 'CANCELLED' " +
                 "WHERE consultationDate < NOW() AND status IN ('SCHEDULED', 'IN_PROGRESS')";

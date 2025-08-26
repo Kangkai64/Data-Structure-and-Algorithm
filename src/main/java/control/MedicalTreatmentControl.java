@@ -148,10 +148,7 @@ public class MedicalTreatmentControl {
         }
     }
     
-    public boolean completeTreatment(String treatmentId) {
-        // Backward-compatible method: complete without changing follow-up date
-        return completeTreatment(treatmentId, null);
-    }
+    
 
     public boolean completeTreatment(String treatmentId, LocalDateTime followUpDate) {
         try {
@@ -288,17 +285,7 @@ public class MedicalTreatmentControl {
         return results;
     }
     
-    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByDiagnosis(String diagnosis) {
-        ArrayBucketList<String, MedicalTreatment> diagnosisTreatments = new ArrayBucketList<String, MedicalTreatment>();
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            if (treatment.getDiagnosis().toLowerCase().contains(diagnosis.toLowerCase())) {
-                diagnosisTreatments.add(treatment.getTreatmentId(), treatment);
-            }
-        }
-        return diagnosisTreatments;
-    }
+    
     
     public ArrayBucketList<String, MedicalTreatment> getActiveTreatments() {
         return activeTreatments;
@@ -760,53 +747,7 @@ public class MedicalTreatmentControl {
         return cancelledTreatments;
     }
 
-    public String generateTreatmentReport() {
-        StringBuilder report = new StringBuilder();
-        report.append("=== MEDICAL TREATMENT REPORT ===\n");
-        report.append("Total Treatments: ").append(getTotalTreatments()).append("\n");
-        report.append("Active Treatments: ").append(getActiveTreatmentsCount()).append("\n");
-        report.append("Completed Treatments: ").append(getCompletedTreatments().getSize()).append("\n");
-        report.append("Report Generated: ").append(LocalDateTime.now()).append("\n\n");
-        
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            report.append("Treatment ID: ").append(treatment.getTreatmentId()).append("\n");
-            report.append("Patient: ").append(treatment.getPatient().getFullName()).append("\n");
-            report.append("Doctor: ").append(treatment.getDoctor().getFullName()).append("\n");
-            report.append("Diagnosis: ").append(treatment.getDiagnosis()).append("\n");
-            report.append("Status: ").append(treatment.getStatus()).append("\n");
-            report.append("Cost: RM").append(treatment.getTreatmentCost()).append("\n");
-            report.append("----------------------------------------\n");
-        }
-        
-        return report.toString();
-    }
     
-    public String generateTreatmentHistoryReport() {
-        StringBuilder report = new StringBuilder();
-        report.append("=== TREATMENT HISTORY REPORT ===\n");
-        report.append("Total Treatments: ").append(getTotalTreatments()).append("\n");
-        report.append("Completed Treatments: ").append(getCompletedTreatments().getSize()).append("\n");
-        report.append("Report Generated: ").append(LocalDateTime.now()).append("\n\n");
-        
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.COMPLETED) {
-                report.append("Treatment ID: ").append(treatment.getTreatmentId()).append("\n");
-                report.append("Patient: ").append(treatment.getPatient().getFullName()).append("\n");
-                report.append("Doctor: ").append(treatment.getDoctor().getFullName()).append("\n");
-                report.append("Diagnosis: ").append(treatment.getDiagnosis()).append("\n");
-                report.append("Treatment Plan: ").append(treatment.getTreatmentPlan()).append("\n");
-                report.append("Start Date: ").append(treatment.getTreatmentDate()).append("\n");
-                report.append("Cost: RM").append(treatment.getTreatmentCost()).append("\n");
-                report.append("----------------------------------------\n");
-            }
-        }
-        
-        return report.toString();
-    }
     
     public boolean hasTreatmentForConsultation(String consultationId) {
         if (consultationId == null) {

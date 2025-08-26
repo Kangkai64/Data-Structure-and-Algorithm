@@ -16,8 +16,8 @@ import java.util.Scanner;
  *          Handles all pharmacy management user interactions
  */
 public class PharmacyManagementUI {
-    private Scanner scanner;
-    private PharmacyManagementControl pharmacyControl;
+    private final Scanner scanner;
+    private final PharmacyManagementControl pharmacyControl;
 
     public PharmacyManagementUI() {
         this.scanner = new Scanner(System.in);
@@ -283,7 +283,8 @@ public class PharmacyManagementUI {
         System.out.println("1. Add Medicine to Prescription");
         System.out.println("2. Remove Medicine from Prescription");
         System.out.println("3. Update Medicine in Prescription");
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        System.out.println("4. Update Prescription Details");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
         switch (choice) {
             case 1:
@@ -294,6 +295,9 @@ public class PharmacyManagementUI {
                 break;
             case 3:
                 updateMedicineInPrescription();
+                break;
+            case 4:
+                updatePrescriptionDetails();
                 break;
             default:
                 System.out.println("Invalid choice.");
@@ -499,6 +503,69 @@ public class PharmacyManagementUI {
                         : prescribedMedicine.getPrescribedMedicineId(),
                 prescribedMedicine.getPrescriptionId(), medicine, quantity, dosage, frequency, duration,
                 prescribedMedicine.getUnitPrice());
+    }
+
+    private void updatePrescriptionDetails() {
+        ConsoleUtils.printHeader("Update Prescription Details");
+        String prescriptionId = ConsoleUtils.getStringInput(scanner, "Enter prescription ID: ");
+        System.out.println();
+        Prescription prescription = pharmacyControl.findPrescriptionById(prescriptionId);
+        if (prescription == null) {
+            System.out.println("Prescription not found.");
+            return;
+        }
+        else {
+            ConsoleUtils.printHeader("Prescription Overview");
+            System.out.println(prescription);
+            System.out.println();
+        }
+        
+        String prescriptionStatus = "";
+        Prescription.PrescriptionStatus status = null;
+        
+        System.out.println("Leave blank if you don't want to update the field.");
+        ConsoleUtils.printSeparator('=', 50);
+        String instructions = ConsoleUtils.getStringInput(scanner, "Enter instructions: ", prescription.getInstructions());
+        LocalDate expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ", DateType.FUTURE_DATE_ONLY, prescription.getExpiryDate());
+
+        // Validate prescription status
+        while (true) {
+            try {
+                status = Prescription.PrescriptionStatus.valueOf(prescriptionStatus.toUpperCase());
+                break;
+            } catch (IllegalArgumentException exception) {
+                System.out.println("Invalid prescription status. Please enter a valid prescription status.");
+                ConsoleUtils.waitMessage();
+                prescriptionStatus = ConsoleUtils.getStringInput(scanner, "Enter prescription status: ", prescription.getStatus().toString());
+            }
+        }
+
+        System.out.println();
+
+        ConsoleUtils.printHeader("Updated Prescription Details");
+        System.out.println("Instructions: " + instructions);
+        System.out.println("Expiry Date: " + expiryDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+        System.out.println("Status: " + status);
+        System.out.println();
+
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
+                "Are you sure you want to update these prescription details? (Y/N): ");
+        if (confirm) {
+            prescription.setInstructions(instructions);
+            prescription.setExpiryDate(expiryDate);
+            prescription.setStatus(status);
+
+            if (pharmacyControl.updatePrescription(prescription)) {
+                System.out.println("Prescription details updated successfully.");
+                ConsoleUtils.waitMessage();
+            } else {
+                System.out.println("Prescription details not updated.");
+                ConsoleUtils.waitMessage();
+            }
+        } else {
+            System.out.println("Prescription details not updated.");
+            ConsoleUtils.waitMessage();
+        }
     }
 
     private void dispensePrescription() {
@@ -719,7 +786,7 @@ public class PharmacyManagementUI {
         ConsoleUtils.printHeader("Generate Pharmacy Reports");
         System.out.println("1. Medicine Stock Report");
         System.out.println("2. Prescription Report");
-        System.out.println("3. Both Reports");
+        System.out.println("3. All Reports");
         System.out.println("4. Back to Pharmacy Menu");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
@@ -734,7 +801,6 @@ public class PharmacyManagementUI {
                 break;
             case 3:
                 generateMedicineStockReport();
-                ConsoleUtils.waitMessage();
                 generatePrescriptionReport();
                 break;
             case 4:
@@ -758,11 +824,15 @@ public class PharmacyManagementUI {
         
         int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
         
+        System.out.println();
+        
         System.out.println("Select sort order:");
         System.out.println("1. Ascending (A-Z, Low to High)");
         System.out.println("2. Descending (Z-A, High to Low)");
         
         int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+
+        System.out.println();
         
         String sortBy = getMedicineSortField(sortFieldChoice);
         String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
@@ -783,12 +853,16 @@ public class PharmacyManagementUI {
         System.out.println("6. Total Cost");
         
         int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+
+        System.out.println();
         
         System.out.println("Select sort order:");
         System.out.println("1. Ascending (A-Z, Low to High)");
         System.out.println("2. Descending (Z-A, High to Low)");
         
         int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+
+        System.out.println();
         
         String sortBy = getPrescriptionSortField(sortFieldChoice);
         String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
@@ -798,27 +872,27 @@ public class PharmacyManagementUI {
     }
 
     private String getMedicineSortField(int choice) {
-        switch (choice) {
-            case 1: return "id";
-            case 2: return "name";
-            case 3: return "generic";
-            case 4: return "stock";
-            case 5: return "price";
-            case 6: return "expiry";
-            case 7: return "status";
-            default: return "name";
-        }
+        return switch (choice) {
+            case 1 -> "id";
+            case 2 -> "name";
+            case 3 -> "generic";
+            case 4 -> "stock";
+            case 5 -> "price";
+            case 6 -> "expiry";
+            case 7 -> "status";
+            default -> "name";
+        };
     }
 
     private String getPrescriptionSortField(int choice) {
-        switch (choice) {
-            case 1: return "id";
-            case 2: return "patient";
-            case 3: return "doctor";
-            case 4: return "date";
-            case 5: return "status";
-            case 6: return "cost";
-            default: return "date";
-        }
+        return switch (choice) {
+            case 1 -> "id";
+            case 2 -> "patient";
+            case 3 -> "doctor";
+            case 4 -> "date";
+            case 5 -> "status";
+            case 6 -> "cost";
+            default -> "date";
+        };
     }
 }

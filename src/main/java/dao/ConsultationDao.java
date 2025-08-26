@@ -195,7 +195,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     // Cancel consultations that are past their scheduled datetime and not completed.
     public int cancelExpiredConsultations() throws SQLException {
         String sql = "UPDATE consultation SET status = 'CANCELLED' " +
-                "WHERE consultationDate < NOW() AND status IN ('SCHEDULED', 'IN_PROGRESS')";
+                "WHERE consultationDate < CURDATE() AND status IN ('SCHEDULED', 'IN_PROGRESS')";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             return preparedStatement.executeUpdate();

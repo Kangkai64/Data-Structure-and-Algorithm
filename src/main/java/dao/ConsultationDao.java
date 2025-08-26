@@ -139,7 +139,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     }
 
     /**
-     * Build queue status summary for a given date without iterating the ADT in higher layers
+     * Build queue status summary for a given date
      */
     public String getQueueStatusForDate(LocalDate date) throws SQLException {
         StringBuilder status = new StringBuilder();

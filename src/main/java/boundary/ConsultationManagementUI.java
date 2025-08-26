@@ -304,19 +304,39 @@ public class ConsultationManagementUI {
     private void searchConsultationsByPatient() {
         ConsoleUtils.printHeader("Search by Patient ID");
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
-        String result = consultationControl.searchByPatientText(patientId);
+        
+        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByPatient(patientId);
         System.out.println();
         ConsoleUtils.printHeader("Search Result");
-        System.out.println(result);
+        
+        if (consultations.isEmpty()) {
+            System.out.println("No consultations found for patient ID: " + patientId);
+        } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) for patient ID: " + patientId);
+            System.out.println();
+            for (Consultation consultation : consultations) {
+                printConsultationDetails(consultation);
+            }
+        }
     }
 
     private void searchConsultationsByDoctor() {
         ConsoleUtils.printHeader("Search by Doctor ID");
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
-        String result = consultationControl.searchByDoctorText(doctorId);
+        
+        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByDoctor(doctorId);
         System.out.println();
         ConsoleUtils.printHeader("Search Result");
-        System.out.println(result);
+        
+        if (consultations.isEmpty()) {
+            System.out.println("No consultations found for doctor ID: " + doctorId);
+        } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) for doctor ID: " + doctorId);
+            System.out.println();
+            for (Consultation consultation : consultations) {
+                printConsultationDetails(consultation);
+            }
+        }
     }
 
     private void searchConsultationsByDateRange() {
@@ -330,18 +350,27 @@ public class ConsultationManagementUI {
             return;
         }
         
-        String result = consultationControl.searchByDateRangeText(startDate, endDate);
+        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByDateRange(startDate, endDate);
         System.out.println();
         ConsoleUtils.printHeader("Search Result");
         System.out.println("Date Range: " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + 
                          " to " + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
-        System.out.println(result);
+        
+        if (consultations.isEmpty()) {
+            System.out.println("No consultations found in the specified date range.");
+        } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) in the specified date range:");
+            System.out.println();
+            for (Consultation consultation : consultations) {
+                printConsultationDetails(consultation);
+            }
+        }
     }
 
     private void searchConsultationsByStatus() {
         ConsoleUtils.printHeader("Search by Status");
         System.out.println("Select status:");
-        System.out.println("1. SCHEDULED\n  2. IN_PROGRESS\n  3. COMPLETED\n  4. CANCELLED");
+        System.out.println("1. SCHEDULED\n2. IN_PROGRESS\n3. COMPLETED\n4. CANCELLED");
         
         int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         
@@ -361,10 +390,19 @@ public class ConsultationManagementUI {
                 break;
         }
         
-        String result = consultationControl.searchByStatusText(status);
+        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByStatus(status);
         System.out.println();
         ConsoleUtils.printHeader("Search Result");
-        System.out.println(result);
+        
+        if (consultations.isEmpty()) {
+            System.out.println("No consultations found with status: " + status);
+        } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) with status: " + status);
+            System.out.println();
+            for (Consultation consultation : consultations) {
+                printConsultationDetails(consultation);
+            }
+        }
     }
 
     private void generateConsultationReports() {

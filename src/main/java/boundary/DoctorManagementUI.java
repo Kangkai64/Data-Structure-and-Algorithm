@@ -30,7 +30,7 @@ public class DoctorManagementUI {
             System.out.println("1. Register New Doctor");
             System.out.println("2. Update Doctor Information");
             System.out.println("3. Add Doctor Schedule");
-            System.out.println("4. Set Doctor Availability");
+            System.out.println("4. Set Availability");
             System.out.println("5. Search Doctor");
             System.out.println("6. Generate Reports");
             System.out.println("7. Back to Main Menu");
@@ -49,7 +49,7 @@ public class DoctorManagementUI {
                     addDoctorSchedule();
                     break;
                 case 4:
-                    setDoctorAvailability();
+                    setAvailabilityMenu();
                     break;
                 case 5:
                     searchDoctor();
@@ -207,20 +207,57 @@ public class DoctorManagementUI {
         System.out.println(added ? "Schedule added successfully." : "Failed to add schedule.");
     }
 
-    private void setDoctorAvailability() {
-        String avail;
-        System.out.println("\n=== SET DOCTOR AVAILABILITY ===");
+    private void setAvailabilityMenu() {
+        System.out.println("\n=== SET AVAILABILITY ===");
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
-        System.out.print("Set availability (true/false): ");
-        boolean isAvailable = getBooleanInput();
-        if (isAvailable) {
-            avail = "Available";
+        Doctor doctor = doctorControl.findDoctorById(doctorId);
+        if (doctor == null) {
+            System.out.println("Doctor not found.");
+            return;
         }
-        else {
-            avail = "Not available";
+
+        // Show current doctor availability
+        System.out.println("Current Doctor Availability: " + (doctor.isAvailable() ? "Available" : "Not Available"));
+
+        // Load and display schedules for the doctor
+        entity.Schedule[] schedules = doctorControl.getDoctorSchedulesOrderedArray(doctorId);
+        if (schedules.length == 0) {
+            System.out.println("No schedules found for this doctor.");
+        } else {
+            System.out.println("\nDoctor Schedules:");
+            for (int index = 0; index < schedules.length; index++) {
+                entity.Schedule s = schedules[index];
+                System.out.println((index + 1) + ". [" + s.getScheduleId() + "] " + s.getDayOfWeek() + " " + s.getFromTime() + "-" + s.getToTime() + " | " + (s.isAvailable() ? "Available" : "Not Available"));
+            }
         }
-        doctorControl.setDoctorAvailability(doctorId, isAvailable);
-        System.out.println("\nDoctor ID: " + doctorId + "\nAvailable: " + avail);
+
+        System.out.println("\n1. Set Doctor Availability");
+        System.out.println("2. Set Schedule Availability");
+        int choice = ConsoleUtils.getIntInput(scanner, "Choose option (1-2): ", 1, 2);
+
+        if (choice == 1) {
+            System.out.print("Set doctor availability (true/false): ");
+            boolean isAvailable = getBooleanInput();
+            boolean ok = doctorControl.setDoctorAvailability(doctorId, isAvailable);
+            if (ok) {
+                System.out.println("Doctor availability updated. " + (isAvailable ? "Available" : "Not Available"));
+                if (!isAvailable) {
+                    System.out.println("All schedules have been set to Not Available.");
+                }
+            } else {
+                System.out.println("Failed to update doctor availability.");
+            }
+        } else {
+            if (schedules.length == 0) {
+                System.out.println("No schedules to update.");
+                return;
+            }
+            String scheduleId = ConsoleUtils.getStringInput(scanner, "Enter schedule ID to update: ");
+            System.out.print("Set schedule availability (true/false): ");
+            boolean isAvailable = getBooleanInput();
+            boolean ok = doctorControl.setScheduleAvailability(scheduleId, isAvailable);
+            System.out.println(ok ? "Schedule availability updated." : "Failed to update schedule availability.");
+        }
     }
 
     private void searchDoctor() {

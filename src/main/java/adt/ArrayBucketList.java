@@ -298,10 +298,12 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     private class BucketListIterator implements Iterator<V> {
         private int currentBucketIndex;
         private Node currentNode;
+        private Node bucketHead;
 
         public BucketListIterator() {
             currentBucketIndex = 0;
             currentNode = null;
+            bucketHead = null;
             findNextNode();
         }
 
@@ -316,10 +318,14 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
                 throw new java.util.NoSuchElementException("No more elements in the bucket list");
             }
             V data = currentNode.getValue();
-            currentNode = currentNode.getNext();
-            if (currentNode == currentNode.getNext()) {
+            // move to next within current bucket
+            Node nextNode = currentNode.getNext();
+            // if we have looped back to the head of this bucket, advance to next bucket
+            if (nextNode == bucketHead) {
                 currentBucketIndex++;
                 findNextNode();
+            } else {
+                currentNode = nextNode;
             }
             return data;
         }
@@ -329,12 +335,14 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
                 LinkedList bucket = buckets[currentBucketIndex];
                 if (!bucket.isEmpty()) {
                     currentNode = bucket.head;
+                    bucketHead = bucket.head;
                     return;
                 } else {
                     currentBucketIndex++;
                 }
             }
             currentNode = null;
+            bucketHead = null;
         }
     }
 

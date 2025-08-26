@@ -4,8 +4,7 @@ import control.ConsultationManagementControl;
 import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
-import dao.PatientDao;
-import dao.DoctorDao;
+// Removed direct DAO usage to comply with ECB; UI interacts only with control
 import utility.ConsoleUtils;
 import utility.DateType;
 import adt.ArrayBucketList;
@@ -22,14 +21,12 @@ import java.util.Scanner;
 public class ConsultationManagementUI {
     private Scanner scanner;
     private ConsultationManagementControl consultationControl;
-    private PatientDao patientDao;
-    private DoctorDao doctorDao;
+    // No DAOs here: boundary talks only to control
 
     public ConsultationManagementUI() {
         this.scanner = new Scanner(System.in);
         this.consultationControl = new ConsultationManagementControl();
-        this.patientDao = new PatientDao();
-        this.doctorDao = new DoctorDao();
+        // DAOs are accessed by control only
     }
 
     public void displayConsultationManagementMenu() {
@@ -83,16 +80,9 @@ public class ConsultationManagementUI {
         
         // Get patient details
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
-        Patient patient = null;
-        try {
-            patient = patientDao.findById(patientId);
-            if (patient == null) {
-                System.out.println("Patient not found.");
-                ConsoleUtils.waitMessage();
-                return;
-            }
-        } catch (Exception e) {
-            System.out.println("Error finding patient: " + e.getMessage());
+        Patient patient = consultationControl.getPatientById(patientId);
+        if (patient == null) {
+            System.out.println("Patient not found.");
             ConsoleUtils.waitMessage();
             return;
         }
@@ -116,16 +106,9 @@ public class ConsultationManagementUI {
 
         // Select doctor from the list
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID from the list above: ");
-        Doctor doctor = null;
-        try {
-            doctor = doctorDao.findById(doctorId);
-            if (doctor == null) {
-                System.out.println("Doctor not found.");
-                ConsoleUtils.waitMessage();
-                return;
-            }
-        } catch (Exception e) {
-            System.out.println("Error finding doctor: " + e.getMessage());
+        Doctor doctor = consultationControl.getDoctorById(doctorId);
+        if (doctor == null) {
+            System.out.println("Doctor not found.");
             ConsoleUtils.waitMessage();
             return;
         }
@@ -323,33 +306,19 @@ public class ConsultationManagementUI {
     private void searchConsultationsByPatient() {
         ConsoleUtils.printHeader("Search by Patient ID");
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
-        
-        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByPatient(patientId);
-        if (consultations.isEmpty()) {
-            System.out.println("No consultations found for this patient.");
-        } else {
-            System.out.println();
-            ConsoleUtils.printHeader("Search Result");
-            for (Consultation consultation : consultations) {
-                printConsultationDetails(consultation);
-            }
-        }
+        String result = consultationControl.searchByPatientText(patientId);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
+        System.out.println(result);
     }
 
     private void searchConsultationsByDoctor() {
         ConsoleUtils.printHeader("Search by Doctor ID");
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
-        
-        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByDoctor(doctorId);
-        if (consultations.isEmpty()) {
-            System.out.println("No consultations found for this doctor.");
-        } else {
-            System.out.println();
-            ConsoleUtils.printHeader("Search Result");
-            for (Consultation consultation : consultations) {
-                printConsultationDetails(consultation);
-            }
-        }
+        String result = consultationControl.searchByDoctorText(doctorId);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
+        System.out.println(result);
     }
 
     private void searchConsultationsByDateRange() {
@@ -363,29 +332,12 @@ public class ConsultationManagementUI {
             return;
         }
         
-        // Get all consultations and filter by date range
-        ArrayBucketList<String, Consultation> allConsultations = consultationControl.getAllConsultations();
-        ArrayBucketList<String, Consultation> filteredConsultations = new ArrayBucketList<String, Consultation>();
-        
-        for (Consultation consultation : allConsultations) {
-            LocalDate consultationDate = consultation.getConsultationDate().toLocalDate();
-            if (!consultationDate.isBefore(startDate) && !consultationDate.isAfter(endDate)) {
-                filteredConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        
-        if (filteredConsultations.isEmpty()) {
-            System.out.println("No consultations found for this date range.");
-        } else {
-            System.out.println();
-            ConsoleUtils.printHeader("Search Result");
-            System.out.println("Date Range: " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + 
-                             " to " + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
-            System.out.println("Found " + filteredConsultations.getSize() + " consultation(s):\n");
-            for (Consultation consultation : filteredConsultations) {
-                printConsultationDetails(consultation);
-            }
-        }
+        String result = consultationControl.searchByDateRangeText(startDate, endDate);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
+        System.out.println("Date Range: " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + 
+                         " to " + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+        System.out.println(result);
     }
 
     private void searchConsultationsByStatus() {
@@ -411,25 +363,10 @@ public class ConsultationManagementUI {
                 break;
         }
         
-        // Get all consultations and filter by status
-        ArrayBucketList<String, Consultation> allConsultations = consultationControl.getAllConsultations();
-        ArrayBucketList<String, Consultation> filteredConsultations = new ArrayBucketList<String, Consultation>();
-        
-        for (Consultation consultation : allConsultations) {
-            if (consultation.getStatus() == status) {
-                filteredConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        
-        if (filteredConsultations.isEmpty()) {
-            System.out.println("No consultations found with status: " + status);
-        } else {
-            System.out.println();
-            ConsoleUtils.printHeader("Search Result");
-            for (Consultation consultation : filteredConsultations) {
-                printConsultationDetails(consultation);
-            }
-        }
+        String result = consultationControl.searchByStatusText(status);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
+        System.out.println(result);
     }
 
     private void generateConsultationReports() {
@@ -535,10 +472,7 @@ public class ConsultationManagementUI {
     }
 
     private void printScheduleDetails(entity.Schedule schedule) {
-        Doctor doctor = null;
-        try {
-            doctor = doctorDao.findById(schedule.getDoctorId());
-        } catch (Exception ignored) {}
+        Doctor doctor = consultationControl.getDoctorById(schedule.getDoctorId());
         String doctorName = doctor != null ? doctor.getFullName() : "Unknown";
         System.out.println("Doctor ID: " + schedule.getDoctorId());
         System.out.println("Doctor Name: " + doctorName);
@@ -560,16 +494,9 @@ public class ConsultationManagementUI {
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
         
         // Check if doctor exists
-        Doctor doctor = null;
-        try {
-            doctor = doctorDao.findById(doctorId);
-            if (doctor == null) {
-                System.out.println("Doctor not found.");
-                ConsoleUtils.waitMessage();
-                return;
-            }
-        } catch (Exception e) {
-            System.out.println("Error finding doctor: " + e.getMessage());
+        Doctor doctor = consultationControl.getDoctorById(doctorId);
+        if (doctor == null) {
+            System.out.println("Doctor not found.");
             ConsoleUtils.waitMessage();
             return;
         }
@@ -643,14 +570,9 @@ public class ConsultationManagementUI {
             
             // Let user select a different doctor
             String newDoctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID from the list above: ");
-            try {
-                doctor = doctorDao.findById(newDoctorId);
-                if (doctor == null) {
-                    System.out.println("Doctor not found.");
-                    return null;
-                }
-            } catch (Exception e) {
-                System.out.println("Error finding doctor: " + e.getMessage());
+            doctor = consultationControl.getDoctorById(newDoctorId);
+            if (doctor == null) {
+                System.out.println("Doctor not found.");
                 return null;
             }
         }

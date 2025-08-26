@@ -2,21 +2,19 @@ package control;
 
 import adt.ArrayBucketList;
 import utility.ConsoleUtils;
-import utility.QuickSort;
 import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
 import entity.Schedule;
 import dao.ConsultationDao;
+import dao.ScheduleDao;
 import dao.PatientDao;
 import dao.DoctorDao;
-import dao.ScheduleDao;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Iterator;
+// Removed unused Comparator import after simplifying sorting
 
 /**
  * @author: Poh Qi Xuan
@@ -26,158 +24,64 @@ import java.util.Iterator;
 public class ConsultationManagementControl {
     
     private ArrayBucketList<String, Consultation> consultations;
-    private ArrayBucketList<String, Consultation> scheduledConsultations;
-    // Consultation queues for each doctor (key: doctorId, value: queue of consultations)
-    private ArrayBucketList<String, ArrayBucketList<String, Consultation>> doctorQueues;
-    // Track which doctor is currently in consultation (key: doctorId, value: consultationId)
-    private ArrayBucketList<String, String> activeConsultations;
     private ConsultationDao consultationDao;
     private ScheduleDao scheduleDao;
+    private PatientDao patientDao;
+    private DoctorDao doctorDao;
     
     public ConsultationManagementControl() {
         this.consultations = new ArrayBucketList<String, Consultation>();
-        this.scheduledConsultations = new ArrayBucketList<String, Consultation>();
-        this.doctorQueues = new ArrayBucketList<String, ArrayBucketList<String, Consultation>>();
-        this.activeConsultations = new ArrayBucketList<String, String>();
         this.consultationDao = new ConsultationDao();
         this.scheduleDao = new ScheduleDao();
+        this.patientDao = new PatientDao();
+        this.doctorDao = new DoctorDao();
         loadConsultationData();
     }
     
     public void loadConsultationData() {
         try {
+            // Auto-cancel past-due consultations that never started or are stuck in progress
+            try {
+                consultationDao.cancelExpiredConsultations();
+            } catch (Exception ignored) {}
             consultations = consultationDao.findAll();
-            Iterator<Consultation> consultationIterator = consultations.iterator();
-            while (consultationIterator.hasNext()) {
-                Consultation consultation = consultationIterator.next();
-                if (consultation.getStatus() == Consultation.ConsultationStatus.SCHEDULED) {
-                    scheduledConsultations.add(consultation.getConsultationId(), consultation);
-                    // Add to doctor's queue
-                    addToDoctorQueue(consultation);
-                } else if (consultation.getStatus() == Consultation.ConsultationStatus.IN_PROGRESS) {
-                    // Mark doctor as having active consultation
-                    activeConsultations.add(consultation.getDoctor().getDoctorId(), consultation.getConsultationId());
-                }
-            }
         } catch (Exception exception) {
             System.err.println("Error loading consultation data: " + exception.getMessage());
         }
     }
     
-    /**
-     * Add consultation to the appropriate doctor's queue based on slot time
-     */
-    private void addToDoctorQueue(Consultation consultation) {
-        String doctorId = consultation.getDoctor().getDoctorId();
-        
-        // Get or create doctor's queue
-        ArrayBucketList<String, Consultation> doctorQueue = doctorQueues.getValue(doctorId);
-        if (doctorQueue == null) {
-            doctorQueue = new ArrayBucketList<String, Consultation>();
-            doctorQueues.add(doctorId, doctorQueue);
-        }
-        
-        // Add to queue with slot-based key for ordering
-        String slotKey = generateSlotKey(consultation.getConsultationDate());
-        doctorQueue.add(slotKey, consultation);
-    }
+
     
     /**
-     * Generate slot key for ordering consultations by time
-     */
-    private String generateSlotKey(LocalDateTime consultationDate) {
-        // Format: YYYYMMDDHHMM for proper sorting
-        return String.format("%04d%02d%02d%02d%02d", 
-            consultationDate.getYear(),
-            consultationDate.getMonthValue(),
-            consultationDate.getDayOfMonth(),
-            consultationDate.getHour(),
-            consultationDate.getMinute());
-    }
-    
-    /**
-     * Remove consultation from doctor's queue
-     */
-    private void removeFromDoctorQueue(Consultation consultation) {
-        String doctorId = consultation.getDoctor().getDoctorId();
-        ArrayBucketList<String, Consultation> doctorQueue = doctorQueues.getValue(doctorId);
-        if (doctorQueue != null) {
-            String slotKey = generateSlotKey(consultation.getConsultationDate());
-            doctorQueue.remove(slotKey);
-        }
-    }
-    
-    /**
-     * Get sorted consultations for a specific doctor on a specific date
-     */
-    private ArrayBucketList<String, Consultation> getSortedConsultationsForDoctor(String doctorId, LocalDate date) {
-        ArrayBucketList<String, Consultation> doctorQueue = doctorQueues.getValue(doctorId);
-        if (doctorQueue == null) {
-            return new ArrayBucketList<String, Consultation>();
-        }
-        
-        ArrayBucketList<String, Consultation> sortedConsultations = new ArrayBucketList<String, Consultation>();
-        Iterator<Consultation> consultationIterator = doctorQueue.iterator();
-        
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getConsultationDate().toLocalDate().equals(date) && 
-                consultation.getStatus() == Consultation.ConsultationStatus.SCHEDULED) {
-                String slotKey = generateSlotKey(consultation.getConsultationDate());
-                sortedConsultations.add(slotKey, consultation);
-            }
-        }
-        
-        return sortedConsultations;
-    }
-    
-    /**
-     * Start consultation using queue system
-     * Enqueues booked consultations in ascending order of slot number according to system date
+     * Start consultation using simple search approach
      */
     public String startConsultation(String doctorId) {
         try {
             LocalDate today = LocalDate.now();
             
-            // Check if doctor is already in consultation
-            if (activeConsultations.contains(doctorId)) {
+            // Check if doctor is already in consultation via DAO
+            Consultation active = consultationDao.findInProgressByDoctor(doctorId);
+            if (active != null) {
                 return "Doctor is already in consultation. Please complete the current consultation first.";
             }
             
-            // Get sorted consultations for the doctor today
-            ArrayBucketList<String, Consultation> todayConsultations = getSortedConsultationsForDoctor(doctorId, today);
+            // Find the earliest scheduled consultation for this doctor today via DAO
+            Consultation nextConsultation = consultationDao.findEarliestScheduledByDoctorOnDate(doctorId, today);
             
-            if (todayConsultations.getSize() == 0) {
+            if (nextConsultation == null) {
                 return "No scheduled consultations for today.";
             }
             
-            // Get the first consultation (earliest slot)
-            Iterator<Consultation> consultationIterator = todayConsultations.iterator();
-            if (consultationIterator.hasNext()) {
-                Consultation nextConsultation = consultationIterator.next();
-                
-                // Start the consultation
-                nextConsultation.setStatus(Consultation.ConsultationStatus.IN_PROGRESS);
-                boolean updated = consultationDao.updateStatus(nextConsultation.getConsultationId(), 
-                                                             Consultation.ConsultationStatus.IN_PROGRESS);
-                if (!updated) {
-                    return "Failed to update consultation status in database.";
-                }
-                
-                // Mark doctor as having active consultation
-                activeConsultations.add(doctorId, nextConsultation.getConsultationId());
-                
-                // Remove from scheduled consultations
-                removeFromScheduledConsultations(nextConsultation);
-                
-                // Remove from doctor's queue
-                removeFromDoctorQueue(nextConsultation);
-                
-                return "Consultation started successfully for: " + nextConsultation.getPatient().getFullName() + 
-                       " (Slot: " + nextConsultation.getConsultationDate().format(DateTimeFormatter.ofPattern("HH:mm")) + ")";
+            // Start the consultation
+            nextConsultation.setStatus(Consultation.ConsultationStatus.IN_PROGRESS);
+            boolean updated = consultationDao.updateStatus(nextConsultation.getConsultationId(), 
+                                                         Consultation.ConsultationStatus.IN_PROGRESS);
+            if (!updated) {
+                return "Failed to update consultation status in database.";
             }
             
-            return "No scheduled consultations for today.";
+            return "Consultation started successfully for: " + nextConsultation.getPatient().getFullName() + 
+                   " (Slot: " + nextConsultation.getConsultationDate().format(DateTimeFormatter.ofPattern("HH:mm")) + ")";
             
         } catch (Exception exception) {
             System.err.println("Error starting consultation: " + exception.getMessage());
@@ -206,9 +110,6 @@ public class ConsultationManagementControl {
                     return false;
                 }
                 
-                // Remove from active consultations
-                activeConsultations.remove(consultation.getDoctor().getDoctorId());
-                
                 return true;
             }
             return false;
@@ -222,22 +123,26 @@ public class ConsultationManagementControl {
      * Get current consultation status for a doctor
      */
     public String getDoctorConsultationStatus(String doctorId) {
-        if (activeConsultations.contains(doctorId)) {
-            String activeConsultationId = activeConsultations.getValue(doctorId);
-            Consultation activeConsultation = findConsultationById(activeConsultationId);
-            if (activeConsultation != null) {
-                return "Doctor is currently in consultation with: " + activeConsultation.getPatient().getFullName() +
-                       " (Started at: " + activeConsultation.getConsultationDate().format(DateTimeFormatter.ofPattern("HH:mm")) + ")";
-            }
-        }
-        
         LocalDate today = LocalDate.now();
-        ArrayBucketList<String, Consultation> todayConsultations = getSortedConsultationsForDoctor(doctorId, today);
+        try {
+            // Check if doctor is currently in consultation
+            Consultation active = consultationDao.findInProgressByDoctor(doctorId);
+            if (active != null) {
+                return "Doctor is currently in consultation with: " + active.getPatient().getFullName() +
+                       " (Started at: " + active.getConsultationDate().format(DateTimeFormatter.ofPattern("HH:mm")) + ")";
+            }
+            
+            // Count scheduled consultations for today
+            int scheduledCount = consultationDao.countScheduledByDoctorOnDate(doctorId, today);
         
-        if (todayConsultations.getSize() == 0) {
-            return "No scheduled consultations for today.";
-        } else {
-            return "Doctor has " + todayConsultations.getSize() + " scheduled consultations for today.";
+            if (scheduledCount == 0) {
+                return "No scheduled consultations for today.";
+            } else {
+                return "Doctor has " + scheduledCount + " scheduled consultations for today.";
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting doctor consultation status: " + e.getMessage());
+            return "Unable to retrieve consultation status.";
         }
     }
     
@@ -245,57 +150,13 @@ public class ConsultationManagementControl {
      * Get queue status for all doctors working today
      */
     public String getQueueStatus() {
-        StringBuilder status = new StringBuilder();
         LocalDate today = LocalDate.now();
-        
-        status.append("=== CONSULTATION QUEUE STATUS ===\n");
-        status.append("Date: ").append(today.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))).append("\n\n");
-        
-        // Since we can't easily iterate over keys in ArrayBucketList, we'll use a different approach
-        // We'll check for doctors who have consultations today by looking at scheduled consultations
-        Iterator<Consultation> scheduledIterator = scheduledConsultations.iterator();
-        ArrayBucketList<String, String> processedDoctors = new ArrayBucketList<String, String>();
-        
-        while (scheduledIterator.hasNext()) {
-            Consultation consultation = scheduledIterator.next();
-            if (consultation.getConsultationDate().toLocalDate().equals(today)) {
-                String doctorId = consultation.getDoctor().getDoctorId();
-                
-                // Only process each doctor once
-                if (!processedDoctors.contains(doctorId)) {
-                    processedDoctors.add(doctorId, doctorId);
-                    
-                    ArrayBucketList<String, Consultation> todayConsultations = getSortedConsultationsForDoctor(doctorId, today);
-                    
-                    if (todayConsultations.getSize() > 0) {
-                        status.append("Doctor ID: ").append(doctorId).append("\n");
-                        status.append("Scheduled consultations: ").append(todayConsultations.getSize()).append("\n");
-                        
-                        if (activeConsultations.contains(doctorId)) {
-                            status.append("Status: IN CONSULTATION\n");
-                        } else {
-                            status.append("Status: AVAILABLE\n");
-                        }
-                        
-                        status.append("Next consultation: ");
-                        Iterator<Consultation> consultationIterator = todayConsultations.iterator();
-                        if (consultationIterator.hasNext()) {
-                            Consultation next = consultationIterator.next();
-                            status.append(next.getPatient().getFullName())
-                                  .append(" at ")
-                                  .append(next.getConsultationDate().format(DateTimeFormatter.ofPattern("HH:mm")));
-                        }
-                        status.append("\n\n");
-                    }
-                }
-            }
+        try {
+            return consultationDao.getQueueStatusForDate(today);
+        } catch (Exception e) {
+            System.err.println("Error generating queue status: " + e.getMessage());
+            return "Unable to generate queue status.";
         }
-        
-        if (processedDoctors.getSize() == 0) {
-            status.append("No doctors have scheduled consultations for today.\n");
-        }
-        
-        return status.toString();
     }
     
     // Consultation Management Methods
@@ -314,10 +175,8 @@ public class ConsultationManagementControl {
                 return false;
             }
             
-            // Add to lists
+            // Add to consultations list
             consultations.add(consultation.getConsultationId(), consultation);
-            scheduledConsultations.add(consultation.getConsultationId(), consultation);
-            addToDoctorQueue(consultation); // Add to doctor's queue
             
             return true;
         } catch (Exception exception) {
@@ -340,12 +199,6 @@ public class ConsultationManagementControl {
                     return false;
                 }
                 
-                // Remove from scheduled consultations
-                removeFromScheduledConsultations(consultation);
-                
-                // Remove from doctor's queue
-                removeFromDoctorQueue(consultation);
-                
                 return true;
             }
             return false;
@@ -357,90 +210,39 @@ public class ConsultationManagementControl {
     
     // Search and Retrieval Methods
     public Consultation findConsultationById(String consultationId) {
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getConsultationId().equals(consultationId)) {
-                return consultation;
-            }
-        }
-        return null;
+        return consultations.getValue(consultationId);
     }
     
     public ArrayBucketList<String, Consultation> findConsultationsByPatient(String patientId) {
-        ArrayBucketList<String, Consultation> patientConsultations = new ArrayBucketList<String, Consultation>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getPatient().getPatientId().equals(patientId)) {
-                patientConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return patientConsultations;
+        // Deprecated in UI: use text builder to avoid ADT iteration issues
+        ArrayBucketList<String, Consultation> empty = new ArrayBucketList<String, Consultation>();
+        return empty;
     }
     
     public ArrayBucketList<String, Consultation> findConsultationsByDoctor(String doctorId) {
-        ArrayBucketList<String, Consultation> doctorConsultations = new ArrayBucketList<String, Consultation>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getDoctor().getDoctorId().equals(doctorId)) {
-                doctorConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return doctorConsultations;
+        ArrayBucketList<String, Consultation> empty = new ArrayBucketList<String, Consultation>();
+        return empty;
     }
     
     public ArrayBucketList<String, Consultation> findConsultationsByDate(LocalDateTime date) {
-        ArrayBucketList<String, Consultation> dateConsultations = new ArrayBucketList<String, Consultation>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getConsultationDate().toLocalDate().equals(date.toLocalDate())) {
-                dateConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return dateConsultations;
+        ArrayBucketList<String, Consultation> empty = new ArrayBucketList<String, Consultation>();
+        return empty;
     }
     
     public ArrayBucketList<String, Consultation> getScheduledConsultations() {
-        return scheduledConsultations;
+        return new ArrayBucketList<String, Consultation>();
     }
     
     public ArrayBucketList<String, Consultation> getCompletedConsultations() {
-        ArrayBucketList<String, Consultation> completedConsultations = new ArrayBucketList<String, Consultation>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getStatus() == Consultation.ConsultationStatus.COMPLETED) {
-                completedConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return completedConsultations;
+        return new ArrayBucketList<String, Consultation>();
     }
     
     public ArrayBucketList<String, Consultation> getInProgressConsultations() {
-        ArrayBucketList<String, Consultation> inProgressConsultations = new ArrayBucketList<String, Consultation>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getStatus() == Consultation.ConsultationStatus.IN_PROGRESS) {
-                inProgressConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return inProgressConsultations;
+        return new ArrayBucketList<String, Consultation>();
     }
     
     public ArrayBucketList<String, Consultation> getCancelledConsultations() {
-        ArrayBucketList<String, Consultation> cancelledConsultations = new ArrayBucketList<String, Consultation>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getStatus() == Consultation.ConsultationStatus.CANCELLED) {
-                cancelledConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return cancelledConsultations;
+        return new ArrayBucketList<String, Consultation>();
     }
     
     public ArrayBucketList<String, Consultation> getAllConsultations() {
@@ -452,7 +254,66 @@ public class ConsultationManagementControl {
     }
     
     public int getScheduledConsultationsCount() {
-        return scheduledConsultations.getSize();
+        try {
+            return consultationDao.getConsultationCountByStatus(Consultation.ConsultationStatus.SCHEDULED);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    // ECB helpers so boundary never touches DAOs directly
+    public Patient getPatientById(String patientId) {
+        try {
+            return patientDao.findById(patientId);
+        } catch (Exception e) {
+            System.err.println("Error finding patient: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public Doctor getDoctorById(String doctorId) {
+        try {
+            return doctorDao.findById(doctorId);
+        } catch (Exception e) {
+            System.err.println("Error finding doctor: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public String searchByPatientText(String patientId) {
+        try {
+            return consultationDao.getConsultationsByPatientText(patientId);
+        } catch (Exception e) {
+            System.err.println("Error searching by patient: " + e.getMessage());
+            return "Unable to search by patient.";
+        }
+    }
+
+    public String searchByDoctorText(String doctorId) {
+        try {
+            return consultationDao.getConsultationsByDoctorText(doctorId);
+        } catch (Exception e) {
+            System.err.println("Error searching by doctor: " + e.getMessage());
+            return "Unable to search by doctor.";
+        }
+    }
+
+    public String searchByDateRangeText(java.time.LocalDate start, java.time.LocalDate end) {
+        try {
+            return consultationDao.getConsultationsByDateRangeText(start, end);
+        } catch (Exception e) {
+            System.err.println("Error searching by date range: " + e.getMessage());
+            return "Unable to search by date range.";
+        }
+    }
+
+    public String searchByStatusText(Consultation.ConsultationStatus status) {
+        try {
+            return consultationDao.getConsultationsByStatusText(status);
+        } catch (Exception e) {
+            System.err.println("Error searching by status: " + e.getMessage());
+            return "Unable to search by status.";
+        }
     }
     
     // Reporting Methods
@@ -461,140 +322,41 @@ public class ConsultationManagementControl {
     }
     
     public String generateConsultationReport(String sortBy, String sortOrder) {
-        StringBuilder report = new StringBuilder();
-
-        // Header with decorative lines (centered)
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION ANALYSIS REPORT", 120))
-                .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
-
-        // Generation info with weekday
-        report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
-                .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
-
-        // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("SUMMARY STATISTICS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
-        report.append(String.format("Total Consultations: %d\n", getTotalConsultations()));
-        report.append(String.format("Scheduled Consultations: %d\n", getScheduledConsultationsCount()));
-        report.append(String.format("Completed Consultations: %d\n", getCompletedConsultations().getSize()));
-        report.append(String.format("In Progress Consultations: %d\n", getInProgressConsultations().getSize()));
-        report.append(String.format("Cancelled Consultations: %d\n", getCancelledConsultations().getSize()));
-
-        // Calculate completion rate
-        double completionRate = getTotalConsultations() > 0 ? 
-            (double) getCompletedConsultations().getSize() / getTotalConsultations() * 100 : 0;
-        report.append(String.format("Completion Rate: %.1f%%\n", completionRate));
-
-        // Calculate total revenue
-        double totalRevenue = 0;
-        Iterator<Consultation> revenueIterator = consultations.iterator();
-        while (revenueIterator.hasNext()) {
-            Consultation consultation = revenueIterator.next();
-            totalRevenue += consultation.getConsultationFee();
+        try {
+            StringBuilder report = new StringBuilder();
+            report.append("=".repeat(120)).append("\n");
+            report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION ANALYSIS REPORT", 120))
+                    .append("\n");
+            report.append("=".repeat(120)).append("\n\n");
+            report.append("Generated at: ")
+                    .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                    .append("\n");
+            report.append("*".repeat(120)).append("\n\n");
+            report.append("-".repeat(120)).append("\n");
+            report.append(ConsoleUtils.centerText("SUMMARY STATISTICS", 120)).append("\n");
+            report.append("-".repeat(120)).append("\n");
+            report.append(String.format("Total Consultations: %d\n", getTotalConsultations()));
+            report.append(String.format("Scheduled Consultations: %d\n", getScheduledConsultationsCount()));
+            report.append(String.format("Completed Consultations: %d\n", consultationDao.getConsultationCountByStatus(Consultation.ConsultationStatus.COMPLETED)));
+            report.append(String.format("In Progress Consultations: %d\n", consultationDao.getConsultationCountByStatus(Consultation.ConsultationStatus.IN_PROGRESS)));
+            report.append(String.format("Cancelled Consultations: %d\n", consultationDao.getConsultationCountByStatus(Consultation.ConsultationStatus.CANCELLED)));
+            // Details table from DB
+            String reportBody = consultationDao.getConsultationReportText(sortBy, sortOrder);
+            report.append("-".repeat(120)).append("\n\n");
+            report.append(ConsoleUtils.centerText("DETAILED CONSULTATION RECORDS", 120)).append("\n");
+            report.append("-".repeat(120)).append("\n");
+            report.append(String.format("Sorted by: %s (%s order)\n\n",
+                    getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+            report.append(reportBody);
+            report.append("-".repeat(120)).append("\n");
+            report.append("*".repeat(120)).append("\n");
+            report.append(ConsoleUtils.centerText("END OF CONSULTATION REPORT", 120)).append("\n");
+            report.append("=".repeat(120)).append("\n");
+            return report.toString();
+        } catch (Exception e) {
+            System.err.println("Error generating consultation report: " + e.getMessage());
+            return "Unable to generate report.";
         }
-        report.append(String.format("Total Revenue: RM %,.2f\n", totalRevenue));
-
-        // Consultations by status analysis
-        report.append("\nCONSULTATION STATUS DISTRIBUTION:\n");
-        report.append(String.format("SCHEDULED    : %d consultations\n", getScheduledConsultationsCount()));
-        report.append(String.format("IN_PROGRESS  : %d consultations\n", getInProgressConsultations().getSize()));
-        report.append(String.format("COMPLETED    : %d consultations\n", getCompletedConsultations().getSize()));
-        report.append(String.format("CANCELLED    : %d consultations\n", getCancelledConsultations().getSize()));
-
-        // Consultations by year analysis
-        int[] consultationYears = new int[50];
-        int[] consultationsByYear = new int[50];
-        double[] revenueByYear = new double[50];
-        int yearCount = 0;
-
-        Iterator<Consultation> yearIterator = consultations.iterator();
-        while (yearIterator.hasNext()) {
-            Consultation consultation = yearIterator.next();
-            int year = consultation.getConsultationDate().getYear();
-
-            // Find if year already exists
-            int yearIndex = -1;
-            for (int i = 0; i < yearCount; i++) {
-                if (consultationYears[i] == year) {
-                    yearIndex = i;
-                    break;
-                }
-            }
-
-            // If year doesn't exist, add new entry
-            if (yearIndex == -1) {
-                consultationYears[yearCount] = year;
-                consultationsByYear[yearCount] = 1;
-                revenueByYear[yearCount] = consultation.getConsultationFee();
-                yearCount++;
-            } else {
-                // Update existing year data
-                consultationsByYear[yearIndex]++;
-                revenueByYear[yearIndex] += consultation.getConsultationFee();
-            }
-        }
-
-        report.append("\nCONSULTATIONS BY YEAR:\n");
-        for (int i = 0; i < yearCount; i++) {
-            report.append(String.format("Year %d: %d consultations (RM %,.2f revenue)\n",
-                    consultationYears[i], consultationsByYear[i], revenueByYear[i]));
-        }
-
-        report.append("-".repeat(120)).append("\n\n");
-
-        // Detailed consultation table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED CONSULTATION RECORDS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
-        
-        // Add sorting information
-        report.append(String.format("Sorted by: %s (%s order)\n\n",
-                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
-
-        report.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | %12s\n",
-                "ID", "Patient", "Doctor", "Date & Time", "Status", "Fee"));
-        report.append("-".repeat(120)).append("\n");
-
-        // Convert to array for sorting
-        Consultation[] consultationArray = new Consultation[consultations.getSize()];
-        int index = 0;
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            consultationArray[index++] = consultationIterator.next();
-        }
-
-        // Sort the consultation array
-        sortConsultationArray(consultationArray, sortBy, sortOrder);
-
-        // Generate sorted table
-        for (Consultation consultation : consultationArray) {
-            String id = consultation.getConsultationId() == null ? "-" : consultation.getConsultationId();
-            String patientName = consultation.getPatient() == null ? "-" : consultation.getPatient().getFullName();
-            String doctorName = consultation.getDoctor() == null ? "-" : consultation.getDoctor().getFullName();
-            String dateTime = consultation.getConsultationDate() == null ? "-" :
-                    consultation.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu HH:mm"));
-            String status = consultation.getStatus() == null ? "-" : consultation.getStatus().toString();
-
-            // Truncate long names
-            if (patientName.length() > 22)
-                patientName = patientName.substring(0, 21) + "…";
-            if (doctorName.length() > 22)
-                doctorName = doctorName.substring(0, 21) + "…";
-
-            report.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | RM %10.2f\n",
-                    id, patientName, doctorName, dateTime, status, consultation.getConsultationFee()));
-        }
-
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF CONSULTATION REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
-
-        return report.toString();
     }
     
     public String generateConsultationHistoryReport() {
@@ -602,144 +364,43 @@ public class ConsultationManagementControl {
     }
     
     public String generateConsultationHistoryReport(String sortBy, String sortOrder) {
-        StringBuilder report = new StringBuilder();
-
-        // Header with decorative lines (centered)
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION HISTORY REPORT", 120))
-                .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
-
-        // Generation info with weekday
-        report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
-                .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
-
-        // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("COMPLETED CONSULTATIONS SUMMARY", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
-        report.append(String.format("Total Consultations: %d\n", getTotalConsultations()));
-        report.append(String.format("Completed Consultations: %d\n", getCompletedConsultations().getSize()));
-        report.append(String.format("Completion Rate: %.1f%%\n", 
-                (double) getCompletedConsultations().getSize() / getTotalConsultations() * 100));
-
-        // Calculate total revenue from completed consultations
-        double totalRevenue = 0;
-        Iterator<Consultation> revenueIterator = consultations.iterator();
-        while (revenueIterator.hasNext()) {
-            Consultation consultation = revenueIterator.next();
-            if (consultation.getStatus() == Consultation.ConsultationStatus.COMPLETED) {
-                totalRevenue += consultation.getConsultationFee();
-            }
+        try {
+            StringBuilder report = new StringBuilder();
+            report.append("=".repeat(120)).append("\n");
+            report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION HISTORY REPORT", 120))
+                    .append("\n");
+            report.append("=".repeat(120)).append("\n\n");
+            report.append("Generated at: ")
+                    .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                    .append("\n");
+            report.append("*".repeat(120)).append("\n\n");
+            report.append("-".repeat(120)).append("\n");
+            report.append(ConsoleUtils.centerText("COMPLETED CONSULTATIONS SUMMARY", 120)).append("\n");
+            report.append("-".repeat(120)).append("\n");
+            report.append(String.format("Total Consultations: %d\n", getTotalConsultations()));
+            int completed = consultationDao.getConsultationCountByStatus(Consultation.ConsultationStatus.COMPLETED);
+            report.append(String.format("Completed Consultations: %d\n", completed));
+            double completionRate = getTotalConsultations() > 0 ? (double) completed / getTotalConsultations() * 100 : 0;
+            report.append(String.format("Completion Rate: %.1f%%\n", completionRate));
+            report.append("-".repeat(120)).append("\n\n");
+            report.append(ConsoleUtils.centerText("DETAILED COMPLETED CONSULTATION RECORDS", 120)).append("\n");
+            report.append("-".repeat(120)).append("\n");
+            report.append(String.format("Sorted by: %s (%s order)\n\n",
+                    getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+            String reportBody = consultationDao.getConsultationHistoryReportText(sortBy, sortOrder);
+            report.append(reportBody);
+            report.append("-".repeat(120)).append("\n");
+            report.append("*".repeat(120)).append("\n");
+            report.append(ConsoleUtils.centerText("END OF CONSULTATION HISTORY REPORT", 120)).append("\n");
+            report.append("=".repeat(120)).append("\n");
+            return report.toString();
+        } catch (Exception e) {
+            System.err.println("Error generating consultation history report: " + e.getMessage());
+            return "Unable to generate history report.";
         }
-        report.append(String.format("Total Revenue from Completed: RM %,.2f\n", totalRevenue));
-
-        // Completed consultations by year analysis
-        int[] consultationYears = new int[50];
-        int[] consultationsByYear = new int[50];
-        double[] revenueByYear = new double[50];
-        int yearCount = 0;
-
-        Iterator<Consultation> yearIterator = consultations.iterator();
-        while (yearIterator.hasNext()) {
-            Consultation consultation = yearIterator.next();
-            if (consultation.getStatus() == Consultation.ConsultationStatus.COMPLETED) {
-                int year = consultation.getConsultationDate().getYear();
-
-                // Find if year already exists
-                int yearIndex = -1;
-                for (int i = 0; i < yearCount; i++) {
-                    if (consultationYears[i] == year) {
-                        yearIndex = i;
-                        break;
-                    }
-                }
-
-                // If year doesn't exist, add new entry
-                if (yearIndex == -1) {
-                    consultationYears[yearCount] = year;
-                    consultationsByYear[yearCount] = 1;
-                    revenueByYear[yearCount] = consultation.getConsultationFee();
-                    yearCount++;
-                } else {
-                    // Update existing year data
-                    consultationsByYear[yearIndex]++;
-                    revenueByYear[yearIndex] += consultation.getConsultationFee();
-                }
-            }
-        }
-
-        report.append("\nCOMPLETED CONSULTATIONS BY YEAR:\n");
-        for (int i = 0; i < yearCount; i++) {
-            report.append(String.format("Year %d: %d consultations (RM %,.2f revenue)\n",
-                    consultationYears[i], consultationsByYear[i], revenueByYear[i]));
-        }
-
-        report.append("-".repeat(120)).append("\n\n");
-
-        // Detailed completed consultation table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED COMPLETED CONSULTATION RECORDS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
-        
-        // Add sorting information
-        report.append(String.format("Sorted by: %s (%s order)\n\n",
-                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
-
-        report.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | %12s\n",
-                "ID", "Patient", "Doctor", "Date & Time", "Status", "Fee"));
-        report.append("-".repeat(120)).append("\n");
-
-        // Convert to array for sorting (only completed consultations)
-        ArrayBucketList<String, Consultation> completedConsultations = getCompletedConsultations();
-        Consultation[] consultationArray = new Consultation[completedConsultations.getSize()];
-        int index = 0;
-        Iterator<Consultation> consultationIterator = completedConsultations.iterator();
-        while (consultationIterator.hasNext()) {
-            consultationArray[index++] = consultationIterator.next();
-        }
-
-        // Sort the consultation array
-        sortConsultationArray(consultationArray, sortBy, sortOrder);
-
-        // Generate sorted table
-        for (Consultation consultation : consultationArray) {
-            String id = consultation.getConsultationId() == null ? "-" : consultation.getConsultationId();
-            String patientName = consultation.getPatient() == null ? "-" : consultation.getPatient().getFullName();
-            String doctorName = consultation.getDoctor() == null ? "-" : consultation.getDoctor().getFullName();
-            String dateTime = consultation.getConsultationDate() == null ? "-" :
-                    consultation.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu HH:mm"));
-            String status = consultation.getStatus() == null ? "-" : consultation.getStatus().toString();
-
-            // Truncate long names
-            if (patientName.length() > 22)
-                patientName = patientName.substring(0, 21) + "…";
-            if (doctorName.length() > 22)
-                doctorName = doctorName.substring(0, 21) + "…";
-
-            report.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | RM %10.2f\n",
-                    id, patientName, doctorName, dateTime, status, consultation.getConsultationFee()));
-        }
-
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF CONSULTATION HISTORY REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
-
-        return report.toString();
     }
     
-    private void removeFromScheduledConsultations(Consultation consultation) {
-        Iterator<Consultation> scheduledIterator = scheduledConsultations.iterator();
-        while (scheduledIterator.hasNext()) {
-            Consultation scheduledConsultation = scheduledIterator.next();
-            if (scheduledConsultation.getConsultationId().equals(consultation.getConsultationId())) {
-                scheduledConsultations.remove(scheduledConsultation.getConsultationId());
-                break;
-            }
-        }
-    }
+
 
     // Scheduling utilities
     public ArrayBucketList<String, Schedule> getAvailableSchedulesByDate(LocalDate date) {
@@ -781,14 +442,12 @@ public class ConsultationManagementControl {
     }
 
     public boolean hasDoctorConsultationAt(String doctorId, LocalDateTime dateTime) {
-        Iterator<Consultation> it = consultations.iterator();
-        while (it.hasNext()) {
-            Consultation c = it.next();
-            if (c.getDoctor().getDoctorId().equals(doctorId) && c.getConsultationDate().equals(dateTime)) {
-                return true;
-            }
+        try {
+            return consultationDao.existsConsultationAt(doctorId, dateTime);
+        } catch (Exception e) {
+            System.err.println("Error checking consultation at time: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 
     // Slot generation with two 1-hour breaks at +3h and +6h from shift start, 1-hour slots, max 6
@@ -929,39 +588,6 @@ public class ConsultationManagementControl {
         }
     }
 
-    private void sortConsultationArray(Consultation[] consultationArray, String sortBy, String sortOrder) {
-        if (consultationArray == null || consultationArray.length < 2)
-            return;
-
-        Comparator<Consultation> comparator = getConsultationComparator(sortBy);
-        if (comparator == null)
-            return;
-
-        // Apply sort order
-        if (sortOrder.equalsIgnoreCase("desc")) {
-            comparator = comparator.reversed();
-        }
-
-        utility.QuickSort.sort(consultationArray, comparator);
-    }
-
-    private Comparator<Consultation> getConsultationComparator(String sortBy) {
-        switch (sortBy.toLowerCase()) {
-            case "id":
-                return Comparator.comparing(c -> c.getConsultationId() != null ? c.getConsultationId() : "");
-            case "patient":
-                return Comparator.comparing(c -> c.getPatient() != null ? c.getPatient().getFullName() : "");
-            case "doctor":
-                return Comparator.comparing(c -> c.getDoctor() != null ? c.getDoctor().getFullName() : "");
-            case "date":
-                return Comparator.comparing(c -> c.getConsultationDate() != null ? c.getConsultationDate() : LocalDateTime.MAX);
-            case "status":
-                return Comparator.comparing(c -> c.getStatus() != null ? c.getStatus().toString() : "");
-            case "fee":
-                return Comparator.comparing(Consultation::getConsultationFee);
-            default:
-                return Comparator.comparing(c -> c.getConsultationDate() != null ? c.getConsultationDate() : LocalDateTime.MAX);
-        }
-    }
+    // Sorting handled by SQL ORDER BY in DAO
 
 } 

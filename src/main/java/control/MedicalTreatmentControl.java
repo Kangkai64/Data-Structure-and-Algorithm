@@ -105,41 +105,60 @@ public class MedicalTreatmentControl {
     }
     
     public boolean updateTreatment(String treatmentId, String diagnosis, String treatmentPlan,
-                                 String prescribedMedications, String treatmentNotes, 
-                                 LocalDateTime followUpDate, double treatmentCost) {
+                             String prescribedMedications, String treatmentNotes, 
+                             LocalDateTime followUpDate, double treatmentCost) {
         try {
             MedicalTreatment treatment = findTreatmentById(treatmentId);
             if (treatment != null) {
-                if (treatment.getStatus() != MedicalTreatment.TreatmentStatus.PRESCRIBED) {
-                    System.err.println("Update not allowed: Only treatments in PRESCRIBED status can be updated.");
+                // Allow updates for PRESCRIBED and COMPLETED
+                if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED) {
+                    // Full update allowed
+                    boolean hasChanges = !treatment.getDiagnosis().equals(diagnosis) ||
+                                       !treatment.getTreatmentPlan().equals(treatmentPlan) ||
+                                       !treatment.getPrescribedMedications().equals(prescribedMedications) ||
+                                       !treatment.getTreatmentNotes().equals(treatmentNotes) ||
+                                       (treatment.getFollowUpDate() == null && followUpDate != null) ||
+                                       (treatment.getFollowUpDate() != null && followUpDate == null) ||
+                                       (treatment.getFollowUpDate() != null && followUpDate != null && 
+                                        !treatment.getFollowUpDate().equals(followUpDate)) ||
+                                       Math.abs(treatment.getTreatmentCost() - treatmentCost) > 0.01;
+
+                    if (!hasChanges) {
+                        System.err.println("No changes detected. Treatment remains unchanged.");
+                        return false;
+                    }
+
+                    treatment.setDiagnosis(diagnosis);
+                    treatment.setTreatmentPlan(treatmentPlan);
+                    treatment.setPrescribedMedications(prescribedMedications);
+                    treatment.setTreatmentNotes(treatmentNotes);
+                    treatment.setFollowUpDate(followUpDate);
+                    treatment.setTreatmentCost(treatmentCost);
+
+                    // Persist changes to database
+                    return treatmentDao.update(treatment);
+                } else if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.COMPLETED) {
+                    // Only notes and follow-up date can be updated
+                    boolean hasChanges = !treatment.getTreatmentNotes().equals(treatmentNotes) ||
+                                       (treatment.getFollowUpDate() == null && followUpDate != null) ||
+                                       (treatment.getFollowUpDate() != null && followUpDate == null) ||
+                                       (treatment.getFollowUpDate() != null && followUpDate != null && 
+                                        !treatment.getFollowUpDate().equals(followUpDate));
+
+                    if (!hasChanges) {
+                        System.err.println("No changes detected. Treatment remains unchanged.");
+                        return false;
+                    }
+
+                    treatment.setTreatmentNotes(treatmentNotes);
+                    treatment.setFollowUpDate(followUpDate);
+
+                    // Persist changes to database
+                    return treatmentDao.updateNotesAndFollowUpDate(treatmentId, treatmentNotes, followUpDate);
+                } else {
+                    System.err.println("Update not allowed: Only treatments in PRESCRIBED or COMPLETED status can be updated.");
                     return false;
                 }
-                
-                // Check if any changes were made
-                boolean hasChanges = !treatment.getDiagnosis().equals(diagnosis) ||
-                                   !treatment.getTreatmentPlan().equals(treatmentPlan) ||
-                                   !treatment.getPrescribedMedications().equals(prescribedMedications) ||
-                                   !treatment.getTreatmentNotes().equals(treatmentNotes) ||
-                                   (treatment.getFollowUpDate() == null && followUpDate != null) ||
-                                   (treatment.getFollowUpDate() != null && followUpDate == null) ||
-                                   (treatment.getFollowUpDate() != null && followUpDate != null && 
-                                    !treatment.getFollowUpDate().equals(followUpDate)) ||
-                                   Math.abs(treatment.getTreatmentCost() - treatmentCost) > 0.01;
-                
-                if (!hasChanges) {
-                    System.err.println("No changes detected. Treatment remains unchanged.");
-                    return false;
-                }
-                
-                treatment.setDiagnosis(diagnosis);
-                treatment.setTreatmentPlan(treatmentPlan);
-                treatment.setPrescribedMedications(prescribedMedications);
-                treatment.setTreatmentNotes(treatmentNotes);
-                treatment.setFollowUpDate(followUpDate);
-                treatment.setTreatmentCost(treatmentCost);
-                
-                // Persist changes to database
-                return treatmentDao.update(treatment);
             }
             return false;
         } catch (Exception exception) {
@@ -750,24 +769,104 @@ public class MedicalTreatmentControl {
     
     
     public boolean hasTreatmentForConsultation(String consultationId) {
-        if (consultationId == null) {
-            return false;
-        }
-        // Check in-memory cache first
-        Iterator<MedicalTreatment> iterator = treatments.iterator();
-        while (iterator.hasNext()) {
-            MedicalTreatment t = iterator.next();
-            if (t.getConsultation() != null && consultationId.equals(t.getConsultation().getConsultationId())) {
-                return true;
-            }
-        }
-        // Fallback: verify against database to avoid stale cache
         try {
-            return treatmentDao.existsByConsultationId(consultationId);
-        } catch (Exception e) {
-            System.err.println("Error checking consultation usage: " + e.getMessage());
+            Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+            while (treatmentIterator.hasNext()) {
+                MedicalTreatment treatment = treatmentIterator.next();
+                if (treatment.getConsultation().getConsultationId().equals(consultationId)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception exception) {
+            System.err.println("Error checking treatment for consultation: " + exception.getMessage());
             return false;
         }
+    }
+    
+    /**
+     * Validates if a treatment can be updated based on its status
+     */
+    public boolean canUpdateTreatment(String treatmentId) {
+        MedicalTreatment treatment = findTreatmentById(treatmentId);
+        if (treatment == null) {
+            return false;
+        }
+        return treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED || 
+               treatment.getStatus() == MedicalTreatment.TreatmentStatus.COMPLETED;
+    }
+    
+    /**
+     * Validates if a treatment can be updated with full options (PRESCRIBED status)
+     */
+    public boolean canUpdateTreatmentFully(String treatmentId) {
+        MedicalTreatment treatment = findTreatmentById(treatmentId);
+        if (treatment == null) {
+            return false;
+        }
+        return treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED;
+    }
+    
+    /**
+     * Updates treatment with validation for completed treatments (only notes and follow-up)
+     */
+    public boolean updateTreatmentWithValidation(String treatmentId, String diagnosis, String treatmentPlan,
+                                               String prescribedMedications, String treatmentNotes, 
+                                               LocalDateTime followUpDate, double treatmentCost) {
+        try {
+            MedicalTreatment treatment = findTreatmentById(treatmentId);
+            if (treatment == null) {
+                return false;
+            }
+            
+            // For completed treatments, only allow notes and follow-up date updates
+            if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.COMPLETED) {
+                // Keep original values for fields that shouldn't be changed
+                diagnosis = treatment.getDiagnosis();
+                treatmentPlan = treatment.getTreatmentPlan();
+                prescribedMedications = treatment.getPrescribedMedications();
+                treatmentCost = treatment.getTreatmentCost();
+            }
+            
+            return updateTreatment(treatmentId, diagnosis, treatmentPlan, prescribedMedications, 
+                                 treatmentNotes, followUpDate, treatmentCost);
+        } catch (Exception exception) {
+            System.err.println("Error updating treatment with validation: " + exception.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Validates if a treatment can be started
+     */
+    public boolean canStartTreatment(String treatmentId) {
+        MedicalTreatment treatment = findTreatmentById(treatmentId);
+        if (treatment == null) {
+            return false;
+        }
+        return treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED;
+    }
+    
+    /**
+     * Validates if a treatment can be completed
+     */
+    public boolean canCompleteTreatment(String treatmentId) {
+        MedicalTreatment treatment = findTreatmentById(treatmentId);
+        if (treatment == null) {
+            return false;
+        }
+        return treatment.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS;
+    }
+    
+    /**
+     * Validates if a treatment can be cancelled
+     */
+    public boolean canCancelTreatment(String treatmentId) {
+        MedicalTreatment treatment = findTreatmentById(treatmentId);
+        if (treatment == null) {
+            return false;
+        }
+        return treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED;
     }
 
     private void removeFromActiveTreatments(MedicalTreatment treatment) {
@@ -780,4 +879,4 @@ public class MedicalTreatmentControl {
             }
         }
     }
-} 
+}

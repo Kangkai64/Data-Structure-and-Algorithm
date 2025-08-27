@@ -1,8 +1,6 @@
 package boundary;
 
 import control.MedicalTreatmentControl;
-import control.PatientManagementControl;
-import control.DoctorManagementControl;
 import control.ConsultationManagementControl;
 import entity.MedicalTreatment;
 import entity.Patient;
@@ -25,16 +23,12 @@ import java.util.Iterator;
  */
 public class MedicalTreatmentUI {
     private Scanner scanner;
-    private PatientManagementControl patientControl;
-    private DoctorManagementControl doctorControl;
     private ConsultationManagementControl consultationControl;
     private MedicalTreatmentControl treatmentControl;
 
     public MedicalTreatmentUI() {
         this.scanner = new Scanner(System.in);
         this.treatmentControl = new MedicalTreatmentControl();
-        this.patientControl = new PatientManagementControl();
-        this.doctorControl = new DoctorManagementControl();
         this.consultationControl = new ConsultationManagementControl();
     }
 
@@ -44,7 +38,7 @@ public class MedicalTreatmentUI {
         while (true) {
             consultationControl.loadConsultationData();
             treatmentControl.loadTreatmentData();
-            System.out.println("\n=== MEDICAL TREATMENT MANAGEMENT MODULE ===");
+            ConsoleUtils.printHeader("MEDICAL TREATMENT MANAGEMENT MODULE");
             System.out.println("1. Create Treatment");
             System.out.println("2. Update Treatment");
             System.out.println("3. Start Treatment");
@@ -53,7 +47,6 @@ public class MedicalTreatmentUI {
             System.out.println("6. Search Treatments");
             System.out.println("7. Generate Treatment Reports");
             System.out.println("8. Back to Main Menu");
-            System.out.print("Enter your choice: ");
             
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
             
@@ -185,68 +178,225 @@ public class MedicalTreatmentUI {
 
 
     
-    private void updateTreatment() {
+        private void updateTreatment() {
         ConsoleUtils.printHeader("Update Treatment");
-        MedicalTreatment treatment = null;
-        String treatmentId = null;
-        while (true) {
-            treatmentId = ConsoleUtils.getStringInput(scanner, "Enter treatment ID: ");
-            treatment = treatmentControl.findTreatmentById(treatmentId);
-            if (treatment == null) {
-                System.out.println("Error: Treatment not found with ID: " + treatmentId);
-                return;
-            }
-            break;
+        
+        // Get treatment ID and validate
+        String treatmentId = ConsoleUtils.getStringInput(scanner, "Enter treatment ID: ");
+        MedicalTreatment treatment = treatmentControl.findTreatmentById(treatmentId);
+        
+        if (treatment == null) {
+            System.out.println("Error: Treatment not found with ID: " + treatmentId);
+            ConsoleUtils.waitMessage();
+            return;
         }
         
+        // Display current details
         System.out.println("Current Treatment Details:");
         System.out.println("Patient: " + treatment.getPatient().getFullName());
         System.out.println("Doctor: " + treatment.getDoctor().getFullName());
         System.out.println("Diagnosis: " + treatment.getDiagnosis());
         System.out.println("Status: " + treatment.getStatus());
         System.out.println("Treatment Date: " + treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
-        if (treatment.getStatus() != MedicalTreatment.TreatmentStatus.PRESCRIBED) {
-            System.out.println("Error: Only treatments in PRESCRIBED status can be updated.");
+        
+        // Validate if treatment can be updated
+        if (!treatmentControl.canUpdateTreatment(treatmentId)) {
+            System.out.println("Error: Only treatments in PRESCRIBED or COMPLETED status can be updated.");
+            ConsoleUtils.waitMessage();
             return;
         }
         
-        System.out.println("\nEnter new details (press Enter to keep current value):");
+        // Initialize update data
+        UpdateData updateData = new UpdateData(treatment);
+        boolean isCompleted = !treatmentControl.canUpdateTreatmentFully(treatmentId);
         
-        String diagnosis = ConsoleUtils.getStringInput(scanner, "New diagnosis [" + treatment.getDiagnosis() + "]: ", treatment.getDiagnosis());
+        // Main update loop
+        while (true) {
+            if (!showUpdateMenu(updateData, isCompleted)) {
+                return; // User cancelled
+            }
+            
+            // Attempt to save changes using control layer validation
+            if (attemptUpdateWithValidation(treatmentId, updateData)) {
+                break; // Success
+            }
+            
+            // Ask if user wants to retry
+            if (!ConsoleUtils.getBooleanInput(scanner, "Do you want to try updating with different values? (Y/N): ")) {
+                System.out.println("Update cancelled.");
+                return;
+            }
+            
+            // Reset for retry
+            updateData.resetToOriginal(treatment);
+        }
         
-        String treatmentPlan = ConsoleUtils.getStringInput(scanner, "New treatment plan [" + treatment.getTreatmentPlan() + "]: ", treatment.getTreatmentPlan());
-        
-        String medications = ConsoleUtils.getStringInput(scanner, "New medications [" + treatment.getPrescribedMedications() + "]: ", treatment.getPrescribedMedications());
-        
-        String notes = ConsoleUtils.getStringInput(scanner, "New notes [" + treatment.getTreatmentNotes() + "]: ", treatment.getTreatmentNotes());
-        
-        LocalDate existingFollowUp = treatment.getFollowUpDate() != null ? treatment.getFollowUpDate().toLocalDate() : null;
-        LocalDate followUpDate = ConsoleUtils.getDateInput(scanner, "New follow-up date (DD-MM-YYYY, press Enter to keep): ", DateType.FUTURE_DATE_ONLY, existingFollowUp);
-        
-        double cost = ConsoleUtils.getDoubleInput(scanner, "New cost [" + treatment.getTreatmentCost() + "]: ", treatment.getTreatmentCost());
-        // Convert LocalDate to LocalDateTime for the control layer
-        LocalDateTime followUpDateTime = followUpDate != null ? followUpDate.atStartOfDay() : null;
-        
+        ConsoleUtils.waitMessage();
+    }
+    
+    private boolean showUpdateMenu(UpdateData updateData, boolean isCompleted) {
+        while (true) {
+            System.out.println("\n=== UPDATE OPTIONS ===");
+
+            if (isCompleted) {
+                System.out.println("Note: Completed treatments can only update notes and follow-up date.");
+                System.out.println("1. Update Notes");
+                System.out.println("2. Update Follow-up Date");
+                System.out.println("3. Confirm and Save Changes");
+                System.out.println("4. Cancel Update");
+
+                int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+
+                switch (choice) {
+                    case 1:
+                        System.out.println("Original Notes: " + updateData.originalNotes);
+                        updateData.notes = ConsoleUtils.getStringInput(scanner, "New notes (leave blank to keep original): ", updateData.originalNotes);
+                        if (updateData.notes.isEmpty()) updateData.notes = updateData.originalNotes;
+                        System.out.println("✓ Notes updated to: " + updateData.notes);
+                        break;
+                    case 2:
+                        System.out.println("Original Follow-up Date: " + 
+                            (updateData.originalFollowUpDate != null ? updateData.originalFollowUpDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) : "None"));
+                        updateData.followUpDate = ConsoleUtils.getDateInput(scanner, "New follow-up date (DD-MM-YYYY, press Enter to keep): ", 
+                            DateType.FUTURE_DATE_ONLY, updateData.originalFollowUpDate);
+                        if (updateData.followUpDate == null) updateData.followUpDate = updateData.originalFollowUpDate;
+                        System.out.println("✓ Follow-up date updated to: " + 
+                            (updateData.followUpDate != null ? updateData.followUpDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) : "None"));
+                        break;
+                    case 3:
+                        return true; // Continue to save
+                    case 4:
+                        System.out.println("Update cancelled.");
+                        return false; // Cancel
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } else {
+                // Full update options for PRESCRIBED treatments
+                System.out.println("1. Update Diagnosis");
+                System.out.println("2. Update Treatment Plan");
+                System.out.println("3. Update Medications");
+                System.out.println("4. Update Cost");
+                System.out.println("5. Update Notes");
+                System.out.println("6. Update Follow-up Date");
+                System.out.println("7. Confirm and Save Changes");
+                System.out.println("8. Cancel Update");
+
+                int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
+
+                switch (choice) {
+                    case 1:
+                        System.out.println("Original Diagnosis: " + updateData.originalDiagnosis);
+                        updateData.diagnosis = ConsoleUtils.getStringInput(scanner, "New diagnosis (leave blank to keep original): ", updateData.originalDiagnosis);
+                        if (updateData.diagnosis.isEmpty()) updateData.diagnosis = updateData.originalDiagnosis;
+                        System.out.println("✓ Diagnosis updated to: " + updateData.diagnosis);
+                        break;
+                    case 2:
+                        System.out.println("Original Treatment Plan: " + updateData.originalTreatmentPlan);
+                        updateData.treatmentPlan = ConsoleUtils.getStringInput(scanner, "New treatment plan (leave blank to keep original): ", updateData.originalTreatmentPlan);
+                        if (updateData.treatmentPlan.isEmpty()) updateData.treatmentPlan = updateData.originalTreatmentPlan;
+                        System.out.println("✓ Treatment plan updated to: " + updateData.treatmentPlan);
+                        break;
+                    case 3:
+                        System.out.println("Original Medications: " + updateData.originalMedications);
+                        updateData.medications = ConsoleUtils.getStringInput(scanner, "New medications (leave blank to keep original): ", updateData.originalMedications);
+                        if (updateData.medications.isEmpty()) updateData.medications = updateData.originalMedications;
+                        System.out.println("✓ Medications updated to: " + updateData.medications);
+                        break;
+                    case 4:
+                        System.out.println("Original Cost: RM" + updateData.originalCost);
+                        double newCost = ConsoleUtils.getDoubleInput(scanner, "New cost (enter -1 to keep original): ", -1, 100000.0);
+                        updateData.cost = (newCost == -1) ? updateData.originalCost : newCost;
+                        System.out.println("✓ Cost updated to: RM" + updateData.cost);
+                        break;
+                    case 5:
+                        System.out.println("Original Notes: " + updateData.originalNotes);
+                        updateData.notes = ConsoleUtils.getStringInput(scanner, "New notes (leave blank to keep original): ", updateData.originalNotes);
+                        if (updateData.notes.isEmpty()) updateData.notes = updateData.originalNotes;
+                        System.out.println("✓ Notes updated to: " + updateData.notes);
+                        break;
+                    case 6:
+                        System.out.println("Original Follow-up Date: " + 
+                            (updateData.originalFollowUpDate != null ? updateData.originalFollowUpDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) : "None"));
+                        updateData.followUpDate = ConsoleUtils.getDateInput(scanner, "New follow-up date (DD-MM-YYYY, press Enter to keep): ", 
+                            DateType.FUTURE_DATE_ONLY, updateData.originalFollowUpDate);
+                        if (updateData.followUpDate == null) updateData.followUpDate = updateData.originalFollowUpDate;
+                        System.out.println("✓ Follow-up date updated to: " + 
+                            (updateData.followUpDate != null ? updateData.followUpDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) : "None"));
+                        break;
+                    case 7:
+                        return true; // Continue to save
+                    case 8:
+                        System.out.println("Update cancelled.");
+                        return false; // Cancel
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            }
+        }
+    }
+    
+    private boolean attemptUpdateWithValidation(String treatmentId, UpdateData updateData) {
+        // Final confirmation
         boolean confirm = ConsoleUtils.getBooleanInput(scanner, "\nAre you sure you want to update this treatment? (Y/N): ");
         if (!confirm) {
             System.out.println("Action cancelled. Treatment was not updated.");
-            return;
+            return false;
         }
-        // Update treatment
-        boolean success = treatmentControl.updateTreatment(treatmentId, diagnosis, treatmentPlan, medications, notes, followUpDateTime, cost);
+        
+        // Convert LocalDate to LocalDateTime for the control layer
+        LocalDateTime followUpDateTime = updateData.followUpDate != null ? updateData.followUpDate.atStartOfDay() : null;
+        
+        // Attempt update using control layer validation
+        boolean success = treatmentControl.updateTreatmentWithValidation(treatmentId, updateData.diagnosis, 
+            updateData.treatmentPlan, updateData.medications, updateData.notes, followUpDateTime, updateData.cost);
         
         if (success) {
             System.out.println("✓ Treatment updated successfully!");
+            return true;
         } else {
             System.out.println("No changes detected or update failed.");
-            boolean retryUpdate = ConsoleUtils.getBooleanInput(scanner, "Do you want to try updating with different values? (Y/N): ");
-            if (retryUpdate) {
-                return;
-            }else {
-                System.out.println("Update cancelled.");
-            }
+            return false;
         }
-        ConsoleUtils.waitMessage();
+    }
+    
+    // Helper class to manage update data
+    private static class UpdateData {
+        String diagnosis, treatmentPlan, medications, notes;
+        double cost;
+        LocalDate followUpDate;
+        
+        // Original values for reset
+        String originalDiagnosis, originalTreatmentPlan, originalMedications, originalNotes;
+        double originalCost;
+        LocalDate originalFollowUpDate;
+        
+        UpdateData(MedicalTreatment treatment) {
+            // Current values
+            this.diagnosis = treatment.getDiagnosis();
+            this.treatmentPlan = treatment.getTreatmentPlan();
+            this.medications = treatment.getPrescribedMedications();
+            this.notes = treatment.getTreatmentNotes();
+            this.cost = treatment.getTreatmentCost();
+            this.followUpDate = treatment.getFollowUpDate() != null ? treatment.getFollowUpDate().toLocalDate() : null;
+            
+            // Store original values
+            this.originalDiagnosis = treatment.getDiagnosis();
+            this.originalTreatmentPlan = treatment.getTreatmentPlan();
+            this.originalMedications = treatment.getPrescribedMedications();
+            this.originalNotes = treatment.getTreatmentNotes();
+            this.originalCost = treatment.getTreatmentCost();
+            this.originalFollowUpDate = treatment.getFollowUpDate() != null ? treatment.getFollowUpDate().toLocalDate() : null;
+        }
+        
+        void resetToOriginal(MedicalTreatment treatment) {
+            this.diagnosis = originalDiagnosis;
+            this.treatmentPlan = originalTreatmentPlan;
+            this.medications = originalMedications;
+            this.notes = originalNotes;
+            this.cost = originalCost;
+            this.followUpDate = originalFollowUpDate;
+        }
     }
     
 
@@ -258,11 +408,14 @@ public class MedicalTreatmentUI {
         MedicalTreatment treatment = treatmentControl.findTreatmentById(treatmentId);
         if (treatment == null) {
             System.out.println("Error: Treatment not found with ID: " + treatmentId);
+            ConsoleUtils.waitMessage();
             return;
         }
         
-        if (treatment.getStatus() != MedicalTreatment.TreatmentStatus.PRESCRIBED) {
+        // Use control layer validation
+        if (!treatmentControl.canStartTreatment(treatmentId)) {
             System.out.println("Error: Treatment cannot be started. Current status: " + treatment.getStatus());
+            ConsoleUtils.waitMessage();
             return;
         }
         
@@ -301,26 +454,33 @@ public class MedicalTreatmentUI {
         MedicalTreatment treatment = treatmentControl.findTreatmentById(treatmentId);
         if (treatment == null) {
             System.out.println("Error: Treatment not found with ID: " + treatmentId);
+            ConsoleUtils.waitMessage();
             return;
         }
         
-        if (treatment.getStatus() != MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
+        // Use control layer validation
+        if (!treatmentControl.canCompleteTreatment(treatmentId)) {
             System.out.println("Error: Treatment cannot be completed. Current status: " + treatment.getStatus());
+            ConsoleUtils.waitMessage();
             return;
         }
         
-        LocalDate followUpDate = ConsoleUtils.getDateInput(scanner, "Enter follow-up date (DD-MM-YYYY, optional, press Enter to skip): ", DateType.FUTURE_DATE_ONLY);
+        // Prompt for follow-up date, allow skipping
+        
+        LocalDate followUpDate = ConsoleUtils.getDateInput(scanner, "Enter follow-up date (DD-MM-YYYY, press Enter to skip): ", DateType.FUTURE_DATE_ONLY, null);
+       
         
         boolean confirm = ConsoleUtils.getBooleanInput(scanner, "\nAre you sure you want to complete this treatment? (Y/N): ");
         if (!confirm) {
             System.out.println("Action cancelled. Treatment was not completed.");
             return;
         }
+        
         // Complete treatment and persist optional follow-up date
         boolean success = treatmentControl.completeTreatment(treatmentId, followUpDate != null ? followUpDate.atStartOfDay() : null);
         
         if (success) {
-            System.out.println("Treatment completed successfully!");
+            System.out.println("✓ Treatment completed successfully!");
             System.out.println("----------------------------------------");
             System.out.println("Treatment ID: " + treatment.getTreatmentId());
             System.out.println("Patient: " + treatment.getPatient().getFullName() + " (" + treatment.getPatient().getPatientId() + ")");
@@ -358,7 +518,8 @@ public class MedicalTreatmentUI {
         displayTreatmentDetails(treatment);
         System.out.println();
 
-        if (treatment.getStatus() != MedicalTreatment.TreatmentStatus.PRESCRIBED) {
+        // Use control layer validation
+        if (!treatmentControl.canCancelTreatment(treatmentId)) {
             System.out.println("Treatment cannot be cancelled. Current status: " + treatment.getStatus());
             ConsoleUtils.waitMessage();
             return;
@@ -395,7 +556,6 @@ public class MedicalTreatmentUI {
         System.out.println("4. Search by Consultation ID");
         System.out.println("5. Search by Status");
         System.out.println("6. Search by Date Range");
-        System.out.print("Enter choice: ");
         
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
         
@@ -486,12 +646,11 @@ public class MedicalTreatmentUI {
 
 
     private void generateTreatmentReports() {
-        System.out.println("\n=== Generate Treatment Reports ===");
+        ConsoleUtils.printHeader("Generate Treatment Reports");
         System.out.println("1. Treatment Analysis Report");
         System.out.println("2. Treatment Status Report");
         System.out.println("3. Both Reports");
         System.out.println("4. Back to Medical Treatment");
-        System.out.print("Enter choice: ");
         
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         
@@ -667,4 +826,4 @@ public class MedicalTreatmentUI {
     }
     
 
-} 
+}

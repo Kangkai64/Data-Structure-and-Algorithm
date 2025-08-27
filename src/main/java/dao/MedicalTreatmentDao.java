@@ -232,6 +232,29 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     }
 
     /**
+     * Updates only the treatment notes and follow-up date for a completed treatment.
+     */
+    public boolean updateNotesAndFollowUpDate(String treatmentId, String treatmentNotes, LocalDateTime followUpDate) {
+        String sql = "UPDATE medical_treatment SET treatmentNotes = ?, followUpDate = ? WHERE treatmentId = ?";
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+            PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, treatmentNotes);
+            if (followUpDate != null) {
+                stmt.setObject(2, followUpDate);
+            } else {
+                stmt.setNull(2, java.sql.Types.TIMESTAMP);
+            }
+            stmt.setString(3, treatmentId);
+
+            int rowsUpdated = stmt.executeUpdate();
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating notes and follow-up date: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Get the ID of the last inserted medical treatment
      * @param connection The database connection
      * @return The generated treatment ID
@@ -312,4 +335,4 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
              throw e;
          }
      }
- } 
+ }

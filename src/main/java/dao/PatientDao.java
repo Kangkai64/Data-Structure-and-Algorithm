@@ -42,15 +42,19 @@ public class PatientDao extends DaoTemplate<Patient> {
         String sql = "SELECT * FROM patient";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-
-            while (resultSet.next()) {
-                Patient patient = mapResultSet(resultSet);
-                if (patient != null) {
-                    patients.add(patient.getPatientId(), patient);
+             Statement statement = connection.createStatement()) {
+            
+            // Set query timeout to prevent hanging
+            statement.setQueryTimeout(10); // 10 seconds timeout
+            
+            try (ResultSet resultSet = statement.executeQuery(sql)) {
+                while (resultSet.next()) {
+                    Patient patient = mapResultSet(resultSet);
+                    if (patient != null) {
+                        patients.add(patient.getPatientId(), patient);
+                    }
                 }
-            }   
+            }
         } catch (SQLException e) {
             System.err.println("Error finding all patients: " + e.getMessage());
             throw e;
@@ -62,8 +66,8 @@ public class PatientDao extends DaoTemplate<Patient> {
     @Override
     public boolean insertAndReturnId(Patient patient) throws SQLException {
         String sql = "INSERT INTO patient (fullName, ICNumber, email, phoneNumber, " +
-                "addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact, isActive) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "addressId, registrationDate, bloodType, allergies, emergencyContact, isActive) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -74,11 +78,10 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setString(4, patient.getPhoneNumber());
             preparedStatement.setString(5, patient.getAddress().getAddressId());
             preparedStatement.setObject(6, patient.getRegistrationDate());
-            preparedStatement.setString(7, patient.getWardNumber());
-            preparedStatement.setString(8, patient.getBloodType().name());
-            preparedStatement.setString(9, allergiesToString(patient.getAllergies()));
-            preparedStatement.setString(10, patient.getEmergencyContact());
-            preparedStatement.setBoolean(11, patient.isActive());
+            preparedStatement.setString(7, patient.getBloodType().name());
+            preparedStatement.setString(8, allergiesToString(patient.getAllergies()));
+            preparedStatement.setString(9, patient.getEmergencyContact());
+            preparedStatement.setBoolean(10, patient.isActive());
 
             int affectedRows = preparedStatement.executeUpdate();
             
@@ -102,7 +105,7 @@ public class PatientDao extends DaoTemplate<Patient> {
     @Override
     public boolean update(Patient patient) throws SQLException {
         String sql = "UPDATE patient SET fullName = ?, ICNumber = ?, email = ?, phoneNumber = ?, " +
-                "addressId = ?, wardNumber = ?, bloodType = ?, allergies = ?, emergencyContact = ?, isActive = ? " +
+                "addressId = ?, bloodType = ?, allergies = ?, emergencyContact = ?, isActive = ? " +
                 "WHERE patientId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -113,12 +116,11 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setString(3, patient.getEmail());
             preparedStatement.setString(4, patient.getPhoneNumber());
             preparedStatement.setString(5, patient.getAddress().getAddressId());
-            preparedStatement.setString(6, patient.getWardNumber());
-            preparedStatement.setString(7, patient.getBloodType().name());
-            preparedStatement.setString(8, allergiesToString(patient.getAllergies()));
-            preparedStatement.setString(9, patient.getEmergencyContact());
-            preparedStatement.setBoolean(10, patient.isActive());
-            preparedStatement.setString(11, patient.getPatientId());
+            preparedStatement.setString(6, patient.getBloodType().name());
+            preparedStatement.setString(7, allergiesToString(patient.getAllergies()));
+            preparedStatement.setString(8, patient.getEmergencyContact());
+            preparedStatement.setBoolean(9, patient.isActive());
+            preparedStatement.setString(10, patient.getPatientId());
 
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;
@@ -164,7 +166,6 @@ public class PatientDao extends DaoTemplate<Patient> {
                     address,
                     resultSet.getObject("registrationDate", LocalDate.class),
                     resultSet.getString("patientId"),
-                    resultSet.getString("wardNumber"),
                     BloodType.valueOf(resultSet.getString("bloodType")),
                     allergies,
                     resultSet.getString("emergencyContact")

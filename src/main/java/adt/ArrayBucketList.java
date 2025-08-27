@@ -317,7 +317,9 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
             }
             V data = currentNode.getValue();
             currentNode = currentNode.getNext();
-            if (currentNode == currentNode.getNext()) {
+            
+            // Check if we've reached the end of the current bucket (circular list)
+            if (currentNode == buckets[currentBucketIndex].head) {
                 currentBucketIndex++;
                 findNextNode();
             }
@@ -325,14 +327,18 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         }
 
         private void findNextNode() {
-            while (currentBucketIndex < bucketCount) {
+            int safetyCounter = 0;
+            int maxIterations = bucketCount * 2; // Safety limit
+            
+            while (currentBucketIndex < bucketCount && safetyCounter < maxIterations) {
                 LinkedList bucket = buckets[currentBucketIndex];
-                if (!bucket.isEmpty()) {
+                if (bucket != null && !bucket.isEmpty()) {
                     currentNode = bucket.head;
                     return;
                 } else {
                     currentBucketIndex++;
                 }
+                safetyCounter++;
             }
             currentNode = null;
         }

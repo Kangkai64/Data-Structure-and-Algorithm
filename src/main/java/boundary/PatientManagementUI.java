@@ -3,6 +3,7 @@ package boundary;
 import java.sql.SQLException;
 import java.util.Scanner;
 
+import adt.ArrayBucketList;
 import control.AddressManagementControl;
 import control.PatientManagementControl;
 import entity.Address;
@@ -27,7 +28,7 @@ public class PatientManagementUI {
 
     public void displayPatientManagementMenu() {
         while (true) {
-            System.out.println("\n=== PATIENT MANAGEMENT MODULE ===");
+            ConsoleUtils.printHeader("PATIENT MANAGEMENT MODULE");
             System.out.println("1. Register New Patient");
             System.out.println("2. Update Patient Record");
             System.out.println("3. Deactivate Patient");
@@ -36,7 +37,6 @@ public class PatientManagementUI {
             System.out.println("6. Search Patient");
             System.out.println("7. Generate Patient Reports");
             System.out.println("8. Back to Main Menu");
-            System.out.print("Enter your choice: ");
 
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
             
@@ -76,7 +76,6 @@ public class PatientManagementUI {
         String icNumber = ConsoleUtils.getICInput(scanner, "Enter IC number (DDMMYY-XX-XXXX): ");
         String email = ConsoleUtils.getEmailInput(scanner, "Enter email: ");
         String phoneNumber = ConsoleUtils.getPhoneInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
-       
         
         // Get address details
         String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
@@ -86,15 +85,12 @@ public class PatientManagementUI {
         
         String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
 
-        String wardNumber = ConsoleUtils.getWardNumberInput(scanner, "Enter ward number (WXXXX): ");
-        
         System.out.println("Select blood type:");
         System.out.println("1. A_POSITIVE  2. A_NEGATIVE  3. B_POSITIVE  4. B_NEGATIVE");
         System.out.println("5. AB_POSITIVE 6. AB_NEGATIVE 7. O_POSITIVE  8. O_NEGATIVE  9. OTHERS");
-        System.out.print("Enter choice: ");
         int bloodTypeChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 9);
         
-        BloodType bloodType = getBloodTypeFromChoice(bloodTypeChoice);
+        BloodType bloodType = patientControl.getBloodTypeFromChoice(bloodTypeChoice);
         
         String allergiesInput = ConsoleUtils.getStringInput(scanner, "Enter allergies (comma-separated, or 'None'): ");
         String allergies = allergiesInput.equalsIgnoreCase("None") ? "None" : allergiesInput;
@@ -111,7 +107,7 @@ public class PatientManagementUI {
         }
         
         boolean success = patientControl.registerPatient(fullName, icNumber, email, phoneNumber, 
-                                                       address, wardNumber, bloodType, allergiesInput, emergencyContact);
+                                                       address, bloodType, allergiesInput, emergencyContact);
         
         if (success) {
             System.out.println("Patient registered successfully!");
@@ -149,8 +145,6 @@ public class PatientManagementUI {
         Address updatedAddress = new Address(street, city, state, postalCode, country);
         updatedAddress.setAddressId(address.getAddressId());
 
-        String wardNumber = ConsoleUtils.getWardNumberInput(scanner, "Ward number [" + patient.getWardNumber() + "]: ", patient.getWardNumber());
-
         System.out.println("Select blood type (Enter to keep current):");
         System.out.println("1. A_POSITIVE  2. A_NEGATIVE  3. B_POSITIVE  4. B_NEGATIVE");
         System.out.println("5. AB_POSITIVE 6. AB_NEGATIVE 7. O_POSITIVE  8. O_NEGATIVE  9. OTHERS");
@@ -169,7 +163,7 @@ public class PatientManagementUI {
             default: defaultChoice = 1;
         }
         int bloodTypeChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-9): ", defaultChoice);
-        BloodType bloodType = getBloodTypeFromChoice(bloodTypeChoice);
+        BloodType bloodType = patientControl.getBloodTypeFromChoice(bloodTypeChoice);
 
         String allergiesInput = ConsoleUtils.getStringInput(scanner, "Allergies [" + patient.getAllergies() + "]: ", patient.getAllergies());
         String emergencyContact = ConsoleUtils.getPhoneInput(scanner, "Emergency contact [" + patient.getEmergencyContact() + "]: ", patient.getEmergencyContact());
@@ -187,7 +181,6 @@ public class PatientManagementUI {
             email,
             phoneNumber,
             updatedAddress,
-            wardNumber,
             bloodType,
             allergiesInput,
             emergencyContact
@@ -209,6 +202,13 @@ public class PatientManagementUI {
             entity.Patient patient = patientControl.findPatientById(patientId);
             if (patient == null) {
                 System.out.println("Patient not found.");
+                scanner.nextLine();
+                return;
+            }
+
+            // Check if patient is already inactive
+            if (!patient.isActive()) {
+                System.out.println("Patient " + patient.getFullName() + " (ID: " + patient.getPatientId() + ") is already inactive.");
                 scanner.nextLine();
                 return;
             }
@@ -317,55 +317,123 @@ public class PatientManagementUI {
     }
 
     private void searchPatient() {
-        System.out.println("\n=== SEARCH PATIENT ===");
+        ConsoleUtils.printHeader("Search Patients");
         System.out.println("1. Search by Patient ID");
-        System.out.println("2. Search by Full Name");
-        System.out.println("3. Search by Email");
-        System.out.println("4. Search by IC Number");
-        System.out.print("Enter choice: ");
-        
+        System.out.println("2. Search by IC Number");
+        System.out.println("3. Search by Full Name");
+        System.out.println("4. Search by Email");
+
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
-        
+        System.out.println();
+
         switch (choice) {
             case 1:
-                String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
-                System.out.println("Search by Patient ID - Implementation needed");
+                searchPatientById();
                 break;
             case 2:
-                String fullName = ConsoleUtils.getStringInput(scanner, "Enter Full Name: ");
-                System.out.println("Search by Full Name - Implementation needed");
+                searchPatientByIcNumber();
                 break;
             case 3:
-                String email = ConsoleUtils.getStringInput(scanner, "Enter Email: ");
-                System.out.println("Search by Email - Implementation needed");
+                searchPatientsByName();
                 break;
             case 4:
-                String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC Number: ");
-                System.out.println("Search by IC Number - Implementation needed");
+                searchPatientByEmail();
                 break;
             default:
                 System.out.println("Invalid choice.");
         }
+        ConsoleUtils.waitMessage();
     }
-
-    private void generatePatientReports() {
-        System.out.println("\n=== PATIENT REPORTS ===");
-        System.out.println(patientControl.generatePatientRegistrationReport());
-        System.out.println(patientControl.generateQueueStatusReport());
-    }
-
-    private BloodType getBloodTypeFromChoice(int choice) {
-        switch (choice) {
-            case 1: return BloodType.A_POSITIVE;
-            case 2: return BloodType.A_NEGATIVE;
-            case 3: return BloodType.B_POSITIVE;
-            case 4: return BloodType.B_NEGATIVE;
-            case 5: return BloodType.AB_POSITIVE;
-            case 6: return BloodType.AB_NEGATIVE;
-            case 7: return BloodType.O_POSITIVE;
-            case 8: return BloodType.O_NEGATIVE;
-            case 9: return BloodType.OTHERS;
-            default: return BloodType.A_POSITIVE;
+    
+    private void searchPatientById() {
+        ConsoleUtils.printHeader("Search Patient by ID (Patient Details)");
+        String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
+        Patient patient = patientControl.findPatientById(patientId);
+        if (patient == null) {
+            System.out.println("Patient not found.");
+        } else {
+            System.out.println(patientControl.displayPatientSearchResult(patient, "Patient ID: " + patientId));
         }
+    }
+    
+    private void searchPatientsByName() {
+        ConsoleUtils.printHeader("Search Patients by Name(Patient List)");
+        String name = ConsoleUtils.getStringInput(scanner, "Enter patient name (partial match): ");
+        ArrayBucketList<String, Patient> patients = patientControl.findPatientsByName(name);
+        if (patients.isEmpty()) {
+            System.out.println("No patients found.");
+        } else {
+            System.out.println();
+            System.out.println(patientControl.displayPatientSearchResults(patients, "Name: " + name));
+        }
+    }
+    
+    private void searchPatientByEmail() {
+        ConsoleUtils.printHeader("Search Patients by Email (Patient List)");
+        String email = ConsoleUtils.getStringInput(scanner, "Enter email (partial match): ");
+        ArrayBucketList<String, Patient> patients = patientControl.findPatientsByEmail(email);
+        if (patients.isEmpty()) {
+            System.out.println("No patients found.");
+        } else {
+            System.out.println();
+            System.out.println(patientControl.displayPatientSearchResults(patients, "Email: " + email));
+        }
+    }
+    
+    private void searchPatientByIcNumber() {
+        ConsoleUtils.printHeader("Search Patient by IC Number (Patient Details)");
+        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC Number (XXXXXX-XX-XXXX): ");
+        
+        // Validate IC number format
+        if (!icNumber.matches("\\d{6}-\\d{2}-\\d{4}")) {
+            System.out.println("Invalid IC number format. Please use format: XXXXXX-XX-XXXX");
+            return;
+        }
+        
+        // Search for exact IC number match
+        Patient patient = patientControl.findPatientByIcNumber(icNumber);
+        if (patient == null) {
+            System.out.println("Patient not found.");
+        } else {
+            System.out.println(patientControl.displayPatientSearchResult(patient, "IC Number: " + icNumber));
+        }
+    }
+    
+    private void generatePatientReports() {
+        ConsoleUtils.printHeader("Generate Patient Record Summary");
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Patient ID");
+        System.out.println("2. Full Name");
+        System.out.println("3. IC Number");
+        System.out.println("4. Email");
+        System.out.println("5. Phone Number");
+        System.out.println("6. Registration Date");
+        System.out.println("7. Status");
+        System.out.println("8. Blood Type");
+        System.out.println("9. Allergies");
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 9);
+
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+
+        String sortBy;
+        switch (sortFieldChoice) {
+            case 1: sortBy = "id"; break;
+            case 2: sortBy = "name"; break;
+            case 3: sortBy = "ic"; break;
+            case 4: sortBy = "email"; break;
+            case 5: sortBy = "phone"; break;
+            case 6: sortBy = "regdate"; break;
+            case 7: sortBy = "status"; break;
+            case 8: sortBy = "blood"; break;
+            case 9: sortBy = "allergies"; break;
+            default: sortBy = "name"; break;
+        }
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+
+        System.out.println(patientControl.generatePatientRecordSummaryReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
     }
 } 

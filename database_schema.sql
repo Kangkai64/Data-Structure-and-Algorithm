@@ -29,7 +29,6 @@ CREATE TABLE patient (
     phoneNumber VARCHAR(20) NOT NULL,
     addressId VARCHAR(20),
     registrationDate DATE NOT NULL,
-    wardNumber VARCHAR(20),
     bloodType ENUM('A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 
                    'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE') NOT NULL,
     allergies TEXT,
@@ -400,7 +399,6 @@ SELECT
     p.ICNumber,
     p.email,
     p.phoneNumber,
-    p.wardNumber,
     p.bloodType,
     p.allergies,
     p.emergencyContact,
@@ -470,10 +468,10 @@ INSERT INTO address (street, city, state, postalCode) VALUES
 ('654 Jalan Hospital', 'Kuala Lumpur', 'WP Kuala Lumpur', '50586');
 
 -- Sample Patients (with Person fields distributed)
-INSERT INTO patient (fullName, ICNumber, email, phoneNumber, addressId, registrationDate, wardNumber, bloodType, allergies, emergencyContact) VALUES
-('Ahmad bin Abdullah', '011130-14-5347', 'ahmad.abdullah@email.com', '012-3456789', 'A000000001', '2024-01-15', 'W001', 'A_POSITIVE', 'Penicillin,Peanuts', '019-8765432'),
-('Siti binti Mohamed', '920220-06-5678', 'siti.mohamed@email.com', '012-3456790', 'A000000002', '2024-01-16', 'W002', 'O_POSITIVE', 'Shellfish', '019-8765433'),
-('Mohammed bin Ali', '940503-08-8901', 'mohammed.ali@email.com', '012-3456793', 'A000000005', '2024-01-18', 'W003', 'B_POSITIVE', 'None', '019-8765434');
+INSERT INTO patient (fullName, ICNumber, email, phoneNumber, addressId, registrationDate, bloodType, allergies, emergencyContact) VALUES
+('Ahmad bin Abdullah', '011130-14-5347', 'ahmad.abdullah@email.com', '012-3456789', 'A000000001', '2024-01-15', 'A_POSITIVE', 'Penicillin,Peanuts', '019-8765432'),
+('Siti binti Mohamed', '920220-06-5678', 'siti.mohamed@email.com', '012-3456790', 'A000000002', '2024-01-16', 'O_POSITIVE', 'Shellfish', '019-8765433'),
+('Mohammed bin Ali', '940503-08-8901', 'mohammed.ali@email.com', '012-3456793', 'A000000005', '2024-01-18', 'B_POSITIVE', 'None', '019-8765434');
 
 -- Sample Doctors (with Person fields distributed)
 INSERT INTO doctor (fullName, ICNumber, email, phoneNumber, addressId, registrationDate, medicalSpecialty, licenseNumber, expYears) VALUES

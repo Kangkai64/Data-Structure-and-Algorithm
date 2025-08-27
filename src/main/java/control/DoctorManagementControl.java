@@ -195,20 +195,70 @@ public class DoctorManagementControl {
     
     public ArrayBucketList<String, Schedule> getDoctorSchedules(String doctorId) {
         try {
-            Doctor doctor = doctorDao.findById(doctorId);
-            if (doctor != null) {
-                ArrayBucketList<String, Schedule> schedules = new ArrayBucketList<String, Schedule>();
-                Iterator<Schedule> scheduleIterator = doctor.getSchedules().iterator();
-                while (scheduleIterator.hasNext()) {
-                    Schedule schedule = scheduleIterator.next();
-                    schedules.add(schedule.getScheduleId(), schedule);
-                }
-                return schedules;
-            }
-            return new ArrayBucketList<String, Schedule>();
+            return scheduleDao.findByDoctorId(doctorId);
         } catch (Exception exception) {
             System.err.println("Error getting doctor schedules: " + exception.getMessage());
             return new ArrayBucketList<String, Schedule>();
+        }
+    }
+
+    public ArrayBucketList<String, Schedule> getDoctorSchedulesOrdered(String doctorId) {
+        try {
+            ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
+            int size = schedules.getSize();
+            Schedule[] arr = new Schedule[size];
+            int idx = 0;
+            Iterator<Schedule> it = schedules.iterator();
+            while (it.hasNext()) {
+                arr[idx++] = it.next();
+            }
+
+            java.util.Comparator<Schedule> byDay = new java.util.Comparator<Schedule>() {
+                @Override
+                public int compare(Schedule a, Schedule b) {
+                    return Integer.compare(a.getDayOfWeek().ordinal(), b.getDayOfWeek().ordinal());
+                }
+            };
+
+            QuickSort.sort(arr, byDay);
+
+            ArrayBucketList<String, Schedule> sorted = new ArrayBucketList<String, Schedule>();
+            // Note: returning ArrayBucketList here will not preserve iteration order due to hashing.
+            // Prefer getDoctorSchedulesOrderedArray() when display order must be guaranteed.
+            for (int i = 0; i < arr.length; i++) {
+                Schedule s = arr[i];
+                sorted.add(s.getScheduleId(), s);
+            }
+            return sorted;
+        } catch (Exception exception) {
+            System.err.println("Error ordering doctor schedules: " + exception.getMessage());
+            return getDoctorSchedules(doctorId);
+        }
+    }
+
+    public Schedule[] getDoctorSchedulesOrderedArray(String doctorId) {
+        try {
+            ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
+            int size = schedules.getSize();
+            Schedule[] arr = new Schedule[size];
+            int idx = 0;
+            Iterator<Schedule> it = schedules.iterator();
+            while (it.hasNext()) {
+                arr[idx++] = it.next();
+            }
+
+            java.util.Comparator<Schedule> byDay = new java.util.Comparator<Schedule>() {
+                @Override
+                public int compare(Schedule a, Schedule b) {
+                    return Integer.compare(a.getDayOfWeek().ordinal(), b.getDayOfWeek().ordinal());
+                }
+            };
+
+            QuickSort.sort(arr, byDay);
+            return arr;
+        } catch (Exception exception) {
+            System.err.println("Error building ordered schedule array: " + exception.getMessage());
+            return new Schedule[0];
         }
     }
     
@@ -216,17 +266,38 @@ public class DoctorManagementControl {
     public boolean setDoctorAvailability(String doctorId, boolean isAvailable) {
         try {
             Doctor doctor = doctorDao.findById(doctorId);
-            if (doctor != null) {
+            if (doctor == null) return false;
+
+            boolean updated = doctorDao.updateAvailability(doctorId, isAvailable);
+            if (!updated) return false;
+
                 doctor.setAvailable(isAvailable);
-                boolean updated = doctorDao.update(doctor);
-                if (updated) {
-                    updateActiveDoctorsList(doctor);
-                    return true;
+
+            // Cascade schedules to match doctor availability
+            ArrayBucketList<String, Schedule> schedules = getDoctorSchedules(doctorId);
+            Iterator<Schedule> it = schedules.iterator();
+            while (it.hasNext()) {
+                Schedule s = it.next();
+                try {
+                    scheduleDao.updateAvailability(s.getScheduleId(), isAvailable);
+                } catch (Exception e) {
+                    System.err.println("Failed to update schedule availability for schedule " + s.getScheduleId() + ": " + e.getMessage());
                 }
             }
-            return false;
+
+                    updateActiveDoctorsList(doctor);
+                    return true;
         } catch (Exception exception) {
             System.err.println("Error setting doctor availability: " + exception.getMessage());
+            return false;
+        }
+    }
+
+    public boolean setScheduleAvailability(String scheduleId, boolean isAvailable) {
+        try {
+            return scheduleDao.updateAvailability(scheduleId, isAvailable);
+        } catch (Exception exception) {
+            System.err.println("Error setting schedule availability: " + exception.getMessage());
             return false;
         }
     }
@@ -324,7 +395,7 @@ public class DoctorManagementControl {
 
     public String generateDoctorInformationReport() {
         StringBuilder report = new StringBuilder();
-        String title = "DOCTOR INFORMATION REPORT";
+        String title = "DOCTOR ACTIVITY REPORT";
         String line = repeatChar('=', REPORT_WIDTH);
         report.append("\n").append(line).append("\n");
         report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
@@ -377,9 +448,8 @@ public class DoctorManagementControl {
     }
 
     /**
-     * Generates the Doctor Information Report with optional quick sort.
      *
-     * @param sortBy    Accepts "name", "specialty", or "experience" (case-insensitive). Any other value disables sorting.
+     * @param sortBy
      * @param ascending true for ascending order, false for descending.
      * @return formatted report string
      */
@@ -388,7 +458,7 @@ public class DoctorManagementControl {
         boolean doSort = field.equals("name") || field.equals("specialty") || field.equals("experience");
 
         StringBuilder report = new StringBuilder();
-        String title = "DOCTOR INFORMATION REPORT";
+        String title = "DOCTOR ACTIVITY REPORT";
         String line = repeatChar('=', REPORT_WIDTH);
         report.append("\n").append(line).append("\n");
         report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
@@ -495,7 +565,7 @@ public class DoctorManagementControl {
             String as = a.getMedicalSpecialty() == null ? "" : a.getMedicalSpecialty();
             String bs = b.getMedicalSpecialty() == null ? "" : b.getMedicalSpecialty();
             result = as.compareToIgnoreCase(bs);
-        } else { // "experience" now maps to consultation count in the report context
+        } else {
             int ae = getConsultationCountForDoctor(a.getDoctorId());
             int be = getConsultationCountForDoctor(b.getDoctorId());
             result = Integer.compare(ae, be);
@@ -503,7 +573,7 @@ public class DoctorManagementControl {
         if (!ascending) {
             result = -result;
         }
-        // Tie-breaker by Doctor ID to make ordering deterministic
+
         if (result == 0) {
             String aid = a.getDoctorId() == null ? "" : a.getDoctorId();
             String bid = b.getDoctorId() == null ? "" : b.getDoctorId();
@@ -532,9 +602,13 @@ public class DoctorManagementControl {
 
     
     
-    public String generateScheduleReport() {
+    public String generateDoctorWorkloadReport() {
+        return generateDoctorWorkloadReport(null, true);
+    }
+
+    public String generateDoctorWorkloadReport(String sortBy, boolean ascending) {
         StringBuilder report = new StringBuilder();
-        String title = "DOCTOR SCHEDULE REPORT";
+        String title = "DOCTOR WORKLOAD REPORT (Estimated Annual Hours)";
         String line = repeatChar('=', REPORT_WIDTH);
         report.append(centerText(title, REPORT_WIDTH)).append("\n");
         report.append(line).append("\n\n");
@@ -544,49 +618,154 @@ public class DoctorManagementControl {
             .append("\n");
         report.append(repeatChar('=', REPORT_WIDTH)).append("\n\n");
 
-        String h1 = padRight("Doctor", 30);
-        String h2 = padRight("Specialty", 26);
-        String h3 = padRight("Day", 14);
-        String h4 = padRight("From", 12);
-        String h5 = padRight("To", 12);
-        report.append(" " + h1 + "| " + h2 + "| " + h3 + "| " + h4 + "| " + h5 + "\n");
-        report.append(line).append("\n");
+        // Aggregate weekly hours per doctor from schedules in database
+        adt.ArrayBucketList<String, Schedule> allSchedules;
+        try {
+            allSchedules = scheduleDao.findAll();
+        } catch (Exception e) {
+            allSchedules = new adt.ArrayBucketList<String, Schedule>();
+        }
 
-        int totalSchedules = 0;
-        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor doctor = doctorIterator.next();
-            Iterator<Schedule> scheduleIterator = doctor.getSchedules().iterator();
-            while (scheduleIterator.hasNext()) {
-                Schedule schedule = scheduleIterator.next();
-                String c1 = padRight(doctor.getFullName(), 30);
-                String c2 = padRight(doctor.getMedicalSpecialty(), 26);
-                String c3 = padRight(String.valueOf(schedule.getDayOfWeek()), 14);
-                String c4 = padRight(schedule.getFromTime(), 12);
-                String c5 = padRight(schedule.getToTime(), 12);
-                report.append(" ").append(c1).append("| ").append(c2).append("| ")
-                      .append(c3).append("| ").append(c4).append("| ").append(c5).append("\n");
-                totalSchedules++;
+        // Totals per doctorId (weekly hours)
+        adt.ArrayBucketList<String, Double> weeklyTotals = new adt.ArrayBucketList<String, Double>();
+        Iterator<Schedule> it = allSchedules.iterator();
+        while (it.hasNext()) {
+            Schedule s = it.next();
+            try {
+                java.time.LocalTime from = java.time.LocalTime.parse(s.getFromTime());
+                java.time.LocalTime to = java.time.LocalTime.parse(s.getToTime());
+                long minutes = java.time.Duration.between(from, to).toMinutes();
+                if (minutes < 0) {
+                    // guard if times are inverted; skip
+                    continue;
+                }
+                double hours = minutes / 60.0;
+                Double current = weeklyTotals.getValue(s.getDoctorId());
+                weeklyTotals.add(s.getDoctorId(), (current == null ? 0.0 : current) + hours);
+            } catch (Exception ignore) {
+                // skip error time format rows
             }
         }
 
-        report.append("\nTotal schedules listed : ").append(totalSchedules).append("\n\n");
+        // Build rows for all doctors
+        class Row { String doctorId; String name; String specialty; double weekly; double annual; }
+        int docCount = activeDoctors.getSize();
+        Row[] rows = new Row[docCount];
+        int pos = 0;
+        Iterator<Doctor> docIt = activeDoctors.iterator();
+        while (docIt.hasNext()) {
+            Doctor d = docIt.next();
+            Row r = new Row();
+            r.doctorId = d.getDoctorId();
+            r.name = d.getFullName();
+            r.specialty = d.getMedicalSpecialty();
+            Double w = weeklyTotals.getValue(d.getDoctorId());
+            r.weekly = w == null ? 0.0 : w.doubleValue();
+            r.annual = r.weekly * 52.0;
+            rows[pos++] = r;
+        }
+
+        // Sorting
+        String field = sortBy == null ? "" : sortBy.trim().toLowerCase();
+        boolean doSort = field.equals("name") || field.equals("specialty") || field.equals("weekly") || field.equals("annual");
+        java.util.Comparator<Row> comparator = new java.util.Comparator<Row>() {
+            @Override
+            public int compare(Row a, Row b) {
+                int result;
+                if (field.equals("name")) {
+                    String an = a.name == null ? "" : a.name;
+                    String bn = b.name == null ? "" : b.name;
+                    result = an.compareToIgnoreCase(bn);
+                } else if (field.equals("specialty")) {
+                    String as = a.specialty == null ? "" : a.specialty;
+                    String bs = b.specialty == null ? "" : b.specialty;
+                    result = as.compareToIgnoreCase(bs);
+                } else if (field.equals("weekly")) {
+                    result = Double.compare(a.weekly, b.weekly);
+                } else if (field.equals("annual")) {
+                    result = Double.compare(a.annual, b.annual);
+                } else {
+                    // default: annual desc
+                    result = -Double.compare(a.annual, b.annual);
+                }
+                if (!ascending) result = -result;
+                // Tie-breaker by doctorId
+                if (result == 0) {
+                    String aid = a.doctorId == null ? "" : a.doctorId;
+                    String bid = b.doctorId == null ? "" : b.doctorId;
+                    result = aid.compareTo(bid);
+                }
+                return result;
+            }
+        };
+        if (doSort || true) { // always sort (default annual desc if
+            quickSortRows(rows, 0, pos - 1, comparator);
+        }
+
+        String h1 = padRight("Doctor ID", 12);
+        String h2 = padRight("Name", 28);
+        String h3 = padRight("Specialty", 22);
+        String h4 = padRight("Weekly Hours", 14);
+        String h5 = padRight("Annual Hours", 14);
+        report.append(" ").append(h1).append(" | ").append(h2).append(" | ")
+              .append(h3).append(" | ").append(h4).append(" | ").append(h5).append("\n");
+        report.append(line).append("\n");
+
+        double totalAnnual = 0.0;
+        for (int i = 0; i < pos; i++) {
+            Row r = rows[i];
+            String c1 = padRight(r.doctorId, 12);
+            String c2 = padRight(r.name == null ? "" : r.name, 28);
+            String c3 = padRight(r.specialty == null ? "" : r.specialty, 22);
+            String c4 = padLeft(String.format(java.util.Locale.US, "%.2f", r.weekly), 14);
+            String c5 = padLeft(String.format(java.util.Locale.US, "%.2f", r.annual), 14);
+            report.append(" ").append(c1).append(" | ").append(c2).append(" | ")
+                  .append(c3).append(" | ").append(c4).append(" | ").append(c5).append("\n");
+            totalAnnual += r.annual;
+        }
+
+        report.append("\nTotal doctors : ").append(docCount).append("\n");
+        report.append("Total annual hours (all doctors) : ")
+              .append(String.format(java.util.Locale.US, "%.2f", totalAnnual)).append("\n\n");
         report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
         report.append(centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
         report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
         return report.toString();
     }
+
+    // Quicksort helper for Row[] using comparator
+    private void quickSortRows(Object[] arr, int low, int high, java.util.Comparator comparator) {
+        if (low >= high) return;
+        int i = low, j = high;
+        Object pivot = arr[low + (high - low) / 2];
+        while (i <= j) {
+            while (comparator.compare(arr[i], pivot) < 0) i++;
+            while (comparator.compare(arr[j], pivot) > 0) j--;
+            if (i <= j) {
+                Object tmp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = tmp;
+                i++; j--;
+            }
+        }
+        if (low < j) quickSortRows(arr, low, j, comparator);
+        if (i < high) quickSortRows(arr, i, high, comparator);
+    }
     
     private void updateActiveDoctorsList(Doctor updatedDoctor) {
+        boolean found = false;
         Iterator<Doctor> doctorIterator = activeDoctors.iterator();
         while (doctorIterator.hasNext()) {
             Doctor doctor = doctorIterator.next();
             if (doctor.getDoctorId().equals(updatedDoctor.getDoctorId())) {
-                // Remove old entry and add updated one
                 activeDoctors.remove(doctor.getDoctorId());
                 activeDoctors.add(updatedDoctor.getDoctorId(), updatedDoctor);
+                found = true;
                 break;
             }
+        }
+        if (!found) {
+            activeDoctors.add(updatedDoctor.getDoctorId(), updatedDoctor);
         }
     }
     

@@ -30,7 +30,7 @@ public class Prescription {
         this.prescriptionDate = prescriptionDate;
         this.instructions = instructions;
         this.expiryDate = expiryDate;
-        this.prescribedMedicines = new ArrayBucketList<String, PrescribedMedicine>();
+        this.prescribedMedicines = new ArrayBucketList<>();
         this.status = PrescriptionStatus.ACTIVE;
         this.totalCost = 0.0;
     }
@@ -167,11 +167,6 @@ public class Prescription {
             this.frequency = frequency;
             this.duration = duration;
             this.unitPrice = unitPrice;
-        }
-
-        // Constructor with prescriptionId only
-        public PrescribedMedicine(String prescriptionId) {
-            this.prescriptionId = prescriptionId;
         }
 
         // Getters and Setter

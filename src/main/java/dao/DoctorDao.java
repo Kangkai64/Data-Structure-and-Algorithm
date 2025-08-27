@@ -12,6 +12,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 
+/**
+ * @author: Lee Yong Kang
+ * Consultation DAO - Module 2
+ * Manages doctor data access operations
+ */
+
 public class DoctorDao extends DaoTemplate<Doctor> {
 
     @Override

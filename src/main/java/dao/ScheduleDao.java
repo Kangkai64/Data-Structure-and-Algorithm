@@ -58,6 +58,31 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
         return schedules;
     }
 
+    public ArrayBucketList<String, Schedule> findByDoctorId(String doctorId) throws SQLException {
+        ArrayBucketList<String, Schedule> schedules = new ArrayBucketList<String, Schedule>();
+        String sql = "SELECT * FROM schedule WHERE doctorId = ? ORDER BY "
+                + "FIELD(dayOfWeek,'MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY')";
+
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, doctorId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    Schedule schedule = mapResultSet(resultSet);
+                    if (schedule != null) {
+                        schedules.add(schedule.getScheduleId(), schedule);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error finding schedules by doctorId: " + e.getMessage());
+            throw e;
+        }
+
+        return schedules;
+    }
+
     @Override
     public boolean insertAndReturnId(Schedule schedule) throws SQLException {
         String sql = "INSERT INTO schedule (doctorId, dayOfWeek, fromTime, toTime, isAvailable) " +

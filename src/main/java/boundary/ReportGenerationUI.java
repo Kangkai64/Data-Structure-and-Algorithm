@@ -1,8 +1,13 @@
 package boundary;
 
-import control.*;
-import utility.ConsoleUtils;
 import java.util.Scanner;
+
+import control.ConsultationManagementControl;
+import control.DoctorManagementControl;
+import control.MedicalTreatmentControl;
+import control.PatientManagementControl;
+import control.PharmacyManagementControl;
+import utility.ConsoleUtils;
 
 /**
  * Report Generation User Interface
@@ -30,11 +35,11 @@ public class ReportGenerationUI {
         
         System.out.println("\n" + patientControl.generatePatientRegistrationReport());
         System.out.println("\n" + doctorControl.generateDoctorInformationReport());
-        System.out.println("\n" + doctorControl.generateScheduleReport());
-        System.out.println("\n" + consultationControl.generateConsultationReport());
-        System.out.println("\n" + consultationControl.generateConsultationHistoryReport());
-        System.out.println("\n" + treatmentControl.generateTreatmentReport());
-        System.out.println("\n" + treatmentControl.generateTreatmentHistoryReport());
+        System.out.println("\n" + doctorControl.generateDoctorWorkloadReport());
+        System.out.println("\n" + consultationControl.generateConsultationReport("date", "desc"));
+        System.out.println("\n" + consultationControl.generateConsultationHistoryReport("date", "desc"));
+        System.out.println("\n" + treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
+        System.out.println("\n" + treatmentControl.generateTreatmentStatusReport("id", "asc"));
         System.out.println("\n" + pharmacyControl.generateMedicineStockReport("name", "asc"));
         System.out.println("\n" + pharmacyControl.generatePrescriptionReport("date", "desc"));
         
@@ -114,11 +119,11 @@ public class ReportGenerationUI {
                 System.out.println(doctorControl.generateDoctorInformationReport());
                 break;
             case 2:
-                System.out.println(doctorControl.generateScheduleReport());
+                System.out.println(doctorControl.generateDoctorWorkloadReport());
                 break;
             case 3:
                 System.out.println(doctorControl.generateDoctorInformationReport());
-                System.out.println(doctorControl.generateScheduleReport());
+                System.out.println(doctorControl.generateDoctorWorkloadReport());
                 break;
             default:
                 System.out.println("Invalid choice.");
@@ -128,7 +133,7 @@ public class ReportGenerationUI {
     private void generateConsultationReports() {
         ConsoleUtils.printHeader("Consultation Reports");
         System.out.println("1. Consultation Report");
-        System.out.println("2. Scheduled Consultations Report");
+        System.out.println("2. Consultation History Report");
         System.out.println("3. Both Reports");
         System.out.print("Enter choice: ");
         
@@ -136,17 +141,81 @@ public class ReportGenerationUI {
         
         switch (choice) {
             case 1:
-                System.out.println(consultationControl.generateConsultationReport());
+                generateConsultationReport();
                 break;
             case 2:
-                System.out.println(consultationControl.generateConsultationHistoryReport());
+                generateConsultationHistoryReport();
                 break;
             case 3:
-                System.out.println(consultationControl.generateConsultationReport());
-                System.out.println(consultationControl.generateConsultationHistoryReport());
+                generateConsultationReport();
+                generateConsultationHistoryReport();
                 break;
             default:
                 System.out.println("Invalid choice.");
+        }
+    }
+    
+    private void generateConsultationReport() {
+        ConsoleUtils.printHeader("Consultation Report");
+        
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Consultation ID");
+        System.out.println("2. Patient Name");
+        System.out.println("3. Doctor Name");
+        System.out.println("4. Consultation Date");
+        System.out.println("5. Status");
+        System.out.println("6. Consultation Fee");
+        
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        String sortBy = getConsultationSortField(sortFieldChoice);
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(consultationControl.generateConsultationReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+    
+    private void generateConsultationHistoryReport() {
+        ConsoleUtils.printHeader("Consultation History Report");
+        
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Consultation ID");
+        System.out.println("2. Patient Name");
+        System.out.println("3. Doctor Name");
+        System.out.println("4. Consultation Date");
+        System.out.println("5. Status");
+        System.out.println("6. Consultation Fee");
+        
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        String sortBy = getConsultationSortField(sortFieldChoice);
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+    
+    private String getConsultationSortField(int choice) {
+        switch (choice) {
+            case 1: return "id";
+            case 2: return "patient";
+            case 3: return "doctor";
+            case 4: return "date";
+            case 5: return "status";
+            case 6: return "fee";
+            default: return "date";
         }
     }
 
@@ -161,14 +230,14 @@ public class ReportGenerationUI {
         
         switch (choice) {
             case 1:
-                System.out.println(treatmentControl.generateTreatmentReport());
+                System.out.println(treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
                 break;
             case 2:
-                System.out.println(treatmentControl.generateTreatmentHistoryReport());
+                System.out.println(treatmentControl.generateTreatmentStatusReport("id", "asc"));
                 break;
             case 3:
-                System.out.println(treatmentControl.generateTreatmentReport());
-                System.out.println(treatmentControl.generateTreatmentHistoryReport());
+                System.out.println(treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
+                System.out.println(treatmentControl.generateTreatmentStatusReport("id", "asc"));
                 break;
             default:
                 System.out.println("Invalid choice.");

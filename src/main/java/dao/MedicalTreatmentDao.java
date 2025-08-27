@@ -24,6 +24,17 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         this.patientDao = new PatientDao();
         this.doctorDao = new DoctorDao();
         this.consultationDao = new ConsultationDao();
+        ensureUniqueConstraintOnConsultation();
+    }
+
+    private void ensureUniqueConstraintOnConsultation() {
+        String ddl = "ALTER TABLE medical_treatment ADD UNIQUE KEY IF NOT EXISTS uq_treatment_consultation (consultationId)";
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate(ddl);
+        } catch (SQLException ignore) {
+            // Ignore if not supported or already exists
+        }
     }
 
     @Override
@@ -79,6 +90,21 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
+            // Enforce one treatment per consultation at the database layer as well
+            if (treatment.getConsultation() != null && treatment.getConsultation().getConsultationId() != null) {
+                String consultationId = treatment.getConsultation().getConsultationId();
+                try (PreparedStatement dupCheck = connection.prepareStatement(
+                        "SELECT COUNT(1) FROM medical_treatment WHERE consultationId = ?")) {
+                    dupCheck.setString(1, consultationId);
+                    try (ResultSet rs = dupCheck.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0) {
+                            System.err.println("Insert blocked: consultationId " + consultationId + " is already used by another treatment.");
+                            return false;
+                        }
+                    }
+                }
+            }
+
             preparedStatement.setString(1, treatment.getPatient().getPatientId());
             preparedStatement.setString(2, treatment.getDoctor().getDoctorId());
             preparedStatement.setString(3, treatment.getConsultation() != null ? 
@@ -108,6 +134,17 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         } catch (SQLException e) {
             System.err.println("Error inserting medical treatment: " + e.getMessage());
             throw e;
+        }
+    }
+
+    public boolean existsByConsultationId(String consultationId) throws SQLException {
+        String sql = "SELECT 1 FROM medical_treatment WHERE consultationId = ? LIMIT 1";
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, consultationId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                return rs.next();
+            }
         }
     }
 
@@ -233,32 +270,46 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
                 return null;
             }
 
-            // Create MedicalTreatment object
-            MedicalTreatment treatment = new MedicalTreatment(
-                    resultSet.getString("treatmentId"),
-                    patient,
-                    doctor,
-                    consultation,
-                    resultSet.getString("diagnosis"),
-                    resultSet.getString("treatmentPlan"),
-                    resultSet.getString("prescribedMedications"),
-                    resultSet.getString("treatmentNotes"),
-                    resultSet.getObject("treatmentDate", LocalDateTime.class),
-                    resultSet.getDouble("treatmentCost")
-            );
-
-            // Set additional fields
-            LocalDateTime followUpDate = resultSet.getObject("followUpDate", LocalDateTime.class);
-            if (followUpDate != null) {
-                treatment.setFollowUpDate(followUpDate);
+            // Parse treatmentDate safely (handle possible zero-date values)
+            LocalDateTime treatmentDate = null;
+            String treatmentDateStr = resultSet.getString("treatmentDate");
+            if (treatmentDateStr != null && !treatmentDateStr.startsWith("0000-00-00")) {
+                java.sql.Timestamp ts = resultSet.getTimestamp("treatmentDate");
+                if (ts != null) {
+                    treatmentDate = ts.toLocalDateTime();
+                }
             }
-            
-            treatment.setStatus(MedicalTreatment.TreatmentStatus.valueOf(resultSet.getString("status")));
 
-            return treatment;
-        } catch (SQLException e) {
-            System.err.println("Error mapping result set to MedicalTreatment: " + e.getMessage());
-            throw e;
-        }
-    }
-} 
+             // Create MedicalTreatment object
+             MedicalTreatment treatment = new MedicalTreatment(
+                resultSet.getString("treatmentId"),
+                patient,
+                doctor,
+                consultation,
+                resultSet.getString("diagnosis"),
+                resultSet.getString("treatmentPlan"),
+                resultSet.getString("prescribedMedications"),
+                resultSet.getString("treatmentNotes"),
+                treatmentDate != null ? treatmentDate : LocalDateTime.now(),
+                resultSet.getDouble("treatmentCost")
+             );
+
+
+             // Set additional fields (followUpDate is DATE; convert safely to start-of-day)
+             String followUpStr = resultSet.getString("followUpDate");
+             if (followUpStr != null && !followUpStr.startsWith("0000-00-00")) {
+                 java.sql.Date fd = resultSet.getDate("followUpDate");
+                 if (fd != null) {
+                     treatment.setFollowUpDate(fd.toLocalDate().atStartOfDay());
+                 }
+             }
+             
+             treatment.setStatus(MedicalTreatment.TreatmentStatus.valueOf(resultSet.getString("status")));
+ 
+             return treatment;
+         } catch (SQLException e) {
+             System.err.println("Error mapping result set to MedicalTreatment: " + e.getMessage());
+             throw e;
+         }
+     }
+ } 

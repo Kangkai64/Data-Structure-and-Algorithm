@@ -31,16 +31,16 @@ public class PharmacyManagementControl {
     private ArrayBucketList<String, Medicine> medicines;
     private ArrayBucketList<String, Prescription> prescriptions;
     private ArrayBucketList<String, Prescription> dispensedPrescriptions;
-    private MedicineDao medicineDao;
-    private PrescriptionDao prescriptionDao;
-    private PatientDao patientDao;
-    private DoctorDao doctorDao;
-    private ConsultationDao consultationDao;
+    private final MedicineDao medicineDao;
+    private final PrescriptionDao prescriptionDao;
+    private final PatientDao patientDao;
+    private final DoctorDao doctorDao;
+    private final ConsultationDao consultationDao;
 
     public PharmacyManagementControl() {
-        this.medicines = new ArrayBucketList<String, Medicine>();
-        this.prescriptions = new ArrayBucketList<String, Prescription>();
-        this.dispensedPrescriptions = new ArrayBucketList<String, Prescription>();
+        this.medicines = new ArrayBucketList<>();
+        this.prescriptions = new ArrayBucketList<>();
+        this.dispensedPrescriptions = new ArrayBucketList<>();
         this.medicineDao = new MedicineDao();
         this.prescriptionDao = new PrescriptionDao();
         this.patientDao = new PatientDao();
@@ -114,6 +114,7 @@ public class PharmacyManagementControl {
     public boolean updateMedicineDetails(Medicine medicine) {
         try {
             medicineDao.update(medicine);
+            medicines.add(medicine.getMedicineId(), medicine);
             return true;
         } catch (Exception exception) {
             System.err.println("Error updating medicine details: " + exception.getMessage());
@@ -127,6 +128,7 @@ public class PharmacyManagementControl {
             if (medicine != null) {
                 medicine.setStatus(Medicine.MedicineStatus.DISCONTINUED);
                 medicineDao.updateStatus(medicineId, Medicine.MedicineStatus.DISCONTINUED);
+                medicines.add(medicine.getMedicineId(), medicine);
                 return true;
             }
             return false;
@@ -150,6 +152,7 @@ public class PharmacyManagementControl {
 
             // Add to prescriptions list
             prescriptionDao.insertAndReturnId(prescription);
+            prescriptions.add(prescription.getPrescriptionId(), prescription);
 
             return true;
         } catch (Exception exception) {
@@ -165,6 +168,8 @@ public class PharmacyManagementControl {
 
             if (prescription != null && medicine != null) {
                 prescriptionDao.insertPrescribedMedicineAndReturnId(prescribedMedicine);
+                prescription.addPrescribedMedicine(prescribedMedicine);
+                prescriptions.add(prescription.getPrescriptionId(), prescription);
                 return true;
             }
             return false;
@@ -191,11 +196,39 @@ public class PharmacyManagementControl {
             if (prescription != null && prescribedMedicine != null) {
                 boolean removed = prescription.removePrescribedMedicine(prescribedMedicine);
                 prescriptionDao.deletePrescribedMedicine(prescriptionId, prescribedMedicineId);
+                prescription.removePrescribedMedicine(prescribedMedicine);
+                prescriptions.add(prescription.getPrescriptionId(), prescription);
                 return removed;
             }
             return false;
         } catch (Exception exception) {
             System.err.println("Error removing medicine from prescription: " + exception.getMessage());
+            return false;
+        }
+    }
+
+    public boolean updatePrescription(Prescription prescription) {
+        Prescription.PrescriptionStatus oldStatus = null;
+        try {
+            Prescription oldPrescription = findPrescriptionById(prescription.getPrescriptionId());
+            if (oldPrescription != null) {
+                oldStatus = oldPrescription.getStatus();
+            }
+
+            prescriptionDao.update(prescription);
+            prescriptions.add(prescription.getPrescriptionId(), prescription);
+            if (prescription.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
+                dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
+            }
+
+            if (oldStatus == Prescription.PrescriptionStatus.DISPENSED && prescription.getStatus() != Prescription.PrescriptionStatus.DISPENSED) {
+                dispensedPrescriptions.remove(prescription.getPrescriptionId());
+            }
+
+            return true;
+        }
+        catch (Exception exception) {
+            System.err.println("Error updating prescription: " + exception.getMessage());
             return false;
         }
     }
@@ -212,6 +245,7 @@ public class PharmacyManagementControl {
                             prescribedMedicine.getDuration());
                     prescriptionDao.updatePrescribedMedicine(prescription, prescribedMedicine);
                     prescriptions.add(prescription.getPrescriptionId(), prescription);
+                    medicines.add(medicine.getMedicineId(), medicine);
                     return updated;
                 }
                 return false;
@@ -254,6 +288,8 @@ public class PharmacyManagementControl {
                 // Update prescription status
                 prescription.setStatus(Prescription.PrescriptionStatus.DISPENSED);
                 prescriptionDao.update(prescription);
+                dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
+                prescriptions.add(prescription.getPrescriptionId(), prescription);
                 return true;
             }
             return false;
@@ -291,7 +327,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Medicine> findMedicineByManufacturer(String manufacturer) {
-        ArrayBucketList<String, Medicine> manufacturerMedicines = new ArrayBucketList<String, Medicine>();
+        ArrayBucketList<String, Medicine> manufacturerMedicines = new ArrayBucketList<>();
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
             Medicine medicine = medicineIterator.next();
@@ -303,7 +339,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Medicine> findMedicineByStatus(int statusChoice) {
-        ArrayBucketList<String, Medicine> statusMedicines = new ArrayBucketList<String, Medicine>();
+        ArrayBucketList<String, Medicine> statusMedicines = new ArrayBucketList<>();
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
             Medicine medicine = medicineIterator.next();
@@ -315,7 +351,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Medicine> getLowStockMedicines() {
-        ArrayBucketList<String, Medicine> lowStockMedicines = new ArrayBucketList<String, Medicine>();
+        ArrayBucketList<String, Medicine> lowStockMedicines = new ArrayBucketList<>();
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
             Medicine medicine = medicineIterator.next();
@@ -327,7 +363,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Medicine> getExpiredMedicines() {
-        ArrayBucketList<String, Medicine> expiredMedicines = new ArrayBucketList<String, Medicine>();
+        ArrayBucketList<String, Medicine> expiredMedicines = new ArrayBucketList<>();
         Iterator<Medicine> medicineIterator = medicines.iterator();
         while (medicineIterator.hasNext()) {
             Medicine medicine = medicineIterator.next();
@@ -343,7 +379,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Prescription> findPrescriptionsByPatient(String patientId) {
-        ArrayBucketList<String, Prescription> patientPrescriptions = new ArrayBucketList<String, Prescription>();
+        ArrayBucketList<String, Prescription> patientPrescriptions = new ArrayBucketList<>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
@@ -356,7 +392,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Prescription> findPrescriptionsByDoctor(String doctorId) {
-        ArrayBucketList<String, Prescription> doctorPrescriptions = new ArrayBucketList<String, Prescription>();
+        ArrayBucketList<String, Prescription> doctorPrescriptions = new ArrayBucketList<>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
@@ -368,7 +404,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Prescription> findPrescriptionsByStatus(int statusChoice) {
-        ArrayBucketList<String, Prescription> statusPrescriptions = new ArrayBucketList<String, Prescription>();
+        ArrayBucketList<String, Prescription> statusPrescriptions = new ArrayBucketList<>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
@@ -380,7 +416,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Prescription> findPrescriptionsByDateRange(LocalDate startDate, LocalDate endDate) {
-        ArrayBucketList<String, Prescription> dateRangePrescriptions = new ArrayBucketList<String, Prescription>();
+        ArrayBucketList<String, Prescription> dateRangePrescriptions = new ArrayBucketList<>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
@@ -393,7 +429,7 @@ public class PharmacyManagementControl {
     }
 
     public ArrayBucketList<String, Prescription> getActivePrescriptions() {
-        ArrayBucketList<String, Prescription> activePrescriptions = new ArrayBucketList<String, Prescription>();
+        ArrayBucketList<String, Prescription> activePrescriptions = new ArrayBucketList<>();
         Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
@@ -661,17 +697,6 @@ public class PharmacyManagementControl {
         report.append("\nPRESCRIPTIONS BY YEAR:\n");
         // Sort prescription years in descending order using QuickSort
         if (prescYearCount > 1) {
-            // Create arrays for sorting
-            Integer[] yearArray = new Integer[prescYearCount];
-            Integer[] countArray = new Integer[prescYearCount];
-            Double[] revenueArray = new Double[prescYearCount];
-
-            for (int index = 0; index < prescYearCount; index++) {
-                yearArray[index] = prescriptionYears[index];
-                countArray[index] = prescriptionsByYear[index];
-                revenueArray[index] = revenueByYear[index];
-            }
-
             for (int index = 0; index < prescYearCount - 1; index++) {
                 for (int innerIndex = index + 1; innerIndex < prescYearCount; innerIndex++) {
                     if (prescriptionYears[index] < prescriptionYears[innerIndex]) {
@@ -810,85 +835,23 @@ public class PharmacyManagementControl {
         return report.toString();
     }
 
-    public String generatePharmacyAnalysisReport() {
-        StringBuilder report = new StringBuilder();
-
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("COMPREHENSIVE PHARMACY ANALYSIS REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n\n");
-
-        report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
-                .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
-
-        // Key Performance Indicators
-        report.append(ConsoleUtils.centerText("KEY PERFORMANCE INDICATORS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
-
-        double totalInventoryValue = 0;
-        double totalRevenue = 0;
-        int lowStockCount = getLowStockMedicines().getSize();
-        int expiredCount = getExpiredMedicines().getSize();
-
-        Iterator<Medicine> medIterator = medicines.iterator();
-        while (medIterator.hasNext()) {
-            Medicine med = medIterator.next();
-            totalInventoryValue += med.getQuantityInStock() * med.getUnitPrice();
-        }
-
-        Iterator<Prescription> presIterator = prescriptions.iterator();
-        while (presIterator.hasNext()) {
-            Prescription pres = presIterator.next();
-            totalRevenue += pres.getTotalCost();
-        }
-
-        report.append(String.format("Total Inventory Value    : RM %,15.2f\n", totalInventoryValue));
-        report.append(String.format("Total Revenue Generated  : RM %,15.2f\n", totalRevenue));
-        report.append(String.format("Stock Efficiency         : %6.1f%% (Low stock medicines: %d)\n",
-                (double) (getTotalMedicines() - lowStockCount) / getTotalMedicines() * 100, lowStockCount));
-        report.append(String.format("Inventory Health         : %6.1f%% (Non-expired: %d)\n",
-                (double) (getTotalMedicines() - expiredCount) / getTotalMedicines() * 100,
-                getTotalMedicines() - expiredCount));
-
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF ANALYSIS REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
-
-        return report.toString();
-    }
-
     // Helper methods for sorting
     private String getSortFieldDisplayName(String sortBy) {
-        switch (sortBy.toLowerCase()) {
-            case "name":
-                return "Medicine Name";
-            case "generic":
-                return "Generic Name";
-            case "stock":
-                return "Stock Quantity";
-            case "price":
-                return "Unit Price";
-            case "expiry":
-                return "Expiry Date";
-            case "status":
-                return "Status";
-            case "date":
-                return "Prescription Date";
-            case "patient":
-                return "Patient Name";
-            case "doctor":
-                return "Doctor Name";
-            case "total":
-                return "Total Cost";
-            case "cost":
-                return "Total Cost";
-            case "id":
-                return "ID";
-            default:
-                return "Default";
-        }
+        return switch (sortBy.toLowerCase()) {
+            case "name" -> "Medicine Name";
+            case "generic" -> "Generic Name";
+            case "stock" -> "Stock Quantity";
+            case "price" -> "Unit Price";
+            case "expiry" -> "Expiry Date";
+            case "status" -> "Status";
+            case "date" -> "Prescription Date";
+            case "patient" -> "Patient Name";
+            case "doctor" -> "Doctor Name";
+            case "total" -> "Total Cost";
+            case "cost" -> "Total Cost";
+            case "id" -> "ID";
+            default -> "Default";
+        };
     }
 
     private void sortMedicineArray(Medicine[] medicineArray, String sortBy, String sortOrder) {
@@ -896,8 +859,6 @@ public class PharmacyManagementControl {
             return;
 
         Comparator<Medicine> comparator = getMedicineComparator(sortBy);
-        if (comparator == null)
-            return;
 
         // Apply sort order
         if (sortOrder.equalsIgnoreCase("desc")) {
@@ -912,9 +873,7 @@ public class PharmacyManagementControl {
             return;
 
         Comparator<Prescription> comparator = getPrescriptionComparator(sortBy);
-        if (comparator == null)
-            return;
-
+        
         // Apply sort order
         if (sortOrder.equalsIgnoreCase("desc")) {
             comparator = comparator.reversed();
@@ -924,46 +883,30 @@ public class PharmacyManagementControl {
     }
 
     private Comparator<Medicine> getMedicineComparator(String sortBy) {
-        switch (sortBy.toLowerCase()) {
-            case "name":
-                return Comparator.comparing(m -> m.getMedicineName() != null ? m.getMedicineName() : "");
-            case "generic":
-                return Comparator.comparing(m -> m.getGenericName() != null ? m.getGenericName() : "");
-            case "stock":
-                return Comparator.comparing(Medicine::getQuantityInStock);
-            case "price":
-                return Comparator.comparing(Medicine::getUnitPrice);
-            case "expiry":
-                return Comparator.comparing(m -> m.getExpiryDate() != null ? m.getExpiryDate() : LocalDate.MAX);
-            case "status":
-                return Comparator.comparing(m -> m.getStatus() != null ? m.getStatus().toString() : "");
-            case "id":
-                return Comparator.comparing(m -> m.getMedicineId() != null ? m.getMedicineId() : "");
-            default:
-                return Comparator.comparing(m -> m.getMedicineName() != null ? m.getMedicineName() : "");
-        }
+        return switch (sortBy.toLowerCase()) {
+            case "name" -> Comparator.comparing(m -> m.getMedicineName() != null ? m.getMedicineName() : "");
+            case "generic" -> Comparator.comparing(m -> m.getGenericName() != null ? m.getGenericName() : "");
+            case "stock" -> Comparator.comparing(Medicine::getQuantityInStock);
+            case "price" -> Comparator.comparing(Medicine::getUnitPrice);
+            case "expiry" -> Comparator.comparing(m -> m.getExpiryDate() != null ? m.getExpiryDate() : LocalDate.MAX);
+            case "status" -> Comparator.comparing(m -> m.getStatus() != null ? m.getStatus().toString() : "");
+            case "id" -> Comparator.comparing(m -> m.getMedicineId() != null ? m.getMedicineId() : "");
+            default -> Comparator.comparing(m -> m.getMedicineName() != null ? m.getMedicineName() : "");
+        };
     }
 
     private Comparator<Prescription> getPrescriptionComparator(String sortBy) {
-        switch (sortBy.toLowerCase()) {
-            case "date":
-                return Comparator
-                        .comparing(p -> p.getPrescriptionDate() != null ? p.getPrescriptionDate() : LocalDate.MAX);
-            case "patient":
-                return Comparator.comparing(p -> p.getPatient() != null ? p.getPatient().getFullName() : "");
-            case "doctor":
-                return Comparator.comparing(p -> p.getDoctor() != null ? p.getDoctor().getFullName() : "");
-            case "total":
-                return Comparator.comparing(Prescription::getTotalCost);
-            case "cost":
-                return Comparator.comparing(Prescription::getTotalCost);
-            case "status":
-                return Comparator.comparing(p -> p.getStatus() != null ? p.getStatus().toString() : "");
-            case "id":
-                return Comparator.comparing(p -> p.getPrescriptionId() != null ? p.getPrescriptionId() : "");
-            default:
-                return Comparator
-                        .comparing(p -> p.getPrescriptionDate() != null ? p.getPrescriptionDate() : LocalDate.MAX);
-        }
+        return switch (sortBy.toLowerCase()) {
+            case "date" -> Comparator
+                    .comparing(p -> p.getPrescriptionDate() != null ? p.getPrescriptionDate() : LocalDate.MAX);
+            case "patient" -> Comparator.comparing(p -> p.getPatient() != null ? p.getPatient().getFullName() : "");
+            case "doctor" -> Comparator.comparing(p -> p.getDoctor() != null ? p.getDoctor().getFullName() : "");
+            case "total" -> Comparator.comparing(Prescription::getTotalCost);
+            case "cost" -> Comparator.comparing(Prescription::getTotalCost);
+            case "status" -> Comparator.comparing(p -> p.getStatus() != null ? p.getStatus().toString() : "");
+            case "id" -> Comparator.comparing(p -> p.getPrescriptionId() != null ? p.getPrescriptionId() : "");
+            default -> Comparator
+                    .comparing(p -> p.getPrescriptionDate() != null ? p.getPrescriptionDate() : LocalDate.MAX);
+        };
     }
 }

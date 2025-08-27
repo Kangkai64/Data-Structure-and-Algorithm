@@ -4,8 +4,6 @@ import control.ConsultationManagementControl;
 import entity.Consultation;
 import entity.Patient;
 import entity.Doctor;
-import dao.PatientDao;
-import dao.DoctorDao;
 import utility.ConsoleUtils;
 import utility.DateType;
 import adt.ArrayBucketList;
@@ -16,20 +14,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 /**
+ * @author: Poh Qi Xuan
  * Consultation Management User Interface
  * Handles all consultation management user interactions
  */
 public class ConsultationManagementUI {
     private Scanner scanner;
     private ConsultationManagementControl consultationControl;
-    private PatientDao patientDao;
-    private DoctorDao doctorDao;
 
     public ConsultationManagementUI() {
         this.scanner = new Scanner(System.in);
         this.consultationControl = new ConsultationManagementControl();
-        this.patientDao = new PatientDao();
-        this.doctorDao = new DoctorDao();
     }
 
     public void displayConsultationManagementMenu() {
@@ -83,16 +78,9 @@ public class ConsultationManagementUI {
         
         // Get patient details
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
-        Patient patient = null;
-        try {
-            patient = patientDao.findById(patientId);
-            if (patient == null) {
-                System.out.println("Patient not found.");
-                ConsoleUtils.waitMessage();
-                return;
-            }
-        } catch (Exception e) {
-            System.out.println("Error finding patient: " + e.getMessage());
+        Patient patient = consultationControl.getPatientById(patientId);
+        if (patient == null) {
+            System.out.println("Patient not found.");
             ConsoleUtils.waitMessage();
             return;
         }
@@ -116,16 +104,9 @@ public class ConsultationManagementUI {
 
         // Select doctor from the list
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID from the list above: ");
-        Doctor doctor = null;
-        try {
-            doctor = doctorDao.findById(doctorId);
-            if (doctor == null) {
-                System.out.println("Doctor not found.");
-                ConsoleUtils.waitMessage();
-                return;
-            }
-        } catch (Exception e) {
-            System.out.println("Error finding doctor: " + e.getMessage());
+        Doctor doctor = consultationControl.getDoctorById(doctorId);
+        if (doctor == null) {
+            System.out.println("Doctor not found.");
             ConsoleUtils.waitMessage();
             return;
         }
@@ -325,11 +306,14 @@ public class ConsultationManagementUI {
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
         
         ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByPatient(patientId);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
+        
         if (consultations.isEmpty()) {
-            System.out.println("No consultations found for this patient.");
+            System.out.println("No consultations found for patient ID: " + patientId);
         } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) for patient ID: " + patientId);
             System.out.println();
-            ConsoleUtils.printHeader("Search Result");
             for (Consultation consultation : consultations) {
                 printConsultationDetails(consultation);
             }
@@ -341,11 +325,14 @@ public class ConsultationManagementUI {
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
         
         ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByDoctor(doctorId);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
+        
         if (consultations.isEmpty()) {
-            System.out.println("No consultations found for this doctor.");
+            System.out.println("No consultations found for doctor ID: " + doctorId);
         } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) for doctor ID: " + doctorId);
             System.out.println();
-            ConsoleUtils.printHeader("Search Result");
             for (Consultation consultation : consultations) {
                 printConsultationDetails(consultation);
             }
@@ -363,26 +350,18 @@ public class ConsultationManagementUI {
             return;
         }
         
-        // Get all consultations and filter by date range
-        ArrayBucketList<String, Consultation> allConsultations = consultationControl.getAllConsultations();
-        ArrayBucketList<String, Consultation> filteredConsultations = new ArrayBucketList<String, Consultation>();
+        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByDateRange(startDate, endDate);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
+        System.out.println("Date Range: " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + 
+                         " to " + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
         
-        for (Consultation consultation : allConsultations) {
-            LocalDate consultationDate = consultation.getConsultationDate().toLocalDate();
-            if (!consultationDate.isBefore(startDate) && !consultationDate.isAfter(endDate)) {
-                filteredConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        
-        if (filteredConsultations.isEmpty()) {
-            System.out.println("No consultations found for this date range.");
+        if (consultations.isEmpty()) {
+            System.out.println("No consultations found in the specified date range.");
         } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) in the specified date range:");
             System.out.println();
-            ConsoleUtils.printHeader("Search Result");
-            System.out.println("Date Range: " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + 
-                             " to " + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
-            System.out.println("Found " + filteredConsultations.getSize() + " consultation(s):\n");
-            for (Consultation consultation : filteredConsultations) {
+            for (Consultation consultation : consultations) {
                 printConsultationDetails(consultation);
             }
         }
@@ -391,7 +370,7 @@ public class ConsultationManagementUI {
     private void searchConsultationsByStatus() {
         ConsoleUtils.printHeader("Search by Status");
         System.out.println("Select status:");
-        System.out.println("1. SCHEDULED\n  2. IN_PROGRESS\n  3. COMPLETED\n  4. CANCELLED");
+        System.out.println("1. SCHEDULED\n2. IN_PROGRESS\n3. COMPLETED\n4. CANCELLED");
         
         int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         
@@ -411,22 +390,16 @@ public class ConsultationManagementUI {
                 break;
         }
         
-        // Get all consultations and filter by status
-        ArrayBucketList<String, Consultation> allConsultations = consultationControl.getAllConsultations();
-        ArrayBucketList<String, Consultation> filteredConsultations = new ArrayBucketList<String, Consultation>();
+        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByStatus(status);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
         
-        for (Consultation consultation : allConsultations) {
-            if (consultation.getStatus() == status) {
-                filteredConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        
-        if (filteredConsultations.isEmpty()) {
+        if (consultations.isEmpty()) {
             System.out.println("No consultations found with status: " + status);
         } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) with status: " + status);
             System.out.println();
-            ConsoleUtils.printHeader("Search Result");
-            for (Consultation consultation : filteredConsultations) {
+            for (Consultation consultation : consultations) {
                 printConsultationDetails(consultation);
             }
         }
@@ -434,13 +407,94 @@ public class ConsultationManagementUI {
 
     private void generateConsultationReports() {
         ConsoleUtils.printHeader("Consultation Reports");
-        System.out.println(consultationControl.generateConsultationReport());
-        ConsoleUtils.waitMessage();
-        System.out.println(consultationControl.generateConsultationHistoryReport());
+        
+        System.out.println("1. Consultation Report");
+        System.out.println("2. Consultation History Report");
+        System.out.println("3. Both Reports");
+        System.out.print("Enter choice: ");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        
+        switch (choice) {
+            case 1:
+                generateConsultationReport();
+                break;
+            case 2:
+                generateConsultationHistoryReport();
+                break;
+            case 3:
+                generateConsultationReport();
+                generateConsultationHistoryReport();
+                break;
+            default:
+                System.out.println("Invalid choice.");
+        }
+    }
+    
+    private void generateConsultationReport() {
+        ConsoleUtils.printHeader("Consultation Report");
+        
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Consultation ID");
+        System.out.println("2. Patient Name");
+        System.out.println("3. Doctor Name");
+        System.out.println("4. Consultation Date");
+        System.out.println("5. Status");
+        System.out.println("6. Consultation Fee");
+        
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        String sortBy = getConsultationSortField(sortFieldChoice);
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(consultationControl.generateConsultationReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
+    
+    private void generateConsultationHistoryReport() {
+        ConsoleUtils.printHeader("Consultation History Report");
+        
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Consultation ID");
+        System.out.println("2. Patient Name");
+        System.out.println("3. Doctor Name");
+        System.out.println("4. Consultation Date");
+        System.out.println("5. Status");
+        System.out.println("6. Consultation Fee");
+        
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, Low to High)");
+        System.out.println("2. Descending (Z-A, High to Low)");
+        
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        String sortBy = getConsultationSortField(sortFieldChoice);
+        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+    
+    private String getConsultationSortField(int choice) {
+        switch (choice) {
+            case 1: return "id";
+            case 2: return "patient";
+            case 3: return "doctor";
+            case 4: return "date";
+            case 5: return "status";
+            case 6: return "fee";
+            default: return "date";
+        }
+    }
 
-    // Helpers for consistent, report-like output
     private void printConsultationDetails(Consultation consultation) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         System.out.println("Consultation ID: " + consultation.getConsultationId());
@@ -453,10 +507,7 @@ public class ConsultationManagementUI {
     }
 
     private void printScheduleDetails(entity.Schedule schedule) {
-        Doctor doctor = null;
-        try {
-            doctor = doctorDao.findById(schedule.getDoctorId());
-        } catch (Exception ignored) {}
+        Doctor doctor = consultationControl.getDoctorById(schedule.getDoctorId());
         String doctorName = doctor != null ? doctor.getFullName() : "Unknown";
         System.out.println("Doctor ID: " + schedule.getDoctorId());
         System.out.println("Doctor Name: " + doctorName);
@@ -478,16 +529,9 @@ public class ConsultationManagementUI {
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
         
         // Check if doctor exists
-        Doctor doctor = null;
-        try {
-            doctor = doctorDao.findById(doctorId);
-            if (doctor == null) {
-                System.out.println("Doctor not found.");
-                ConsoleUtils.waitMessage();
-                return;
-            }
-        } catch (Exception e) {
-            System.out.println("Error finding doctor: " + e.getMessage());
+        Doctor doctor = consultationControl.getDoctorById(doctorId);
+        if (doctor == null) {
+            System.out.println("Doctor not found.");
             ConsoleUtils.waitMessage();
             return;
         }
@@ -561,14 +605,9 @@ public class ConsultationManagementUI {
             
             // Let user select a different doctor
             String newDoctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID from the list above: ");
-            try {
-                doctor = doctorDao.findById(newDoctorId);
-                if (doctor == null) {
-                    System.out.println("Doctor not found.");
-                    return null;
-                }
-            } catch (Exception e) {
-                System.out.println("Error finding doctor: " + e.getMessage());
+            doctor = consultationControl.getDoctorById(newDoctorId);
+            if (doctor == null) {
+                System.out.println("Doctor not found.");
                 return null;
             }
         }

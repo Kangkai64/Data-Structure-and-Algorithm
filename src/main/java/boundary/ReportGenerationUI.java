@@ -34,7 +34,6 @@ public class ReportGenerationUI {
         ConsoleUtils.printHeader("Generating All Reports");
         
         System.out.println("\n" + patientControl.generatePatientRegistrationReport());
-        System.out.println("\n" + patientControl.generateQueueStatusReport());
         System.out.println("\n" + doctorControl.generateDoctorInformationReport());
         System.out.println("\n" + doctorControl.generateDoctorWorkloadReport());
         System.out.println("\n" + consultationControl.generateConsultationReport("date", "desc"));
@@ -91,23 +90,16 @@ public class ReportGenerationUI {
     private void generatePatientReports() {
         ConsoleUtils.printHeader("Patient Reports");
         System.out.println("1. Patient Registration Report");
-        System.out.println("2. Queue Status Report");
-        System.out.println("3. Both Reports");
-        System.out.print("Enter choice: ");
-        
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        System.out.println("2. Back to Main Menu");
+
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
         
         switch (choice) {
             case 1:
                 System.out.println(patientControl.generatePatientRegistrationReport());
                 break;
             case 2:
-                System.out.println(patientControl.generateQueueStatusReport());
-                break;
-            case 3:
-                System.out.println(patientControl.generatePatientRegistrationReport());
-                System.out.println(patientControl.generateQueueStatusReport());
-                break;
+                return;
             default:
                 System.out.println("Invalid choice.");
         }

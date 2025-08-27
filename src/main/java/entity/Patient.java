@@ -6,7 +6,6 @@ import static utility.PatternChecker.PHONE_PATTERN;
 
 public class Patient extends Person {
     private String patientId;
-    private String wardNumber;
     private BloodType bloodType;
     private String allergies;
     private Doctor dischargingDoctor;
@@ -15,11 +14,10 @@ public class Patient extends Person {
     private String emergencyContact;
 
     public Patient(String fullName, String ICNumber, String email, String phoneNumber,
-                   Address address, LocalDate registrationDate, String patientId, String wardNumber,
+                   Address address, LocalDate registrationDate, String patientId,
                    BloodType bloodType, String allergies, String emergencyContact) {
         super(fullName, ICNumber, email, phoneNumber, address, registrationDate);
         this.patientId = patientId;
-        this.wardNumber = wardNumber;
         this.bloodType = bloodType;
         this.allergies = allergies;
         this.emergencyContact = emergencyContact;
@@ -32,14 +30,6 @@ public class Patient extends Person {
 
     public void setPatientId(String patientId) {
         this.patientId = patientId;
-    }
-
-    public String getWardNumber() {
-        return wardNumber;
-    }
-
-    public void setWardNumber(String wardNumber) {
-        this.wardNumber = wardNumber;
     }
 
     public BloodType getBloodType() {

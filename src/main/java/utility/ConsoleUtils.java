@@ -127,27 +127,6 @@ public class ConsoleUtils {
         Pattern postalPattern = Pattern.compile("^\\d{5}$");
         return getInputMatchingWithDefault(scanner, prompt, postalPattern, "Postal code must be 5 digits", defaultValue).trim();
     }
-
-    public static String getWardNumberInput(Scanner scanner, String prompt) {
-        Pattern wardPattern = Pattern.compile("^W\\d{1,19}$");
-        return getInputMatching(
-            scanner, 
-            prompt, 
-            wardPattern, 
-            "Must start with 'W' followed by up to 19 digits (e.g., W1, W123)"
-        );
-    }
-    
-    public static String getWardNumberInput(Scanner scanner, String prompt, String defaultValue) {
-        Pattern wardPattern = Pattern.compile("^W\\d{1,19}$");
-        return getInputMatchingWithDefault(
-            scanner, 
-            prompt, 
-            wardPattern, 
-            "Must start with 'W' followed by up to 19 digits (e.g., W1, W123)", 
-            defaultValue
-        );
-    }
     
     public static int getIntInput(Scanner scanner, String prompt, int min, int max) {
         while (true) {

@@ -35,9 +35,9 @@ public class DoctorManagementUI {
             System.out.println("5. Search Doctor");
             System.out.println("6. Generate Reports");
             System.out.println("7. Back to Main Menu");
-            
+
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-            
+
             switch (choice) {
                 case 1:
                     registerNewDoctor();
@@ -74,37 +74,37 @@ public class DoctorManagementUI {
         String specialty = ConsoleUtils.getStringInput(scanner, "Enter medical specialty: ");
         String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter license number: ");
         int expYears = ConsoleUtils.getIntInput(scanner, "Enter experience years: ", 0, 50);
-        
+
         // Get address details
         String street = ConsoleUtils.getStringInput(scanner, "Enter street: ");
         String city = ConsoleUtils.getStringInput(scanner, "Enter city: ");
         String state = ConsoleUtils.getStringInput(scanner, "Enter state: ");
         Integer postalCode = ConsoleUtils.getIntInput(scanner, "Enter postal code: ", 0, 99999);
         String country = ConsoleUtils.getStringInput(scanner, "Enter country: ");
-        
+
         Address address = new Address(street, city, state, postalCode.toString(), country);
-        
-        boolean success = doctorControl.registerDoctor(fullName, icNumber, email, phoneNumber, 
-                                                     address, specialty, licenseNumber, expYears);
-        
+
+        boolean success = doctorControl.registerDoctor(fullName, icNumber, email, phoneNumber,
+                address, specialty, licenseNumber, expYears);
+
         if (success) {
             System.out.println("Doctor registered successfully!");
         } else {
             System.out.println("Failed to register doctor.");
         }
     }
-    
+
     private void updateDoctorInfo() {
         System.out.println("\n=== UPDATE DOCTOR INFORMATION ===");
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID to update: ");
-        
+
         // First, find the doctor to display current information
         Doctor currentDoctor = doctorControl.findDoctorById(doctorId);
         if (currentDoctor == null) {
             System.out.println("Doctor not found with ID: " + doctorId);
             return;
         }
-        
+
         // Display current doctor information
         System.out.println("\nCurrent Doctor Information:");
         System.out.println("1.Name: " + currentDoctor.getFullName());
@@ -117,7 +117,7 @@ public class DoctorManagementUI {
         int choice = ConsoleUtils.getIntInput(scanner, "\nEnter the number of information to update: ", 1, 6);
 
         String fullNameToUpdate = null;
-        String emailToUpdate = null;    
+        String emailToUpdate = null;
         String phoneToUpdate = null;
         String specialtyToUpdate = null;
         int expYearsToUpdate = -1;
@@ -153,7 +153,7 @@ public class DoctorManagementUI {
             case 5:
                 System.out.print("Enter new experience years: ");
                 String expYearsInput = scanner.nextLine();
-                int newExpYears = -1; 
+                int newExpYears = -1;
                 if (!expYearsInput.trim().isEmpty()) {
                     try {
                         newExpYears = Integer.parseInt(expYearsInput.trim());
@@ -166,7 +166,7 @@ public class DoctorManagementUI {
                         newExpYears = -1;
                     }
                 }
-                expYearsToUpdate = newExpYears; 
+                expYearsToUpdate = newExpYears;
                 break;
             case 6:
                 String newStreet = ConsoleUtils.getStringInput(scanner, "Enter new street: ");
@@ -179,10 +179,10 @@ public class DoctorManagementUI {
             default:
                 System.out.println("Invalid choice. Please try again.");
         }
-        
-        boolean success = doctorControl.updateDoctorInfo(doctorId, fullNameToUpdate, emailToUpdate, 
-                                                       phoneToUpdate, specialtyToUpdate, expYearsToUpdate, newAddress);
-        
+
+        boolean success = doctorControl.updateDoctorInfo(doctorId, fullNameToUpdate, emailToUpdate,
+                phoneToUpdate, specialtyToUpdate, expYearsToUpdate, newAddress);
+
         if (success) {
             System.out.println("Doctor information updated successfully!");
         } else {
@@ -227,7 +227,9 @@ public class DoctorManagementUI {
             System.out.println("\nDoctor Schedules:");
             for (int index = 0; index < schedules.length; index++) {
                 entity.Schedule s = schedules[index];
-                System.out.println((index + 1) + ". [" + s.getScheduleId() + "] " + s.getDayOfWeek() + " " + s.getFromTime() + "-" + s.getToTime() + " | " + (s.isAvailable() ? "Available" : "Not Available"));
+                System.out.println(
+                        (index + 1) + ". [" + s.getScheduleId() + "] " + s.getDayOfWeek() + " " + s.getFromTime() + "-"
+                                + s.getToTime() + " | " + (s.isAvailable() ? "Available" : "Not Available"));
             }
         }
 
@@ -269,9 +271,9 @@ public class DoctorManagementUI {
         System.out.println("5. Search by License Number");
         System.out.println("6. Search by Specialty");
         System.out.print("Enter choice: ");
-        
+
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-        
+
         switch (choice) {
             case 1:
                 searchByDoctorId();
@@ -299,7 +301,7 @@ public class DoctorManagementUI {
     private void searchByDoctorId() {
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
         Doctor doctor = doctorControl.findDoctorById(doctorId);
-        
+
         if (doctor != null) {
             System.out.println("\n=== DOCTOR FOUND ===");
             displayDoctorDetails(doctor);
@@ -310,20 +312,20 @@ public class DoctorManagementUI {
 
     private void searchByIC() {
         String lastFourDigits = ConsoleUtils.getStringInput(scanner, "Enter last 4 digits of IC number: ");
-        
+
         // Validate input - should be exactly 4 digits
         if (lastFourDigits.length() != 4 || !lastFourDigits.matches("\\d{4}")) {
             System.out.println("Invalid input. Please enter exactly 4 digits.");
             return;
         }
-        
+
         // Use hash function to find doctors with matching IC last 4 digits
         ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
         ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
-        
+
         // Calculate hash for the search input
         int searchHash = hashLastFourDigits(lastFourDigits);
-        
+
         Iterator<Doctor> iterator = allDoctors.iterator();
         while (iterator.hasNext()) {
             Doctor doctor = iterator.next();
@@ -334,7 +336,7 @@ public class DoctorManagementUI {
                     String doctorLastFour = icNumber.substring(icNumber.length() - 4);
                     // Calculate hash for doctor's last 4 digits
                     int doctorHash = hashLastFourDigits(doctorLastFour);
-                    
+
                     // Compare hashes - if they match, then compare the actual strings
                     if (doctorHash == searchHash && doctorLastFour.equals(lastFourDigits)) {
                         foundDoctors.add(doctor.getDoctorId(), doctor);
@@ -342,12 +344,13 @@ public class DoctorManagementUI {
                 }
             }
         }
-        
+
         if (foundDoctors.getSize() > 0) {
             System.out.println("\n=== DOCTOR FOUND ===");
-            System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with IC ending in " + lastFourDigits + ":");
+            System.out.println(
+                    "Found " + foundDoctors.getSize() + " doctor(s) with IC ending in " + lastFourDigits + ":");
             System.out.println();
-            
+
             Iterator<Doctor> foundIterator = foundDoctors.iterator();
             int count = 1;
             while (foundIterator.hasNext()) {
@@ -370,32 +373,32 @@ public class DoctorManagementUI {
         if (lastFourDigits == null) {
             return 0;
         }
-        
+
         int hash = 0;
-        
+
         // Use a prime multiplier and process each character
         // This helps break up patterns in sequential IDs
         for (int i = 0; i < lastFourDigits.length(); i++) {
             hash = hash * 31 + lastFourDigits.charAt(i);
         }
-        
+
         // Additional mixing to improve distribution
-        hash ^= (hash >>> 16);  // XOR with upper bits
-        hash *= 0x85ebca6b;     // Multiply by a large prime-like number
-        hash ^= (hash >>> 13);  // More mixing
-        
+        hash ^= (hash >>> 16); // XOR with upper bits
+        hash *= 0x85ebca6b; // Multiply by a large prime-like number
+        hash ^= (hash >>> 13); // More mixing
+
         return Math.abs(hash);
     }
 
     private void searchByFullName() {
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter Full Name (or partial name): ");
         ArrayBucketList<String, Doctor> doctors = doctorControl.findDoctorsByName(fullName);
-        
+
         if (doctors.getSize() > 0) {
             System.out.println("\n=== DOCTORS FOUND ===");
             System.out.println("Found " + doctors.getSize() + " doctor(s):");
             System.out.println();
-            
+
             Iterator<Doctor> iterator = doctors.iterator();
             int count = 1;
             while (iterator.hasNext()) {
@@ -414,7 +417,7 @@ public class DoctorManagementUI {
         String email = ConsoleUtils.getStringInput(scanner, "Enter Email: ");
         ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
         ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
-        
+
         Iterator<Doctor> iterator = allDoctors.iterator();
         while (iterator.hasNext()) {
             Doctor doctor = iterator.next();
@@ -422,12 +425,12 @@ public class DoctorManagementUI {
                 foundDoctors.add(doctor.getDoctorId(), doctor);
             }
         }
-        
+
         if (foundDoctors.getSize() > 0) {
             System.out.println("\n=== DOCTORS FOUND ===");
             System.out.println("Found " + foundDoctors.getSize() + " doctor(s):");
             System.out.println();
-            
+
             Iterator<Doctor> foundIterator = foundDoctors.iterator();
             int count = 1;
             while (foundIterator.hasNext()) {
@@ -446,20 +449,21 @@ public class DoctorManagementUI {
         String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter License Number: ");
         ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
         ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
-        
+
         Iterator<Doctor> iterator = allDoctors.iterator();
         while (iterator.hasNext()) {
             Doctor doctor = iterator.next();
-            if (doctor.getLicenseNumber() != null && doctor.getLicenseNumber().toLowerCase().contains(licenseNumber.toLowerCase())) {
+            if (doctor.getLicenseNumber() != null
+                    && doctor.getLicenseNumber().toLowerCase().contains(licenseNumber.toLowerCase())) {
                 foundDoctors.add(doctor.getDoctorId(), doctor);
             }
         }
-        
+
         if (foundDoctors.getSize() > 0) {
             System.out.println("\n=== DOCTORS FOUND ===");
             System.out.println("Found " + foundDoctors.getSize() + " doctor(s):");
             System.out.println();
-            
+
             Iterator<Doctor> foundIterator = foundDoctors.iterator();
             int count = 1;
             while (foundIterator.hasNext()) {
@@ -477,12 +481,12 @@ public class DoctorManagementUI {
     private void searchBySpecialty() {
         String specialty = ConsoleUtils.getStringInput(scanner, "Enter Specialty: ");
         ArrayBucketList<String, Doctor> doctors = doctorControl.getDoctorsBySpecialty(specialty);
-        
+
         if (doctors.getSize() > 0) {
             System.out.println("\n=== DOCTORS FOUND ===");
             System.out.println("Found " + doctors.getSize() + " doctor(s) with specialty: " + specialty);
             System.out.println();
-            
+
             Iterator<Doctor> iterator = doctors.iterator();
             int count = 1;
             while (iterator.hasNext()) {
@@ -508,11 +512,11 @@ public class DoctorManagementUI {
         System.out.println("Experience Years: " + doctor.getExpYears());
         System.out.println("Availability: " + (doctor.isAvailable() ? "Available" : "Not Available"));
         System.out.println("Registration Date: " + doctor.getRegistrationDate());
-        
+
         if (doctor.getAddress() != null) {
             System.out.println("Address: " + doctor.getAddress());
         }
-        
+
         System.out.println("Number of Consultations: " + getConsultationCountForDoctor(doctor.getDoctorId()));
     }
 
@@ -521,13 +525,13 @@ public class DoctorManagementUI {
             // Get all consultations and count those for the specific doctor
             dao.ConsultationDao consultationDao = new dao.ConsultationDao();
             ArrayBucketList<String, entity.Consultation> allConsultations = consultationDao.findAll();
-            
+
             int count = 0;
             Iterator<entity.Consultation> iterator = allConsultations.iterator();
             while (iterator.hasNext()) {
                 entity.Consultation consultation = iterator.next();
-                if (consultation != null && consultation.getDoctor() != null && 
-                    doctorId.equals(consultation.getDoctor().getDoctorId())) {
+                if (consultation != null && consultation.getDoctor() != null &&
+                        doctorId.equals(consultation.getDoctor().getDoctorId())) {
                     count++;
                 }
             }
@@ -633,4 +637,4 @@ public class DoctorManagementUI {
             }
         }
     }
-} 
+}

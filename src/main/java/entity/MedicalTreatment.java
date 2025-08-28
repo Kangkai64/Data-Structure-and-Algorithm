@@ -21,9 +21,9 @@ public class MedicalTreatment {
         PRESCRIBED, IN_PROGRESS, COMPLETED, CANCELLED
     }
 
-    public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor, 
-                           Consultation consultation, String diagnosis, 
-                           String treatmentPlan, LocalDateTime treatmentDate, double treatmentCost) {
+    public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor,
+            Consultation consultation, String diagnosis,
+            String treatmentPlan, LocalDateTime treatmentDate, double treatmentCost) {
         this.treatmentId = treatmentId;
         this.patient = patient;
         this.doctor = doctor;
@@ -36,10 +36,10 @@ public class MedicalTreatment {
         this.status = TreatmentStatus.PRESCRIBED;
     }
 
-    public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor, 
-                           Consultation consultation, String diagnosis, 
-                           String treatmentPlan, String prescribedMedications, 
-                           String treatmentNotes, LocalDateTime treatmentDate, double treatmentCost) {
+    public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor,
+            Consultation consultation, String diagnosis,
+            String treatmentPlan, String prescribedMedications,
+            String treatmentNotes, LocalDateTime treatmentDate, double treatmentCost) {
         this(treatmentId, patient, doctor, consultation, diagnosis, treatmentPlan, treatmentDate, treatmentCost);
         this.prescribedMedications = prescribedMedications;
         this.treatmentNotes = treatmentNotes;
@@ -48,41 +48,101 @@ public class MedicalTreatment {
     }
 
     // Getters and Setters
-    public String getTreatmentId() { return treatmentId; }
-    public void setTreatmentId(String treatmentId) { this.treatmentId = treatmentId; }
+    public String getTreatmentId() {
+        return treatmentId;
+    }
 
-    public Patient getPatient() { return patient; }
-    public void setPatient(Patient patient) { this.patient = patient; }
+    public void setTreatmentId(String treatmentId) {
+        this.treatmentId = treatmentId;
+    }
 
-    public Doctor getDoctor() { return doctor; }
-    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
+    public Patient getPatient() {
+        return patient;
+    }
 
-    public Consultation getConsultation() { return consultation; }
-    public void setConsultation(Consultation consultation) { this.consultation = consultation; }
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
 
-    public String getDiagnosis() { return diagnosis; }
-    public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
+    public Doctor getDoctor() {
+        return doctor;
+    }
 
-    public String getTreatmentPlan() { return treatmentPlan; }
-    public void setTreatmentPlan(String treatmentPlan) { this.treatmentPlan = treatmentPlan; }
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
 
-    public String getPrescribedMedications() { return prescribedMedications; }
-    public void setPrescribedMedications(String prescribedMedications) { this.prescribedMedications = prescribedMedications; }
+    public Consultation getConsultation() {
+        return consultation;
+    }
 
-    public String getTreatmentNotes() { return treatmentNotes; }
-    public void setTreatmentNotes(String treatmentNotes) { this.treatmentNotes = treatmentNotes; }
+    public void setConsultation(Consultation consultation) {
+        this.consultation = consultation;
+    }
 
-    public LocalDateTime getTreatmentDate() { return treatmentDate; }
-    public void setTreatmentDate(LocalDateTime treatmentDate) { this.treatmentDate = treatmentDate; }
+    public String getDiagnosis() {
+        return diagnosis;
+    }
 
-    public LocalDateTime getFollowUpDate() { return followUpDate; }
-    public void setFollowUpDate(LocalDateTime followUpDate) { this.followUpDate = followUpDate; }
+    public void setDiagnosis(String diagnosis) {
+        this.diagnosis = diagnosis;
+    }
 
-    public TreatmentStatus getStatus() { return status; }
-    public void setStatus(TreatmentStatus status) { this.status = status; }
+    public String getTreatmentPlan() {
+        return treatmentPlan;
+    }
 
-    public double getTreatmentCost() { return treatmentCost; }
-    public void setTreatmentCost(double treatmentCost) { this.treatmentCost = treatmentCost; }
+    public void setTreatmentPlan(String treatmentPlan) {
+        this.treatmentPlan = treatmentPlan;
+    }
+
+    public String getPrescribedMedications() {
+        return prescribedMedications;
+    }
+
+    public void setPrescribedMedications(String prescribedMedications) {
+        this.prescribedMedications = prescribedMedications;
+    }
+
+    public String getTreatmentNotes() {
+        return treatmentNotes;
+    }
+
+    public void setTreatmentNotes(String treatmentNotes) {
+        this.treatmentNotes = treatmentNotes;
+    }
+
+    public LocalDateTime getTreatmentDate() {
+        return treatmentDate;
+    }
+
+    public void setTreatmentDate(LocalDateTime treatmentDate) {
+        this.treatmentDate = treatmentDate;
+    }
+
+    public LocalDateTime getFollowUpDate() {
+        return followUpDate;
+    }
+
+    public void setFollowUpDate(LocalDateTime followUpDate) {
+        this.followUpDate = followUpDate;
+    }
+
+    public TreatmentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TreatmentStatus status) {
+        this.status = status;
+    }
+
+    public double getTreatmentCost() {
+        return treatmentCost;
+    }
+
+    public void setTreatmentCost(double treatmentCost) {
+        this.treatmentCost = treatmentCost;
+    }
 
     @Override
     public String toString() {
@@ -101,4 +161,4 @@ public class MedicalTreatment {
     public int hashCode() {
         return Integer.parseInt(treatmentId.replaceAll("[^0-9]", ""));
     }
-} 
+}

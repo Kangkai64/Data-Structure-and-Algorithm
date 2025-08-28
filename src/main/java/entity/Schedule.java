@@ -12,8 +12,8 @@ public class Schedule {
     private String toTime;
     private boolean isAvailable;
 
-    public Schedule (String scheduleId, String doctorId, DayOfWeek dayOfWeek,
-                     String fromTime, String toTime, boolean isAvailable) {
+    public Schedule(String scheduleId, String doctorId, DayOfWeek dayOfWeek,
+            String fromTime, String toTime, boolean isAvailable) {
         this.scheduleId = scheduleId;
         this.doctorId = doctorId;
         this.dayOfWeek = dayOfWeek;
@@ -22,23 +22,53 @@ public class Schedule {
         this.isAvailable = isAvailable;
     }
 
-    public String getScheduleId() { return  scheduleId; }
-    public void setScheduleId(String scheduleId) { this.scheduleId = scheduleId; }
+    public String getScheduleId() {
+        return scheduleId;
+    }
 
-    public String getDoctorId() { return doctorId; }
-    public void setDoctorId(String doctorId) { this.doctorId = doctorId; }
+    public void setScheduleId(String scheduleId) {
+        this.scheduleId = scheduleId;
+    }
 
-    public DayOfWeek getDayOfWeek() { return dayOfWeek; }
-    public void setDayOfWeek(DayOfWeek dayOfWeek) { this.dayOfWeek = dayOfWeek; }
+    public String getDoctorId() {
+        return doctorId;
+    }
 
-    public String getFromTime() { return fromTime; }
-    public void setFromTime(String fromTime) { this.fromTime = fromTime; }
+    public void setDoctorId(String doctorId) {
+        this.doctorId = doctorId;
+    }
 
-    public String getToTime() { return  toTime; }
-    public void setToTime(String toTime) { this.toTime = toTime; }
+    public DayOfWeek getDayOfWeek() {
+        return dayOfWeek;
+    }
 
-    public boolean isAvailable() { return  isAvailable; }
-    public void setAvailable(boolean available) { isAvailable = available; }
+    public void setDayOfWeek(DayOfWeek dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public String getFromTime() {
+        return fromTime;
+    }
+
+    public void setFromTime(String fromTime) {
+        this.fromTime = fromTime;
+    }
+
+    public String getToTime() {
+        return toTime;
+    }
+
+    public void setToTime(String toTime) {
+        this.toTime = toTime;
+    }
+
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    public void setAvailable(boolean available) {
+        isAvailable = available;
+    }
 
     public String toString() {
         return "Schedule ID = " + scheduleId + "\n"

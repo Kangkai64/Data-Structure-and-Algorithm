@@ -4,8 +4,10 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 /**
- * ArrayBucketList - A custom ADT that combines ArrayList and LinkedList functionality
- * The main array stores LinkedList buckets, and items are added based on hash index
+ * ArrayBucketList - A custom ADT that combines ArrayList and LinkedList
+ * functionality
+ * The main array stores LinkedList buckets, and items are added based on hash
+ * index
  */
 public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Serializable, Iterable<V> {
     private LinkedList[] buckets;
@@ -24,31 +26,35 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Constructor with specified bucket count
+     * 
      * @param bucketCount number of buckets in the array
      */
     public ArrayBucketList(int bucketCount) {
         this.bucketCount = bucketCount;
         this.numberOfEntries = 0;
-        this.buckets = (LinkedList[]) new ArrayBucketList<?,?>.LinkedList[bucketCount];
+        this.buckets = (LinkedList[]) new ArrayBucketList<?, ?>.LinkedList[bucketCount];
         this.queueData = new LinkedList();
 
         for (int index = 0; index < bucketCount; index++) {
             buckets[index] = new LinkedList();
         }
     }
+
     /**
      * Returns the current number of elements in the queue.
      *
-     * This method safely checks if the queue's internal data structure (queueData) is initialized
-     * before attempting to access its size. This prevents a NullPointerException if the queue has not
+     * This method safely checks if the queue's internal data structure (queueData)
+     * is initialized
+     * before attempting to access its size. This prevents a NullPointerException if
+     * the queue has not
      * been instantiated.
      *
-     * @return The number of elements in the queue, or 0 if the queue is not initialized.
+     * @return The number of elements in the queue, or 0 if the queue is not
+     *         initialized.
      */
     public int getQueueSize() {
-            return queueData != null ? queueData.size : 0;
-        }
-    
+        return queueData != null ? queueData.size : 0;
+    }
 
     /**
      * Hash function (moved from HashUtility)
@@ -57,28 +63,30 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         if (key == null) {
             return 0;
         }
-        
+
         String keyStr = key.toString();
         int hash = 0;
-        
+
         // Use a prime multiplier and process each character
         // This helps break up patterns in sequential IDs
         for (int i = 0; i < keyStr.length(); i++) {
             hash = hash * 31 + keyStr.charAt(i);
         }
-        
+
         // Additional mixing to improve distribution
-        hash ^= (hash >>> 16);  // XOR with upper bits
-        hash *= 0x85ebca6b;     // Multiply by a large prime-like number
-        hash ^= (hash >>> 13);  // More mixing
-        
+        hash ^= (hash >>> 16); // XOR with upper bits
+        hash *= 0x85ebca6b; // Multiply by a large prime-like number
+        hash ^= (hash >>> 13); // More mixing
+
         return Math.abs(hash) % bucketCount;
     }
 
     /**
-     * Adds a new entry to the dictionary. If the given search key already exists, replaces the value.
-     * @param key    an object search key of the new entry
-     * @param value  an object associated with the search key
+     * Adds a new entry to the dictionary. If the given search key already exists,
+     * replaces the value.
+     * 
+     * @param key   an object search key of the new entry
+     * @param value an object associated with the search key
      * @return either null if the new entry was added or the value that was replaced
      */
     @Override
@@ -102,6 +110,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
             return null;
         }
     }
+
     /**
      * Adds a key-value pair to the queue if it is valid and not already present.
      * - Ignores insertion if the key or value is null.
@@ -120,7 +129,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         }
         queueData.add(key, value);
     }
-    
+
     /**
      * Checks whether a given key already exists in the queue.
      *
@@ -136,8 +145,10 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Removes a specific entry from the dictionary.
-     * @param key  an object search key of the entry to be removed
-     * @return either the value that was associated with the search key or null if no such object exists
+     * 
+     * @param key an object search key of the entry to be removed
+     * @return either the value that was associated with the search key or null if
+     *         no such object exists
      */
     @Override
     public V remove(K key) {
@@ -171,8 +182,10 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Retrieves the value associated with a given search key.
-     * @param key  an object search key of the entry to be retrieved
-     * @return either the value that is associated with the search key or null if no such object exists
+     * 
+     * @param key an object search key of the entry to be retrieved
+     * @return either the value that is associated with the search key or null if no
+     *         such object exists
      */
     @Override
     public V getValue(K key) {
@@ -184,7 +197,8 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Sees whether a specific entry is in the dictionary.
-     * @param key  an object search key of the desired entry
+     * 
+     * @param key an object search key of the desired entry
      * @return true if key is associated with an entry in the dictionary
      */
     @Override
@@ -196,6 +210,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Sees whether the dictionary is empty.
+     * 
      * @return true if the dictionary is empty
      */
     @Override
@@ -205,6 +220,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Sees whether the dictionary is full (always false for dynamic structure)
+     * 
      * @return true if the dictionary is full
      */
     @Override
@@ -214,6 +230,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Gets the size of the dictionary.
+     * 
      * @return the number of entries (key-value pairs) currently in the dictionary
      */
     @Override
@@ -234,6 +251,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Calculate current load factor
+     * 
      * @return load factor (total entries / bucket count)
      */
     public double getLoadFactor() {
@@ -244,30 +262,35 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
      * Resize buckets by doubling the array size
      */
     private void resizeBuckets() {
-        int newBucketCount = bucketCount * 2;
+        int oldBucketCount = bucketCount;
+        int newBucketCount = oldBucketCount * 2;
         LinkedList[] oldBuckets = buckets;
-        buckets = (LinkedList[]) new ArrayBucketList<?,?>.LinkedList[newBucketCount];
+
+        buckets = (LinkedList[]) new ArrayBucketList<?, ?>.LinkedList[newBucketCount];
         for (int index = 0; index < newBucketCount; index++) {
             buckets[index] = new LinkedList();
         }
+
+        bucketCount = newBucketCount; // ensure rehashing uses the new size
         numberOfEntries = 0;
+
         for (LinkedList oldBucket : oldBuckets) {
             for (Node node : oldBucket) {
                 this.add((K) node.getKey(), (V) node.getValue());
             }
         }
-        bucketCount = newBucketCount;
     }
 
     /**
      * String representation of the bucket list
+     * 
      * @return string representation
      */
     @Override
     public String toString() {
         StringBuilder outputStr = new StringBuilder();
         outputStr.append("ArrayBucketList with ").append(numberOfEntries)
-                 .append(" entries in ").append(bucketCount).append(" buckets:\n");
+                .append(" entries in ").append(bucketCount).append(" buckets:\n");
         for (int bucketIndex = 0; bucketIndex < bucketCount; bucketIndex++) {
             outputStr.append("Bucket ").append(bucketIndex).append(": ");
             outputStr.append(buckets[bucketIndex].toString()).append("\n");
@@ -285,6 +308,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
     /**
      * Iterator for the main bucket list (values only)
+     * 
      * @return iterator for all values
      */
     @Override
@@ -363,7 +387,8 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
         /**
          * Add key-value to the linked list
-         * @param key key to add
+         * 
+         * @param key   key to add
          * @param value value to add
          */
         public void add(K key, V value) {
@@ -390,6 +415,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
         /**
          * Remove by key from the linked list
+         * 
          * @param key key to remove
          */
         public void remove(K key) {
@@ -423,6 +449,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
         /**
          * Get node by key
+         * 
          * @param key key to search for
          * @return Node if found, else null
          */
@@ -451,6 +478,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
         /**
          * Check if linked list is empty
+         * 
          * @return true if empty
          */
         public boolean isEmpty() {
@@ -459,6 +487,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
         /**
          * String representation of the linked list
+         * 
          * @return string representation
          */
         @Override
@@ -481,6 +510,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
 
         /**
          * Iterator for the linked list (returns Node)
+         * 
          * @return iterator for linked list entries
          */
         @Override
@@ -501,6 +531,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
             public boolean hasNext() {
                 return head != null && visitedCount < size;
             }
+
             @Override
             public Node next() {
                 if (!hasNext()) {
@@ -522,33 +553,42 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         private V value;
         private Node next;
         private Node previous;
+
         public Node(K key, V value) {
             this.key = key;
             this.value = value;
             this.next = null;
             this.previous = null;
         }
+
         public K getKey() {
             return key;
         }
+
         public void setKey(K key) {
             this.key = key;
         }
+
         public V getValue() {
             return value;
         }
+
         public void setValue(V value) {
             this.value = value;
         }
+
         public Node getNext() {
             return next;
         }
+
         public void setNext(Node next) {
             this.next = next;
         }
+
         public Node getPrevious() {
             return previous;
         }
+
         public void setPrevious(Node previous) {
             this.previous = previous;
         }

@@ -13,8 +13,8 @@ import java.time.LocalDate;
 
 /**
  * @author: Ho Kang Kai
- * Medicine DAO - Module 5
- * Manages medicine data access operations
+ *          Medicine DAO - Module 5
+ *          Manages medicine data access operations
  */
 
 public class MedicineDao extends DaoTemplate<Medicine> {
@@ -24,7 +24,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
         String sql = "SELECT * FROM medicine WHERE medicineId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, medicineId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -46,8 +46,8 @@ public class MedicineDao extends DaoTemplate<Medicine> {
         String sql = "SELECT * FROM medicine ORDER BY medicineName";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 Medicine medicine = mapResultSet(resultSet);
@@ -71,7 +71,8 @@ public class MedicineDao extends DaoTemplate<Medicine> {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, medicine.getMedicineName());
             preparedStatement.setString(2, medicine.getGenericName());
@@ -88,7 +89,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
             preparedStatement.setString(13, medicine.getStatus().name());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedMedicineId(connection);
@@ -97,7 +98,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
                     return true;
                 }
             }
-            
+
             return false;
 
         } catch (SQLException e) {
@@ -114,7 +115,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
                 "WHERE medicineId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, medicine.getMedicineName());
             preparedStatement.setString(2, medicine.getGenericName());
@@ -144,7 +145,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
         String sql = "DELETE FROM medicine WHERE medicineId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, medicineId);
 
@@ -160,7 +161,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
         String sql = "UPDATE medicine SET quantityInStock = ? WHERE medicineId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setInt(1, newQuantity);
             preparedStatement.setString(2, medicineId);
@@ -177,7 +178,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
         String sql = "UPDATE medicine SET status = ? WHERE medicineId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, status.name());
             preparedStatement.setString(2, medicineId);
@@ -193,7 +194,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
     public boolean updatePrice(String medicineId, double newPrice) throws SQLException {
         String sql = "UPDATE medicine SET unitPrice = ? WHERE medicineId = ?";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setDouble(1, newPrice);
             preparedStatement.setString(2, medicineId);
             return preparedStatement.executeUpdate() > 0;
@@ -219,8 +220,7 @@ public class MedicineDao extends DaoTemplate<Medicine> {
                     resultSet.getDouble("unitPrice"),
                     resultSet.getObject("expiryDate", LocalDate.class),
                     resultSet.getString("storageLocation"),
-                    resultSet.getBoolean("requiresPrescription")
-            );
+                    resultSet.getBoolean("requiresPrescription"));
         } catch (SQLException e) {
             System.err.println("Error mapping result set to Medicine: " + e.getMessage());
             throw e;
@@ -229,21 +229,22 @@ public class MedicineDao extends DaoTemplate<Medicine> {
 
     /**
      * Get the ID of the last inserted medicine
+     * 
      * @param connection The database connection
      * @return The generated medicine ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedMedicineId(Connection connection) throws SQLException {
         String sql = "SELECT medicineId FROM medicine ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("medicineId");
             }
         }
-        
+
         return null;
     }
-} 
+}

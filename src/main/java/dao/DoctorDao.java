@@ -14,8 +14,8 @@ import java.time.LocalDate;
 
 /**
  * @author: Lee Yong Kang
- * Consultation DAO - Module 2
- * Manages doctor data access operations
+ *          Consultation DAO - Module 2
+ *          Manages doctor data access operations
  */
 
 public class DoctorDao extends DaoTemplate<Doctor> {
@@ -28,7 +28,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                 "WHERE d.doctorId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, doctorId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -53,8 +53,8 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                 "ORDER BY d.fullName";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 Doctor doctor = mapResultSet(resultSet);
@@ -77,7 +77,8 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, doctor.getFullName());
             preparedStatement.setString(2, doctor.getICNumber());
@@ -91,7 +92,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
             preparedStatement.setBoolean(10, doctor.isAvailable());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedDoctorId(connection);
@@ -100,7 +101,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                     return true;
                 }
             }
-            
+
             return false;
 
         } catch (SQLException e) {
@@ -116,7 +117,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                 "WHERE doctorId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, doctor.getFullName());
             preparedStatement.setString(2, doctor.getICNumber());
@@ -142,7 +143,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
         String sql = "DELETE FROM doctor WHERE doctorId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, doctorId);
 
@@ -158,7 +159,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
         String sql = "UPDATE doctor SET isAvailable = ? WHERE doctorId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setBoolean(1, isAvailable);
             preparedStatement.setString(2, doctorId);
@@ -182,8 +183,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                         resultSet.getString("city"),
                         resultSet.getString("state"),
                         resultSet.getString("postalCode"),
-                        resultSet.getString("country")
-                );
+                        resultSet.getString("country"));
                 address.setAddressId(resultSet.getString("addressId"));
             }
 
@@ -198,8 +198,7 @@ public class DoctorDao extends DaoTemplate<Doctor> {
                     resultSet.getString("doctorId"),
                     resultSet.getString("medicalSpecialty"),
                     resultSet.getString("licenseNumber"),
-                    resultSet.getInt("expYears")
-            );
+                    resultSet.getInt("expYears"));
 
             // Set availability
             doctor.setAvailable(resultSet.getBoolean("isAvailable"));
@@ -213,21 +212,22 @@ public class DoctorDao extends DaoTemplate<Doctor> {
 
     /**
      * Get the ID of the last inserted doctor
+     * 
      * @param connection The database connection
      * @return The generated doctor ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedDoctorId(Connection connection) throws SQLException {
         String sql = "SELECT doctorId FROM doctor ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("doctorId");
             }
         }
-        
+
         return null;
     }
 }

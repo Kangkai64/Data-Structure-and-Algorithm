@@ -10,10 +10,11 @@ public class AddressManagementControl {
 
     /**
      * Retrieves an address by its ID
+     * 
      * @param addressId The ID of the address to retrieve
      * @return The address if found, null otherwise
      * @throws IllegalArgumentException if addressId is null or empty
-     * @throws SQLException if there is a database error
+     * @throws SQLException             if there is a database error
      */
     public Address getAddressById(String addressId) throws SQLException {
         if (addressId == null || addressId.trim().isEmpty()) {
@@ -29,10 +30,11 @@ public class AddressManagementControl {
 
     /**
      * Adds a new address
+     * 
      * @param address The address to add
      * @return true if the address was added successfully, false otherwise
      * @throws IllegalArgumentException if address is null or invalid
-     * @throws SQLException if there is a database error
+     * @throws SQLException             if there is a database error
      */
     public boolean addAddress(Address address) throws SQLException {
         if (address == null) {
@@ -48,10 +50,11 @@ public class AddressManagementControl {
 
     /**
      * Updates an existing address
+     * 
      * @param address The address to update
      * @return true if the address was updated successfully, false otherwise
      * @throws IllegalArgumentException if address is null or invalid
-     * @throws SQLException if there is a database error
+     * @throws SQLException             if there is a database error
      */
     public boolean updateAddress(Address address) throws SQLException {
         if (address == null) {
@@ -70,10 +73,11 @@ public class AddressManagementControl {
 
     /**
      * Deletes an address
+     * 
      * @param addressId The ID of the address to delete
      * @return true if the address was deleted successfully, false otherwise
      * @throws IllegalArgumentException if addressId is null or empty
-     * @throws SQLException if there is a database error
+     * @throws SQLException             if there is a database error
      */
     public boolean deleteAddress(String addressId) throws SQLException {
         if (addressId == null || addressId.trim().isEmpty()) {

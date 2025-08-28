@@ -21,8 +21,8 @@ public class Prescription {
         ACTIVE, DISPENSED, EXPIRED, CANCELLED
     }
 
-    public Prescription(String prescriptionId, Patient patient, Doctor doctor, 
-                       Consultation consultation, LocalDate prescriptionDate, String instructions, LocalDate expiryDate) {
+    public Prescription(String prescriptionId, Patient patient, Doctor doctor,
+            Consultation consultation, LocalDate prescriptionDate, String instructions, LocalDate expiryDate) {
         this.prescriptionId = prescriptionId;
         this.patient = patient;
         this.doctor = doctor;
@@ -36,37 +36,85 @@ public class Prescription {
     }
 
     // Getters and Setters
-    public String getPrescriptionId() { return prescriptionId; }
-    public void setPrescriptionId(String prescriptionId) { this.prescriptionId = prescriptionId; }
-
-    public Patient getPatient() { return patient; }
-    public void setPatient(Patient patient) { this.patient = patient; }
-
-    public Doctor getDoctor() { return doctor; }
-    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
-
-    public Consultation getConsultation() { return consultation; }
-    public void setConsultation(Consultation consultation) { this.consultation = consultation; }
-
-    public LocalDate getPrescriptionDate() { return prescriptionDate; }
-    public void setPrescriptionDate(LocalDate prescriptionDate) { this.prescriptionDate = prescriptionDate; }
-
-    public ArrayBucketList<String, PrescribedMedicine> getPrescribedMedicines() { return prescribedMedicines; }
-    public void setPrescribedMedicines(ArrayBucketList<String, PrescribedMedicine> prescribedMedicines) { 
-        this.prescribedMedicines = prescribedMedicines; 
+    public String getPrescriptionId() {
+        return prescriptionId;
     }
 
-    public String getInstructions() { return instructions; }
-    public void setInstructions(String instructions) { this.instructions = instructions; }
+    public void setPrescriptionId(String prescriptionId) {
+        this.prescriptionId = prescriptionId;
+    }
 
-    public LocalDate getExpiryDate() { return expiryDate; }
-    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
+    public Patient getPatient() {
+        return patient;
+    }
 
-    public PrescriptionStatus getStatus() { return status; }
-    public void setStatus(PrescriptionStatus status) { this.status = status; }
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
 
-    public double getTotalCost() { return totalCost; }
-    public void setTotalCost(double totalCost) { this.totalCost = totalCost; }
+    public Doctor getDoctor() {
+        return doctor;
+    }
+
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
+
+    public Consultation getConsultation() {
+        return consultation;
+    }
+
+    public void setConsultation(Consultation consultation) {
+        this.consultation = consultation;
+    }
+
+    public LocalDate getPrescriptionDate() {
+        return prescriptionDate;
+    }
+
+    public void setPrescriptionDate(LocalDate prescriptionDate) {
+        this.prescriptionDate = prescriptionDate;
+    }
+
+    public ArrayBucketList<String, PrescribedMedicine> getPrescribedMedicines() {
+        return prescribedMedicines;
+    }
+
+    public void setPrescribedMedicines(ArrayBucketList<String, PrescribedMedicine> prescribedMedicines) {
+        this.prescribedMedicines = prescribedMedicines;
+    }
+
+    public String getInstructions() {
+        return instructions;
+    }
+
+    public void setInstructions(String instructions) {
+        this.instructions = instructions;
+    }
+
+    public LocalDate getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(LocalDate expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    public PrescriptionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(PrescriptionStatus status) {
+        this.status = status;
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+
+    public void setTotalCost(double totalCost) {
+        this.totalCost = totalCost;
+    }
 
     // Business Logic Methods
     public PrescribedMedicine findPrescribedMedicineById(String prescribedMedicineId) {
@@ -75,7 +123,8 @@ public class Prescription {
 
     public boolean addPrescribedMedicine(PrescribedMedicine prescribedMedicine) {
         if (prescribedMedicine != null) {
-            boolean added = prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(), prescribedMedicine) != null;
+            boolean added = prescribedMedicines.add(prescribedMedicine.getPrescribedMedicineId(),
+                    prescribedMedicine) != null;
             if (added) {
                 calculateTotalCost();
             }
@@ -97,15 +146,17 @@ public class Prescription {
         return false;
     }
 
-    public boolean updatePrescribedMedicine(PrescribedMedicine prescribedMedicine, Medicine medicine, int quantity, String dosage, String frequency, int duration) {
-        PrescribedMedicine tempPrescribedMedicine = prescribedMedicines.getValue(prescribedMedicine.getPrescribedMedicineId());
+    public boolean updatePrescribedMedicine(PrescribedMedicine prescribedMedicine, Medicine medicine, int quantity,
+            String dosage, String frequency, int duration) {
+        PrescribedMedicine tempPrescribedMedicine = prescribedMedicines
+                .getValue(prescribedMedicine.getPrescribedMedicineId());
         if (tempPrescribedMedicine != null) {
-                tempPrescribedMedicine.setMedicine(medicine);
-                tempPrescribedMedicine.setQuantity(quantity);
-                tempPrescribedMedicine.setDosage(dosage);
-                tempPrescribedMedicine.setFrequency(frequency);
-                tempPrescribedMedicine.setDuration(duration);
-                return true;
+            tempPrescribedMedicine.setMedicine(medicine);
+            tempPrescribedMedicine.setQuantity(quantity);
+            tempPrescribedMedicine.setDosage(dosage);
+            tempPrescribedMedicine.setFrequency(frequency);
+            tempPrescribedMedicine.setDuration(duration);
+            return true;
         }
         return false;
     }
@@ -134,11 +185,11 @@ public class Prescription {
     @Override
     public String toString() {
         return "Prescription ID: " + prescriptionId + "\n" +
-               "Patient: " + patient.getFullName() + "\n" +
-               "Doctor: " + doctor.getFullName() + "\n" +
-               "Prescription Date: " + prescriptionDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + "\n" +
-               "Status: " + status + "\n" +
-               "Total Cost: RM " + String.format("%.2f", totalCost) + "\n";
+                "Patient: " + patient.getFullName() + "\n" +
+                "Doctor: " + doctor.getFullName() + "\n" +
+                "Prescription Date: " + prescriptionDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + "\n" +
+                "Status: " + status + "\n" +
+                "Total Cost: RM " + String.format("%.2f", totalCost) + "\n";
     }
 
     @Override
@@ -157,8 +208,9 @@ public class Prescription {
         private int duration; // in days
         private double unitPrice;
 
-        public PrescribedMedicine(String prescribedMedicineId, String prescriptionId, Medicine medicine, int quantity, String dosage, 
-                                String frequency, int duration, double unitPrice) {
+        public PrescribedMedicine(String prescribedMedicineId, String prescriptionId, Medicine medicine, int quantity,
+                String dosage,
+                String frequency, int duration, double unitPrice) {
             this.prescribedMedicineId = prescribedMedicineId;
             this.prescriptionId = prescriptionId;
             this.medicine = medicine;
@@ -170,29 +222,69 @@ public class Prescription {
         }
 
         // Getters and Setter
-        public String getPrescribedMedicineId() { return prescribedMedicineId; }
-        public void setPrescribedMedicineId(String prescribedMedicineId) { this.prescribedMedicineId = prescribedMedicineId; }
+        public String getPrescribedMedicineId() {
+            return prescribedMedicineId;
+        }
 
-        public String getPrescriptionId() { return prescriptionId; }
-        public void setPrescriptionId(String prescriptionId) { this.prescriptionId = prescriptionId; }
+        public void setPrescribedMedicineId(String prescribedMedicineId) {
+            this.prescribedMedicineId = prescribedMedicineId;
+        }
 
-        public Medicine getMedicine() { return medicine; }
-        public void setMedicine(Medicine medicine) { this.medicine = medicine; }
+        public String getPrescriptionId() {
+            return prescriptionId;
+        }
 
-        public int getQuantity() { return quantity; }
-        public void setQuantity(int quantity) { this.quantity = quantity; }
+        public void setPrescriptionId(String prescriptionId) {
+            this.prescriptionId = prescriptionId;
+        }
 
-        public String getDosage() { return dosage; }
-        public void setDosage(String dosage) { this.dosage = dosage; }
+        public Medicine getMedicine() {
+            return medicine;
+        }
 
-        public String getFrequency() { return frequency; }
-        public void setFrequency(String frequency) { this.frequency = frequency; }
+        public void setMedicine(Medicine medicine) {
+            this.medicine = medicine;
+        }
 
-        public int getDuration() { return duration; }
-        public void setDuration(int duration) { this.duration = duration; }
+        public int getQuantity() {
+            return quantity;
+        }
 
-        public double getUnitPrice() { return unitPrice; }
-        public void setUnitPrice(double unitPrice) { this.unitPrice = unitPrice; }
+        public void setQuantity(int quantity) {
+            this.quantity = quantity;
+        }
+
+        public String getDosage() {
+            return dosage;
+        }
+
+        public void setDosage(String dosage) {
+            this.dosage = dosage;
+        }
+
+        public String getFrequency() {
+            return frequency;
+        }
+
+        public void setFrequency(String frequency) {
+            this.frequency = frequency;
+        }
+
+        public int getDuration() {
+            return duration;
+        }
+
+        public void setDuration(int duration) {
+            this.duration = duration;
+        }
+
+        public double getUnitPrice() {
+            return unitPrice;
+        }
+
+        public void setUnitPrice(double unitPrice) {
+            this.unitPrice = unitPrice;
+        }
 
         public double getTotalCost() {
             return quantity * unitPrice;
@@ -201,12 +293,12 @@ public class Prescription {
         @Override
         public String toString() {
             return "Prescribed Medicine ID: " + prescribedMedicineId + "\n" +
-                   "Prescription ID: " + prescriptionId + "\n" +
-                   "Medicine: " + medicine.getMedicineName() + "\n" +
-                   "Quantity: " + quantity + "\n" +
-                   "Dosage: " + dosage + "\n" +
-                   "Frequency: " + frequency + "\n" +
-                   "Total Cost: RM " + String.format("%.2f", getTotalCost()) + "\n";
+                    "Prescription ID: " + prescriptionId + "\n" +
+                    "Medicine: " + medicine.getMedicineName() + "\n" +
+                    "Quantity: " + quantity + "\n" +
+                    "Dosage: " + dosage + "\n" +
+                    "Frequency: " + frequency + "\n" +
+                    "Total Cost: RM " + String.format("%.2f", getTotalCost()) + "\n";
         }
 
         @Override
@@ -214,4 +306,4 @@ public class Prescription {
             return Integer.parseInt(prescribedMedicineId.replaceAll("[^0-9]", ""));
         }
     }
-} 
+}

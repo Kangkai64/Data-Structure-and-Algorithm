@@ -21,7 +21,7 @@ public class PatientDao extends DaoTemplate<Patient> {
         String sql = "SELECT * FROM patient WHERE patientId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, patientId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -42,18 +42,18 @@ public class PatientDao extends DaoTemplate<Patient> {
         String sql = "SELECT * FROM patient";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-            Statement statement = connection.createStatement()) {
-            
+                Statement statement = connection.createStatement()) {
+
             // Set query timeout to prevent hanging
             statement.setQueryTimeout(10); // 10 seconds timeout
-            
+
             try (ResultSet resultSet = statement.executeQuery(sql)) {
                 while (resultSet.next()) {
                     Patient patient = mapResultSet(resultSet);
                     if (patient != null) {
                         patients.add(patient.getPatientId(), patient);
                     }
-                }   
+                }
             }
         } catch (SQLException e) {
             System.err.println("Error finding all patients: " + e.getMessage());
@@ -70,7 +70,8 @@ public class PatientDao extends DaoTemplate<Patient> {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, patient.getFullName());
             preparedStatement.setString(2, patient.getICNumber());
@@ -84,7 +85,7 @@ public class PatientDao extends DaoTemplate<Patient> {
             preparedStatement.setBoolean(10, patient.isActive());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedPatientId(connection);
@@ -93,7 +94,7 @@ public class PatientDao extends DaoTemplate<Patient> {
                     return true;
                 }
             }
-            
+
             return false;
 
         } catch (SQLException e) {
@@ -105,11 +106,11 @@ public class PatientDao extends DaoTemplate<Patient> {
     @Override
     public boolean update(Patient patient) throws SQLException {
         String sql = "UPDATE patient SET fullName = ?, ICNumber = ?, email = ?, phoneNumber = ?, " +
-                     "addressId = ?, bloodType = ?, allergies = ?, emergencyContact = ?, isActive = ? " +
-                     "WHERE patientId = ?";
+                "addressId = ?, bloodType = ?, allergies = ?, emergencyContact = ?, isActive = ? " +
+                "WHERE patientId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, patient.getFullName());
             preparedStatement.setString(2, patient.getICNumber());
@@ -135,7 +136,7 @@ public class PatientDao extends DaoTemplate<Patient> {
         String sql = "DELETE FROM patient WHERE patientId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, patientId);
 
@@ -168,8 +169,7 @@ public class PatientDao extends DaoTemplate<Patient> {
                     resultSet.getString("patientId"),
                     BloodType.valueOf(resultSet.getString("bloodType")),
                     allergies,
-                    resultSet.getString("emergencyContact")
-            );
+                    resultSet.getString("emergencyContact"));
 
             patient.setActive(resultSet.getBoolean("isActive"));
             return patient;
@@ -202,21 +202,22 @@ public class PatientDao extends DaoTemplate<Patient> {
 
     /**
      * Get the ID of the last inserted patient
+     * 
      * @param connection The database connection
      * @return The generated patient ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedPatientId(Connection connection) throws SQLException {
         String sql = "SELECT patientId FROM patient ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("patientId");
             }
         }
-        
+
         return null;
     }
 }

@@ -15,8 +15,8 @@ import java.util.Scanner;
 
 /**
  * @author: Poh Qi Xuan
- * Consultation Management User Interface
- * Handles all consultation management user interactions
+ *          Consultation Management User Interface
+ *          Handles all consultation management user interactions
  */
 public class ConsultationManagementUI {
     private Scanner scanner;
@@ -75,7 +75,7 @@ public class ConsultationManagementUI {
 
     private void scheduleConsultation() {
         ConsoleUtils.printHeader("Schedule Consultation");
-        
+
         // Get patient details
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
         Patient patient = consultationControl.getPatientById(patientId);
@@ -86,10 +86,12 @@ public class ConsultationManagementUI {
         }
 
         // Choose date (DD-MM-YYYY)
-        LocalDate consultationDate = ConsoleUtils.getDateInput(scanner, "Enter consultation date (DD-MM-YYYY): ", DateType.FUTURE_DATE_ONLY);
+        LocalDate consultationDate = ConsoleUtils.getDateInput(scanner, "Enter consultation date (DD-MM-YYYY): ",
+                DateType.FUTURE_DATE_ONLY);
 
         // Show available doctors and operating hours for the selected day
-        ArrayBucketList<String, entity.Schedule> schedulesForDate = consultationControl.getAvailableSchedulesByDate(consultationDate);
+        ArrayBucketList<String, entity.Schedule> schedulesForDate = consultationControl
+                .getAvailableSchedulesByDate(consultationDate);
         if (schedulesForDate.isEmpty()) {
             System.out.println("No doctor schedules are available on this date.");
             ConsoleUtils.waitMessage();
@@ -125,26 +127,30 @@ public class ConsultationManagementUI {
             LocalTime t = LocalTime.parse(slotOptions[index]);
             System.out.println((index + 1) + ". " + t.format(timeFormatter));
         }
-        int chosenIndex = ConsoleUtils.getIntInput(scanner, "Choose a slot (1-" + slotOptions.length + "): ", 1, slotOptions.length) - 1;
+        int chosenIndex = ConsoleUtils.getIntInput(scanner, "Choose a slot (1-" + slotOptions.length + "): ", 1,
+                slotOptions.length) - 1;
         LocalTime selectedTime = LocalTime.parse(slotOptions[chosenIndex]);
 
         LocalDateTime consultationDateTime = LocalDateTime.of(consultationDate, selectedTime);
-        
+
         String symptoms = ConsoleUtils.getStringInput(scanner, "Enter symptoms: ");
         double consultationFee = ConsoleUtils.getDoubleInput(scanner, "Enter consultation fee: ", 0.0, 10000.0);
-        
+
         // Display consultation overview
         ConsoleUtils.printHeader("Consultation Overview");
         System.out.println("Patient: " + patient.getFullName() + " (ID: " + patientId + ")");
         System.out.println("Doctor: " + doctor.getFullName() + " (ID: " + doctorId + ")");
-        System.out.println("Date & Time: " + consultationDateTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
+        System.out.println(
+                "Date & Time: " + consultationDateTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
         System.out.println("Symptoms: " + symptoms);
         System.out.println("Fee: RM" + consultationFee);
         System.out.println();
 
-        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to schedule this consultation? (Y/N): ");
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
+                "Are you sure you want to schedule this consultation? (Y/N): ");
         if (confirm) {
-            if (consultationControl.scheduleConsultation(patient, doctor, consultationDateTime, symptoms, consultationFee)) {
+            if (consultationControl.scheduleConsultation(patient, doctor, consultationDateTime, symptoms,
+                    consultationFee)) {
                 System.out.println("Consultation scheduled successfully.");
             } else {
                 System.out.println("Consultation not scheduled.");
@@ -155,11 +161,10 @@ public class ConsultationManagementUI {
         ConsoleUtils.waitMessage();
     }
 
-
     private void completeConsultation() {
         ConsoleUtils.printHeader("Complete Consultation");
         String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID: ");
-        
+
         Consultation consultation = consultationControl.findConsultationById(consultationId);
         if (consultation == null) {
             System.out.println("Consultation not found.");
@@ -180,7 +185,7 @@ public class ConsultationManagementUI {
         String diagnosis = ConsoleUtils.getStringInput(scanner, "Enter diagnosis: ");
         String treatment = ConsoleUtils.getStringInput(scanner, "Enter treatment: ");
         String notes = ConsoleUtils.getStringInput(scanner, "Enter notes: ");
-        
+
         // Ask for next visit scheduling (optional)
         LocalDateTime nextVisitDate = null;
         boolean hasNextVisit = ConsoleUtils.getBooleanInput(scanner, "Schedule next visit? (Y/N): ");
@@ -200,7 +205,8 @@ public class ConsultationManagementUI {
         }
         System.out.println();
 
-        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to complete this consultation? (Y/N): ");
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
+                "Are you sure you want to complete this consultation? (Y/N): ");
         if (confirm) {
             if (consultationControl.completeConsultation(consultationId, diagnosis, treatment, notes, nextVisitDate)) {
                 System.out.println("Consultation completed successfully.");
@@ -216,7 +222,7 @@ public class ConsultationManagementUI {
     private void cancelConsultation() {
         ConsoleUtils.printHeader("Cancel Consultation");
         String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID: ");
-        
+
         Consultation consultation = consultationControl.findConsultationById(consultationId);
         if (consultation == null) {
             System.out.println("Consultation not found.");
@@ -235,13 +241,14 @@ public class ConsultationManagementUI {
         }
 
         String reason = ConsoleUtils.getStringInput(scanner, "Enter cancellation reason: ");
-        
+
         ConsoleUtils.printHeader("Cancellation Details");
         System.out.println("Consultation ID: " + consultationId);
         System.out.println("Reason: " + reason);
         System.out.println();
 
-        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to cancel this consultation? (Y/N): ");
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
+                "Are you sure you want to cancel this consultation? (Y/N): ");
         if (confirm) {
             if (consultationControl.cancelConsultation(consultationId)) {
                 System.out.println("Consultation cancelled successfully.");
@@ -290,7 +297,7 @@ public class ConsultationManagementUI {
     private void searchConsultationById() {
         ConsoleUtils.printHeader("Search by Consultation ID");
         String consultationId = ConsoleUtils.getStringInput(scanner, "Enter Consultation ID: ");
-        
+
         Consultation consultation = consultationControl.findConsultationById(consultationId);
         if (consultation == null) {
             System.out.println("Consultation not found.");
@@ -304,11 +311,11 @@ public class ConsultationManagementUI {
     private void searchConsultationsByPatient() {
         ConsoleUtils.printHeader("Search by Patient ID");
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
-        
+
         ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByPatient(patientId);
         System.out.println();
         ConsoleUtils.printHeader("Search Result");
-        
+
         if (consultations.isEmpty()) {
             System.out.println("No consultations found for patient ID: " + patientId);
         } else {
@@ -323,11 +330,11 @@ public class ConsultationManagementUI {
     private void searchConsultationsByDoctor() {
         ConsoleUtils.printHeader("Search by Doctor ID");
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
-        
+
         ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByDoctor(doctorId);
         System.out.println();
         ConsoleUtils.printHeader("Search Result");
-        
+
         if (consultations.isEmpty()) {
             System.out.println("No consultations found for doctor ID: " + doctorId);
         } else {
@@ -341,21 +348,24 @@ public class ConsultationManagementUI {
 
     private void searchConsultationsByDateRange() {
         ConsoleUtils.printHeader("Search by Date Range");
-        LocalDate startDate = ConsoleUtils.getDateInput(scanner, "Enter start date (DD-MM-YYYY): ", DateType.PAST_DATE_ONLY);
-        LocalDate endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ", DateType.PAST_DATE_ONLY);
-        
+        LocalDate startDate = ConsoleUtils.getDateInput(scanner, "Enter start date (DD-MM-YYYY): ",
+                DateType.PAST_DATE_ONLY);
+        LocalDate endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ",
+                DateType.PAST_DATE_ONLY);
+
         // Validate date range
         if (startDate.isAfter(endDate)) {
             System.out.println("Start date cannot be after end date.");
             return;
         }
-        
-        ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByDateRange(startDate, endDate);
+
+        ArrayBucketList<String, Consultation> consultations = consultationControl
+                .findConsultationsByDateRange(startDate, endDate);
         System.out.println();
         ConsoleUtils.printHeader("Search Result");
-        System.out.println("Date Range: " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + 
-                         " to " + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
-        
+        System.out.println("Date Range: " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) +
+                " to " + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+
         if (consultations.isEmpty()) {
             System.out.println("No consultations found in the specified date range.");
         } else {
@@ -371,9 +381,9 @@ public class ConsultationManagementUI {
         ConsoleUtils.printHeader("Search by Status");
         System.out.println("Select status:");
         System.out.println("1. SCHEDULED\n2. IN_PROGRESS\n3. COMPLETED\n4. CANCELLED");
-        
+
         int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
-        
+
         Consultation.ConsultationStatus status = null;
         switch (statusChoice) {
             case 1:
@@ -389,11 +399,11 @@ public class ConsultationManagementUI {
                 status = Consultation.ConsultationStatus.CANCELLED;
                 break;
         }
-        
+
         ArrayBucketList<String, Consultation> consultations = consultationControl.findConsultationsByStatus(status);
         System.out.println();
         ConsoleUtils.printHeader("Search Result");
-        
+
         if (consultations.isEmpty()) {
             System.out.println("No consultations found with status: " + status);
         } else {
@@ -407,14 +417,14 @@ public class ConsultationManagementUI {
 
     private void generateConsultationReports() {
         ConsoleUtils.printHeader("Consultation Reports");
-        
+
         System.out.println("1. Consultation Report");
         System.out.println("2. Consultation History Report");
         System.out.println("3. Both Reports");
         System.out.print("Enter choice: ");
-        
+
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
-        
+
         switch (choice) {
             case 1:
                 generateConsultationReport();
@@ -430,10 +440,10 @@ public class ConsultationManagementUI {
                 System.out.println("Invalid choice.");
         }
     }
-    
+
     private void generateConsultationReport() {
         ConsoleUtils.printHeader("Consultation Report");
-        
+
         System.out.println("Select field to sort by:");
         System.out.println("1. Consultation ID");
         System.out.println("2. Patient Name");
@@ -441,25 +451,25 @@ public class ConsultationManagementUI {
         System.out.println("4. Consultation Date");
         System.out.println("5. Status");
         System.out.println("6. Consultation Fee");
-        
+
         int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-        
+
         System.out.println("Select sort order:");
         System.out.println("1. Ascending (A-Z, Low to High)");
         System.out.println("2. Descending (Z-A, High to Low)");
-        
+
         int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-        
+
         String sortBy = getConsultationSortField(sortFieldChoice);
         String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
-        
+
         System.out.println(consultationControl.generateConsultationReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
-    
+
     private void generateConsultationHistoryReport() {
         ConsoleUtils.printHeader("Consultation History Report");
-        
+
         System.out.println("Select field to sort by:");
         System.out.println("1. Consultation ID");
         System.out.println("2. Patient Name");
@@ -467,39 +477,48 @@ public class ConsultationManagementUI {
         System.out.println("4. Consultation Date");
         System.out.println("5. Status");
         System.out.println("6. Consultation Fee");
-        
+
         int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-        
+
         System.out.println("Select sort order:");
         System.out.println("1. Ascending (A-Z, Low to High)");
         System.out.println("2. Descending (Z-A, High to Low)");
-        
+
         int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-        
+
         String sortBy = getConsultationSortField(sortFieldChoice);
         String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
-        
+
         System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
-    
+
     private String getConsultationSortField(int choice) {
         switch (choice) {
-            case 1: return "id";
-            case 2: return "patient";
-            case 3: return "doctor";
-            case 4: return "date";
-            case 5: return "status";
-            case 6: return "fee";
-            default: return "date";
+            case 1:
+                return "id";
+            case 2:
+                return "patient";
+            case 3:
+                return "doctor";
+            case 4:
+                return "date";
+            case 5:
+                return "status";
+            case 6:
+                return "fee";
+            default:
+                return "date";
         }
     }
 
     private void printConsultationDetails(Consultation consultation) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         System.out.println("Consultation ID: " + consultation.getConsultationId());
-        System.out.println("Patient: " + consultation.getPatient().getFullName() + " (" + consultation.getPatient().getPatientId() + ")");
-        System.out.println("Doctor: " + consultation.getDoctor().getFullName() + " (" + consultation.getDoctor().getDoctorId() + ")");
+        System.out.println("Patient: " + consultation.getPatient().getFullName() + " ("
+                + consultation.getPatient().getPatientId() + ")");
+        System.out.println("Doctor: " + consultation.getDoctor().getFullName() + " ("
+                + consultation.getDoctor().getDoctorId() + ")");
         System.out.println("Date: " + consultation.getConsultationDate().format(dateTimeFormatter));
         System.out.println("Status: " + consultation.getStatus());
         System.out.println("Fee: RM" + consultation.getConsultationFee());
@@ -517,17 +536,18 @@ public class ConsultationManagementUI {
         System.out.println("Available: " + (schedule.isAvailable() ? "Yes" : "No"));
         System.out.println("----------------------------------------");
     }
-    
+
     /**
      * Start consultation using queue system
-     * Enqueues booked consultations in ascending order of slot number according to system date
+     * Enqueues booked consultations in ascending order of slot number according to
+     * system date
      */
     private void startConsultation() {
         ConsoleUtils.printHeader("Start Consultation (Queue-based)");
-        
+
         // Get doctor ID
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
-        
+
         // Check if doctor exists
         Doctor doctor = consultationControl.getDoctorById(doctorId);
         if (doctor == null) {
@@ -535,19 +555,19 @@ public class ConsultationManagementUI {
             ConsoleUtils.waitMessage();
             return;
         }
-        
+
         // Show current status
         System.out.println("Doctor: " + doctor.getFullName());
         System.out.println("Status: " + consultationControl.getDoctorConsultationStatus(doctorId));
         System.out.println();
-        
+
         // Start consultation using queue
         String result = consultationControl.startConsultation(doctorId);
         System.out.println(result);
-        
+
         ConsoleUtils.waitMessage();
     }
-    
+
     /**
      * View queue status for all doctors
      */
@@ -556,32 +576,35 @@ public class ConsultationManagementUI {
         System.out.println(consultationControl.getQueueStatus());
         ConsoleUtils.waitMessage();
     }
-    
+
     /**
-     * Schedule next visit using the same slot selection system as scheduleConsultation
+     * Schedule next visit using the same slot selection system as
+     * scheduleConsultation
      */
     private LocalDateTime scheduleNextVisit(Consultation currentConsultation) {
         ConsoleUtils.printHeader("Schedule Next Visit");
-        
+
         // Use the same doctor as the current consultation
         Doctor doctor = currentConsultation.getDoctor();
         Patient patient = currentConsultation.getPatient();
-        
+
         System.out.println("Patient: " + patient.getFullName() + " (ID: " + patient.getPatientId() + ")");
         System.out.println("Doctor: " + doctor.getFullName() + " (ID: " + doctor.getDoctorId() + ")");
         System.out.println();
-        
+
         // Choose date (DD-MM-YYYY) - must be in the future
-        LocalDate nextVisitDate = ConsoleUtils.getDateInput(scanner, "Enter next visit date (DD-MM-YYYY): ", DateType.FUTURE_DATE_ONLY);
-        
+        LocalDate nextVisitDate = ConsoleUtils.getDateInput(scanner, "Enter next visit date (DD-MM-YYYY): ",
+                DateType.FUTURE_DATE_ONLY);
+
         // Show available doctors and operating hours for the selected day
-        ArrayBucketList<String, entity.Schedule> schedulesForDate = consultationControl.getAvailableSchedulesByDate(nextVisitDate);
+        ArrayBucketList<String, entity.Schedule> schedulesForDate = consultationControl
+                .getAvailableSchedulesByDate(nextVisitDate);
         if (schedulesForDate.isEmpty()) {
             System.out.println("No doctor schedules are available on this date.");
             ConsoleUtils.waitMessage();
             return null;
         }
-        
+
         // Check if the current doctor has schedule on the selected date
         boolean doctorAvailable = false;
         for (entity.Schedule schedule : schedulesForDate) {
@@ -590,19 +613,21 @@ public class ConsultationManagementUI {
                 break;
             }
         }
-        
+
         if (!doctorAvailable) {
             System.out.println("The current doctor is not available on the selected date.");
-            System.out.println("Available doctors for " + nextVisitDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + ":");
+            System.out.println(
+                    "Available doctors for " + nextVisitDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + ":");
             for (entity.Schedule schedule : schedulesForDate) {
                 printScheduleDetails(schedule);
             }
-            
-            boolean useDifferentDoctor = ConsoleUtils.getBooleanInput(scanner, "Would you like to schedule with a different doctor? (Y/N): ");
+
+            boolean useDifferentDoctor = ConsoleUtils.getBooleanInput(scanner,
+                    "Would you like to schedule with a different doctor? (Y/N): ");
             if (!useDifferentDoctor) {
                 return null;
             }
-            
+
             // Let user select a different doctor
             String newDoctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID from the list above: ");
             doctor = consultationControl.getDoctorById(newDoctorId);
@@ -611,7 +636,7 @@ public class ConsultationManagementUI {
                 return null;
             }
         }
-        
+
         // Show available 1-hour slots (breaks excluded) and choose one
         String[] slotOptions = consultationControl.getAvailableSlotTimes(doctor.getDoctorId(), nextVisitDate);
         if (slotOptions.length == 0) {
@@ -619,33 +644,36 @@ public class ConsultationManagementUI {
             ConsoleUtils.waitMessage();
             return null;
         }
-        
+
         ConsoleUtils.printHeader("Available 1-hour Slots (breaks excluded)");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         for (int index = 0; index < slotOptions.length; index++) {
             LocalTime t = LocalTime.parse(slotOptions[index]);
             System.out.println((index + 1) + ". " + t.format(timeFormatter));
         }
-        
-        int chosenIndex = ConsoleUtils.getIntInput(scanner, "Choose a slot (1-" + slotOptions.length + "): ", 1, slotOptions.length) - 1;
+
+        int chosenIndex = ConsoleUtils.getIntInput(scanner, "Choose a slot (1-" + slotOptions.length + "): ", 1,
+                slotOptions.length) - 1;
         LocalTime selectedTime = LocalTime.parse(slotOptions[chosenIndex]);
-        
+
         LocalDateTime nextVisitDateTime = LocalDateTime.of(nextVisitDate, selectedTime);
-        
+
         // Display next visit overview
         ConsoleUtils.printHeader("Next Visit Overview");
         System.out.println("Patient: " + patient.getFullName() + " (ID: " + patient.getPatientId() + ")");
         System.out.println("Doctor: " + doctor.getFullName() + " (ID: " + doctor.getDoctorId() + ")");
         System.out.println("Date & Time: " + nextVisitDateTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
         System.out.println();
-        
-        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to schedule this next visit? (Y/N): ");
+
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner,
+                "Are you sure you want to schedule this next visit? (Y/N): ");
         if (confirm) {
             // Schedule the next consultation
             String symptoms = ConsoleUtils.getStringInput(scanner, "Enter symptoms for next visit: ");
             double consultationFee = ConsoleUtils.getDoubleInput(scanner, "Enter consultation fee: ", 0.0, 10000.0);
-            
-            if (consultationControl.scheduleConsultation(patient, doctor, nextVisitDateTime, symptoms, consultationFee)) {
+
+            if (consultationControl.scheduleConsultation(patient, doctor, nextVisitDateTime, symptoms,
+                    consultationFee)) {
                 System.out.println("Next visit scheduled successfully.");
                 return nextVisitDateTime;
             } else {
@@ -657,4 +685,4 @@ public class ConsultationManagementUI {
             return null;
         }
     }
-} 
+}

@@ -21,7 +21,6 @@ public class ConsoleUtils {
 
         }
     }
-    
 
     public static String getInputMatching(Scanner scanner, String prompt, Pattern pattern, String invalidMessage) {
         while (true) {
@@ -37,13 +36,12 @@ public class ConsoleUtils {
         }
     }
 
-
     public static String getEmailInput(Scanner scanner, String prompt) {
         return getInputMatching(scanner, prompt, PatternChecker.EMAIL_PATTERN, "Please enter a valid email address");
     }
 
-
-    public static String getInputMatchingWithDefault(Scanner scanner, String prompt, Pattern pattern, String invalidMessage, String defaultValue) {
+    public static String getInputMatchingWithDefault(Scanner scanner, String prompt, Pattern pattern,
+            String invalidMessage, String defaultValue) {
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
@@ -63,11 +61,9 @@ public class ConsoleUtils {
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) {
                 System.out.println("IC number cannot be empty");
-            }
-            else if (!PatternChecker.IC_PATTERN.matcher(input).matches()) {
+            } else if (!PatternChecker.IC_PATTERN.matcher(input).matches()) {
                 System.out.println("Invalid IC number format");
-            }             
-            else {
+            } else {
                 return input;
             }
         }
@@ -79,11 +75,9 @@ public class ConsoleUtils {
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) {
                 System.out.println("Phone number cannot be empty");
-            }
-            else if (!PatternChecker.PHONE_PATTERN.matcher(input).matches()) {
+            } else if (!PatternChecker.PHONE_PATTERN.matcher(input).matches()) {
                 System.out.println("Invalid phone number format");
-            }       
-            else {
+            } else {
                 return input;
             }
         }
@@ -95,27 +89,27 @@ public class ConsoleUtils {
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) {
                 System.out.println("Time cannot be empty");
-            }
-            else if (!PatternChecker.TIME_PATTERN.matcher(input).matches()) {
+            } else if (!PatternChecker.TIME_PATTERN.matcher(input).matches()) {
                 System.out.println("Invalid time format");
-            }
-            else {
+            } else {
                 return input;
             }
         }
     }
 
-
     public static String getICInput(Scanner scanner, String prompt, String defaultValue) {
-        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.IC_PATTERN, "IC must be in format: XXXXXX-XX-XXXX", defaultValue);
+        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.IC_PATTERN,
+                "IC must be in format: XXXXXX-XX-XXXX", defaultValue);
     }
 
     public static String getEmailInput(Scanner scanner, String prompt, String defaultValue) {
-        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.EMAIL_PATTERN, "Please enter a valid email address", defaultValue);
+        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.EMAIL_PATTERN,
+                "Please enter a valid email address", defaultValue);
     }
 
     public static String getPhoneInput(Scanner scanner, String prompt, String defaultValue) {
-        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.PHONE_PATTERN, "Phone must be in format: 0XX-XXXXXXX or 0XX-XXXXXXXX", defaultValue);
+        return getInputMatchingWithDefault(scanner, prompt, PatternChecker.PHONE_PATTERN,
+                "Phone must be in format: 0XX-XXXXXXX or 0XX-XXXXXXXX", defaultValue);
     }
 
     public static String getPostalCodeInput(Scanner scanner, String prompt) {
@@ -125,9 +119,10 @@ public class ConsoleUtils {
 
     public static String getPostalCodeInput(Scanner scanner, String prompt, String defaultValue) {
         Pattern postalPattern = Pattern.compile("^\\d{5}$");
-        return getInputMatchingWithDefault(scanner, prompt, postalPattern, "Postal code must be 5 digits", defaultValue).trim();
+        return getInputMatchingWithDefault(scanner, prompt, postalPattern, "Postal code must be 5 digits", defaultValue)
+                .trim();
     }
-    
+
     public static int getIntInput(Scanner scanner, String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt);
@@ -161,7 +156,8 @@ public class ConsoleUtils {
     }
 
     public static LocalDate getDateInput(Scanner scanner, String prompt, DateType dateType) {
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-uuuu").withResolverStyle(ResolverStyle.STRICT);
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-uuuu")
+                .withResolverStyle(ResolverStyle.STRICT);
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
@@ -299,20 +295,20 @@ public class ConsoleUtils {
         if (text.length() >= width) {
             return text;
         }
-        
+
         int padding = (width - text.length()) / 2;
         StringBuilder centered = new StringBuilder();
-        
+
         // Add left padding
         centered.append(" ".repeat(padding));
-        
+
         centered.append(text);
-        
+
         // Add right padding to reach exact width
         while (centered.length() < width) {
             centered.append(" ");
         }
-        
+
         return centered.toString();
     }
 

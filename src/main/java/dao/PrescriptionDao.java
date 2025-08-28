@@ -90,7 +90,8 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, prescription.getPatient().getPatientId());
             preparedStatement.setString(2, prescription.getDoctor().getDoctorId());
@@ -103,7 +104,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             preparedStatement.setDouble(8, prescription.getTotalCost());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedPrescriptionId(connection);
@@ -112,7 +113,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
                     return true;
                 }
             }
-            
+
             return false;
 
         } catch (SQLException e) {
@@ -123,21 +124,22 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
 
     /**
      * Get the ID of the last inserted prescription
+     * 
      * @param connection The database connection
      * @return The generated prescription ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedPrescriptionId(Connection connection) throws SQLException {
         String sql = "SELECT prescriptionId FROM prescription ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("prescriptionId");
             }
         }
-        
+
         return null;
     }
 
@@ -197,11 +199,13 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
         return prescribedMedicines;
     }
 
-    public boolean insertPrescribedMedicineAndReturnId(Prescription.PrescribedMedicine prescribedMedicine) throws SQLException {
+    public boolean insertPrescribedMedicineAndReturnId(Prescription.PrescribedMedicine prescribedMedicine)
+            throws SQLException {
         String sql = "INSERT INTO prescribed_medicine (prescriptionId, medicineId, quantity, dosage, frequency, duration, unitPrice) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, prescribedMedicine.getPrescriptionId());
             preparedStatement.setString(2, prescribedMedicine.getMedicine().getMedicineId());
@@ -212,7 +216,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             preparedStatement.setDouble(7, prescribedMedicine.getMedicine().getUnitPrice());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedPrescribedMedicineId(connection);
@@ -221,7 +225,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
                     return true;
                 }
             }
-            
+
             return false;
         } catch (SQLException e) {
             System.err.println("Error inserting prescribed medicine: " + e.getMessage());
@@ -231,21 +235,22 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
 
     /**
      * Get the ID of the last inserted prescribed medicine
+     * 
      * @param connection The database connection
      * @return The generated prescribed medicine ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedPrescribedMedicineId(Connection connection) throws SQLException {
         String sql = "SELECT prescribedMedicineId FROM prescribed_medicine ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("prescribedMedicineId");
             }
         }
-        
+
         return null;
     }
 

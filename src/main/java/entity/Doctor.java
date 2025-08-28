@@ -14,12 +14,11 @@ public class Doctor extends Person {
     private int expYears;
     private boolean isAvailable;
     private ArrayBucketList<String, Patient> patients;
-    private ArrayBucketList<String, Appointment> appointments;
     private ArrayBucketList<String, Schedule> schedules;
 
     public Doctor(String fullName, String ICNumber, String email, String phoneNumber,
-                  Address address, LocalDate registrationDate, String doctorId, String medicalSpecialty,
-                  String licenseNumber, int expYears) {
+            Address address, LocalDate registrationDate, String doctorId, String medicalSpecialty,
+            String licenseNumber, int expYears) {
         super(fullName, ICNumber, email, phoneNumber, address, registrationDate);
         this.doctorId = doctorId;
         this.medicalSpecialty = medicalSpecialty;
@@ -27,25 +26,49 @@ public class Doctor extends Person {
         this.expYears = expYears;
         this.isAvailable = true;
         this.patients = new ArrayBucketList<String, Patient>();
-        this.appointments = new ArrayBucketList<String, Appointment>();
         this.schedules = new ArrayBucketList<String, Schedule>();
     }
 
     // Accessor and mutator method for doctor
-    public String getDoctorId() { return  doctorId; }
-    public void setDoctorId(String doctorId) { this.doctorId = doctorId; }
+    public String getDoctorId() {
+        return doctorId;
+    }
 
-    public String getMedicalSpecialty() { return medicalSpecialty; }
-    public void setMedicalSpecialty(String medicalSpecialty) { this.medicalSpecialty = medicalSpecialty; }
+    public void setDoctorId(String doctorId) {
+        this.doctorId = doctorId;
+    }
 
-    public String getLicenseNumber() { return  licenseNumber; }
-    public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
+    public String getMedicalSpecialty() {
+        return medicalSpecialty;
+    }
 
-    public int getExpYears() { return  expYears; }
-    public void setExpYears(int expYears) { this.expYears = expYears; }
+    public void setMedicalSpecialty(String medicalSpecialty) {
+        this.medicalSpecialty = medicalSpecialty;
+    }
 
-    public boolean isAvailable() { return  isAvailable; }
-    public void setAvailable (boolean available) { isAvailable = available; }
+    public String getLicenseNumber() {
+        return licenseNumber;
+    }
+
+    public void setLicenseNumber(String licenseNumber) {
+        this.licenseNumber = licenseNumber;
+    }
+
+    public int getExpYears() {
+        return expYears;
+    }
+
+    public void setExpYears(int expYears) {
+        this.expYears = expYears;
+    }
+
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    public void setAvailable(boolean available) {
+        isAvailable = available;
+    }
 
     // Patient Management
     public boolean addPatient(Patient patient) {
@@ -66,31 +89,6 @@ public class Doctor extends Person {
 
     public int getNumberOfPatients() {
         return patients.getSize();
-    }
-
-    // Appointment Management
-    public boolean addAppointment(Appointment appointment) {
-        return appointments.add(appointment.getAppointmentId(), appointment) != null;
-    }
-
-    public boolean addAppointment(int position, Appointment appointment) {
-        return appointments.add(appointment.getAppointmentId(), appointment) != null;
-    }
-
-    public Appointment removeAppointment(String appointmentId) {
-        return appointments.remove(appointmentId);
-    }
-
-    public Appointment getAppointment(String appointmentId) {
-        return appointments.getValue(appointmentId);
-    }
-
-    public boolean isAppointmentExist(String appointmentId) {
-        return appointments.contains(appointmentId);
-    }
-
-    public int getNumberOfAppointment() {
-        return appointments.getSize();
     }
 
     // Schedule Management

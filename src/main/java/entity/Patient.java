@@ -14,8 +14,8 @@ public class Patient extends Person {
     private String emergencyContact;
 
     public Patient(String fullName, String ICNumber, String email, String phoneNumber,
-                   Address address, LocalDate registrationDate, String patientId,
-                   BloodType bloodType, String allergies, String emergencyContact) {
+            Address address, LocalDate registrationDate, String patientId,
+            BloodType bloodType, String allergies, String emergencyContact) {
         super(fullName, ICNumber, email, phoneNumber, address, registrationDate);
         this.patientId = patientId;
         this.bloodType = bloodType;

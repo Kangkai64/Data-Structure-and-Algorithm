@@ -221,13 +221,13 @@ public class PharmacyManagementControl {
                 dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
             }
 
-            if (oldStatus == Prescription.PrescriptionStatus.DISPENSED && prescription.getStatus() != Prescription.PrescriptionStatus.DISPENSED) {
+            if (oldStatus == Prescription.PrescriptionStatus.DISPENSED
+                    && prescription.getStatus() != Prescription.PrescriptionStatus.DISPENSED) {
                 dispensedPrescriptions.remove(prescription.getPrescriptionId());
             }
 
             return true;
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
             System.err.println("Error updating prescription: " + exception.getMessage());
             return false;
         }
@@ -873,7 +873,7 @@ public class PharmacyManagementControl {
             return;
 
         Comparator<Prescription> comparator = getPrescriptionComparator(sortBy);
-        
+
         // Apply sort order
         if (sortOrder.equalsIgnoreCase("desc")) {
             comparator = comparator.reversed();

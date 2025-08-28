@@ -18,8 +18,8 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * @author: Poh Qi Xuan
- * Consultation DAO - Module 3
- * Manages consultation data access operations
+ *          Consultation DAO - Module 3
+ *          Manages consultation data access operations
  */
 
 public class ConsultationDao extends DaoTemplate<Consultation> {
@@ -37,7 +37,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         String sql = "SELECT * FROM consultation WHERE consultationId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, consultationId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -59,8 +59,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         String sql = "SELECT * FROM consultation ORDER BY consultationDate DESC";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 Consultation consultation = mapResultSet(resultSet);
@@ -82,7 +82,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     public Consultation findInProgressByDoctor(String doctorId) throws SQLException {
         String sql = "SELECT * FROM consultation WHERE doctorId = ? AND status = 'IN_PROGRESS' ORDER BY consultationDate LIMIT 1";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, doctorId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
@@ -102,7 +102,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     public Consultation findEarliestScheduledByDoctorOnDate(String doctorId, LocalDate date) throws SQLException {
         String sql = "SELECT * FROM consultation WHERE doctorId = ? AND status = 'SCHEDULED' AND DATE(consultationDate) = ? ORDER BY consultationDate ASC LIMIT 1";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, doctorId);
             preparedStatement.setDate(2, Date.valueOf(date));
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -123,7 +123,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     public int countScheduledByDoctorOnDate(String doctorId, LocalDate date) throws SQLException {
         String sql = "SELECT COUNT(*) FROM consultation WHERE doctorId = ? AND status = 'SCHEDULED' AND DATE(consultationDate) = ?";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, doctorId);
             preparedStatement.setDate(2, Date.valueOf(date));
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -144,14 +144,15 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     public String getQueueStatusForDate(LocalDate date) throws SQLException {
         StringBuilder status = new StringBuilder();
         status.append("=== CONSULTATION QUEUE STATUS ===\n");
-        status.append("Date: ").append(date.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"))).append("\n\n");
+        status.append("Date: ").append(date.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+                .append("\n\n");
 
         String groupedSql = "SELECT doctorId, COUNT(*) AS scheduledCount, MIN(consultationDate) AS nextTime " +
                 "FROM consultation WHERE status = 'SCHEDULED' AND DATE(consultationDate) = ? " +
                 "GROUP BY doctorId ORDER BY doctorId";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement groupedStmt = connection.prepareStatement(groupedSql)) {
+                PreparedStatement groupedStmt = connection.prepareStatement(groupedSql)) {
             groupedStmt.setDate(1, Date.valueOf(date));
             try (ResultSet rs = groupedStmt.executeQuery()) {
                 boolean any = false;
@@ -168,9 +169,9 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     status.append("Status: ").append(inProgress ? "IN CONSULTATION" : "AVAILABLE").append("\n");
                     if (nextTime != null) {
                         status.append("Next consultation: ")
-                              .append("-") // Patient name unavailable here without extra join; kept simple
-                              .append(" at ")
-                              .append(nextTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
+                                .append("-") // Patient name unavailable here without extra join; kept simple
+                                .append(" at ")
+                                .append(nextTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
                     }
                     status.append("\n\n");
                 }
@@ -192,12 +193,13 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         }
     }
 
-    // Cancel consultations that are past their scheduled datetime and not completed.
+    // Cancel consultations that are past their scheduled datetime and not
+    // completed.
     public int cancelExpiredConsultations() throws SQLException {
         String sql = "UPDATE consultation SET status = 'CANCELLED' " +
                 "WHERE consultationDate < CURDATE() AND status IN ('SCHEDULED', 'IN_PROGRESS')";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             return preparedStatement.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error cancelling expired consultations: " + e.getMessage());
@@ -212,7 +214,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         String sql = "SELECT 1 FROM consultation WHERE doctorId = ? AND consultationDate = ? " +
                 "AND status IN ('SCHEDULED','IN_PROGRESS') LIMIT 1";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, doctorId);
             preparedStatement.setObject(2, dateTime);
             try (ResultSet rs = preparedStatement.executeQuery()) {
@@ -235,7 +237,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "FROM consultation c JOIN patient p ON c.patientId=p.patientId " +
                 "JOIN doctor d ON c.doctorId=d.doctorId WHERE c.patientId = ? ORDER BY c.consultationDate DESC";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, patientId);
             try (ResultSet rs = ps.executeQuery()) {
                 StringBuilder sb = new StringBuilder();
@@ -244,7 +246,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     any = true;
                     appendConsultationLine(sb, rs);
                 }
-                if (!any) return "No consultations found for this patient.";
+                if (!any)
+                    return "No consultations found for this patient.";
                 return sb.toString();
             }
         }
@@ -256,7 +259,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "FROM consultation c JOIN patient p ON c.patientId=p.patientId " +
                 "JOIN doctor d ON c.doctorId=d.doctorId WHERE c.doctorId = ? ORDER BY c.consultationDate DESC";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 StringBuilder sb = new StringBuilder();
@@ -265,7 +268,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     any = true;
                     appendConsultationLine(sb, rs);
                 }
-                if (!any) return "No consultations found for this doctor.";
+                if (!any)
+                    return "No consultations found for this doctor.";
                 return sb.toString();
             }
         }
@@ -278,7 +282,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "JOIN doctor d ON c.doctorId=d.doctorId " +
                 "WHERE DATE(c.consultationDate) BETWEEN ? AND ? ORDER BY c.consultationDate DESC";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(start));
             ps.setDate(2, Date.valueOf(end));
             try (ResultSet rs = ps.executeQuery()) {
@@ -288,7 +292,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     any = true;
                     appendConsultationLine(sb, rs);
                 }
-                if (!any) return "No consultations found for this date range.";
+                if (!any)
+                    return "No consultations found for this date range.";
                 return sb.toString();
             }
         }
@@ -300,7 +305,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "FROM consultation c JOIN patient p ON c.patientId=p.patientId " +
                 "JOIN doctor d ON c.doctorId=d.doctorId WHERE c.status = ? ORDER BY c.consultationDate DESC";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, status.name());
             try (ResultSet rs = ps.executeQuery()) {
                 StringBuilder sb = new StringBuilder();
@@ -309,7 +314,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     any = true;
                     appendConsultationLine(sb, rs);
                 }
-                if (!any) return "No consultations found with status: " + status.name();
+                if (!any)
+                    return "No consultations found with status: " + status.name();
                 return sb.toString();
             }
         }
@@ -322,7 +328,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "FROM consultation c JOIN patient p ON c.patientId=p.patientId " +
                 "JOIN doctor d ON c.doctorId=d.doctorId " + orderBy;
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                PreparedStatement ps = connection.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | %12s\n",
@@ -343,7 +349,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "FROM consultation c JOIN patient p ON c.patientId=p.patientId " +
                 "JOIN doctor d ON c.doctorId=d.doctorId WHERE c.status='COMPLETED' " + orderBy;
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                PreparedStatement ps = connection.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | %12s\n",
@@ -360,12 +366,24 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     private String toOrderBy(String sortBy, String sortOrder, boolean completedOnly) {
         String column;
         switch (sortBy == null ? "date" : sortBy.toLowerCase()) {
-            case "id": column = "c.consultationId"; break;
-            case "patient": column = "p.fullName"; break;
-            case "doctor": column = "d.fullName"; break;
-            case "status": column = "c.status"; break;
-            case "fee": column = "c.consultationFee"; break;
-            default: column = "c.consultationDate"; break;
+            case "id":
+                column = "c.consultationId";
+                break;
+            case "patient":
+                column = "p.fullName";
+                break;
+            case "doctor":
+                column = "d.fullName";
+                break;
+            case "status":
+                column = "c.status";
+                break;
+            case "fee":
+                column = "c.consultationFee";
+                break;
+            default:
+                column = "c.consultationDate";
+                break;
         }
         String dir = ("asc".equalsIgnoreCase(sortOrder)) ? "ASC" : "DESC";
         return " ORDER BY " + column + " " + dir;
@@ -394,8 +412,10 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         LocalDateTime dt = rs.getObject("consultationDate", LocalDateTime.class);
         String status = rs.getString("status");
         double fee = rs.getDouble("consultationFee");
-        if (patientName != null && patientName.length() > 22) patientName = patientName.substring(0, 21) + "…";
-        if (doctorName != null && doctorName.length() > 22) doctorName = doctorName.substring(0, 21) + "…";
+        if (patientName != null && patientName.length() > 22)
+            patientName = patientName.substring(0, 21) + "…";
+        if (doctorName != null && doctorName.length() > 22)
+            doctorName = doctorName.substring(0, 21) + "…";
         sb.append(String.format("%-12s | %-22s | %-22s | %-16s | %-12s | RM %10.2f\n",
                 id,
                 patientName == null ? "-" : patientName,
@@ -406,8 +426,10 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     }
 
     private String truncate(String input, int max) {
-        if (input == null) return "-";
-        if (input.length() <= max) return input;
+        if (input == null)
+            return "-";
+        if (input.length() <= max)
+            return input;
         return input.substring(0, max - 1) + "…";
     }
 
@@ -418,7 +440,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, consultation.getPatient().getPatientId());
             preparedStatement.setString(2, consultation.getDoctor().getDoctorId());
@@ -428,18 +451,18 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             preparedStatement.setString(6, consultation.getTreatment());
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
-            
+
             // Handle nextVisitDate - convert from LocalDateTime to Date for database
             if (consultation.getNextVisitDate() != null) {
                 preparedStatement.setDate(9, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
             } else {
                 preparedStatement.setNull(9, java.sql.Types.DATE);
             }
-            
+
             preparedStatement.setDouble(10, consultation.getConsultationFee());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedConsultationId(connection);
@@ -448,7 +471,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     return true;
                 }
             }
-            
+
             return false;
 
         } catch (SQLException e) {
@@ -464,7 +487,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "nextVisitDate = ?, consultationFee = ? WHERE consultationId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, consultation.getPatient().getPatientId());
             preparedStatement.setString(2, consultation.getDoctor().getDoctorId());
@@ -474,14 +497,14 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             preparedStatement.setString(6, consultation.getTreatment());
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
-            
+
             // Handle nextVisitDate - convert from LocalDateTime to Date for database
             if (consultation.getNextVisitDate() != null) {
                 preparedStatement.setDate(9, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
             } else {
                 preparedStatement.setNull(9, java.sql.Types.DATE);
             }
-            
+
             preparedStatement.setDouble(10, consultation.getConsultationFee());
             preparedStatement.setString(11, consultation.getConsultationId());
 
@@ -498,7 +521,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         String sql = "DELETE FROM consultation WHERE consultationId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, consultationId);
 
@@ -514,7 +537,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         String sql = "UPDATE consultation SET status = ? WHERE consultationId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, status.name());
             preparedStatement.setString(2, consultationId);
@@ -532,7 +555,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "WHERE consultationId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, diagnosis);
             preparedStatement.setString(2, treatment);
@@ -551,7 +574,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "WHERE DATE(consultationDate) BETWEEN ? AND ? AND status = 'COMPLETED'";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setDate(1, new Date(startDate.getTime()));
             preparedStatement.setDate(2, new Date(endDate.getTime()));
@@ -572,7 +595,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
         String sql = "SELECT COUNT(*) FROM consultation WHERE status = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, status.name());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -594,8 +617,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                 "AND nextVisitDate >= CURDATE() ORDER BY nextVisitDate";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 Consultation consultation = mapResultSet(resultSet);
@@ -619,7 +642,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             Doctor doctor = doctorDao.findById(resultSet.getString("doctorId"));
 
             if (patient == null || doctor == null) {
-                System.err.println("Patient or Doctor not found for consultation: " + 
+                System.err.println("Patient or Doctor not found for consultation: " +
                         resultSet.getString("consultationId"));
                 return null;
             }
@@ -631,15 +654,14 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     doctor,
                     resultSet.getObject("consultationDate", LocalDateTime.class),
                     resultSet.getString("symptoms"),
-                    resultSet.getDouble("consultationFee")
-            );
+                    resultSet.getDouble("consultationFee"));
 
             // Set additional fields
             consultation.setDiagnosis(resultSet.getString("diagnosis"));
             consultation.setTreatment(resultSet.getString("treatment"));
             consultation.setNotes(resultSet.getString("notes"));
             consultation.setStatus(Consultation.ConsultationStatus.valueOf(resultSet.getString("status")));
-            
+
             // Handle nextVisitDate - convert from Date to LocalDateTime
             java.sql.Date nextVisitDate = resultSet.getDate("nextVisitDate");
             if (nextVisitDate != null) {
@@ -655,21 +677,22 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
 
     /**
      * Get the ID of the last inserted consultation
+     * 
      * @param connection The database connection
      * @return The generated consultation ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedConsultationId(Connection connection) throws SQLException {
         String sql = "SELECT consultationId FROM consultation ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("consultationId");
             }
         }
-        
+
         return null;
     }
-} 
+}

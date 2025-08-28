@@ -4,7 +4,8 @@ import java.util.Comparator;
 
 public final class QuickSort {
 
-    private QuickSort() {}
+    private QuickSort() {
+    }
 
     public static <T> void sort(T[] array, Comparator<T> comparator) {
         if (array == null || comparator == null || array.length < 2) {
@@ -40,5 +41,3 @@ public final class QuickSort {
         array[b] = temp;
     }
 }
-
-

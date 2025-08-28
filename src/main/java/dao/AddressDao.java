@@ -17,7 +17,7 @@ public class AddressDao extends DaoTemplate<Address> {
         String sql = "SELECT * FROM address WHERE addressId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, addressId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -39,8 +39,8 @@ public class AddressDao extends DaoTemplate<Address> {
         String sql = "SELECT * FROM address ORDER BY city, street";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 Address address = mapResultSet(resultSet);
@@ -62,7 +62,8 @@ public class AddressDao extends DaoTemplate<Address> {
                 "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, address.getStreet());
             preparedStatement.setString(2, address.getCity());
@@ -71,7 +72,7 @@ public class AddressDao extends DaoTemplate<Address> {
             preparedStatement.setString(5, address.getCountry());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedAddressId(connection);
@@ -80,7 +81,7 @@ public class AddressDao extends DaoTemplate<Address> {
                     return true;
                 }
             }
-            
+
             return false;
 
         } catch (SQLException e) {
@@ -95,7 +96,7 @@ public class AddressDao extends DaoTemplate<Address> {
                 "WHERE addressId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, address.getStreet());
             preparedStatement.setString(2, address.getCity());
@@ -117,7 +118,7 @@ public class AddressDao extends DaoTemplate<Address> {
         String sql = "DELETE FROM address WHERE addressId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, addressId);
 
@@ -131,21 +132,22 @@ public class AddressDao extends DaoTemplate<Address> {
 
     /**
      * Get the ID of the last inserted address
+     * 
      * @param connection The database connection
      * @return The generated address ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedAddressId(Connection connection) throws SQLException {
         String sql = "SELECT addressId FROM address ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("addressId");
             }
         }
-        
+
         return null;
     }
 
@@ -157,8 +159,7 @@ public class AddressDao extends DaoTemplate<Address> {
                     resultSet.getString("city"),
                     resultSet.getString("state"),
                     resultSet.getString("postalCode"),
-                    resultSet.getString("country")
-            );
+                    resultSet.getString("country"));
             address.setAddressId(resultSet.getString("addressId"));
             return address;
         } catch (SQLException e) {

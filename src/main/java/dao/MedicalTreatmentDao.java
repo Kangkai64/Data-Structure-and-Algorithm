@@ -30,7 +30,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     private void ensureUniqueConstraintOnConsultation() {
         String ddl = "ALTER TABLE medical_treatment ADD UNIQUE KEY IF NOT EXISTS uq_treatment_consultation (consultationId)";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement()) {
+                Statement statement = connection.createStatement()) {
             statement.executeUpdate(ddl);
         } catch (SQLException ignore) {
             // Ignore if not supported or already exists
@@ -42,7 +42,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         String sql = "SELECT * FROM medical_treatment WHERE treatmentId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, treatmentId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -64,8 +64,8 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         String sql = "SELECT * FROM medical_treatment ORDER BY treatmentDate DESC";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 MedicalTreatment treatment = mapResultSet(resultSet);
@@ -88,7 +88,8 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
                 "followUpDate, status, treatmentCost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             // Enforce one treatment per consultation at the database layer as well
             if (treatment.getConsultation() != null && treatment.getConsultation().getConsultationId() != null) {
@@ -98,7 +99,8 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
                     dupCheck.setString(1, consultationId);
                     try (ResultSet rs = dupCheck.executeQuery()) {
                         if (rs.next() && rs.getInt(1) > 0) {
-                            System.err.println("Insert blocked: consultationId " + consultationId + " is already used by another treatment.");
+                            System.err.println("Insert blocked: consultationId " + consultationId
+                                    + " is already used by another treatment.");
                             return false;
                         }
                     }
@@ -107,8 +109,8 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
 
             preparedStatement.setString(1, treatment.getPatient().getPatientId());
             preparedStatement.setString(2, treatment.getDoctor().getDoctorId());
-            preparedStatement.setString(3, treatment.getConsultation() != null ? 
-                    treatment.getConsultation().getConsultationId() : null);
+            preparedStatement.setString(3,
+                    treatment.getConsultation() != null ? treatment.getConsultation().getConsultationId() : null);
             preparedStatement.setString(4, treatment.getDiagnosis());
             preparedStatement.setString(5, treatment.getTreatmentPlan());
             preparedStatement.setString(6, treatment.getPrescribedMedications());
@@ -119,7 +121,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             preparedStatement.setDouble(11, treatment.getTreatmentCost());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedTreatmentId(connection);
@@ -128,7 +130,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
                     return true;
                 }
             }
-            
+
             return false;
 
         } catch (SQLException e) {
@@ -140,7 +142,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     public boolean existsByConsultationId(String consultationId) throws SQLException {
         String sql = "SELECT 1 FROM medical_treatment WHERE consultationId = ? LIMIT 1";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, consultationId);
             try (ResultSet rs = preparedStatement.executeQuery()) {
                 return rs.next();
@@ -156,12 +158,12 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
                 "WHERE treatmentId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, treatment.getPatient().getPatientId());
             preparedStatement.setString(2, treatment.getDoctor().getDoctorId());
-            preparedStatement.setString(3, treatment.getConsultation() != null ? 
-                    treatment.getConsultation().getConsultationId() : null);
+            preparedStatement.setString(3,
+                    treatment.getConsultation() != null ? treatment.getConsultation().getConsultationId() : null);
             preparedStatement.setString(4, treatment.getDiagnosis());
             preparedStatement.setString(5, treatment.getTreatmentPlan());
             preparedStatement.setString(6, treatment.getPrescribedMedications());
@@ -185,7 +187,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         String sql = "DELETE FROM medical_treatment WHERE treatmentId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, treatmentId);
 
@@ -201,7 +203,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         String sql = "UPDATE medical_treatment SET status = ? WHERE treatmentId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, status.name());
             preparedStatement.setString(2, treatmentId);
@@ -218,7 +220,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         String sql = "UPDATE medical_treatment SET followUpDate = ? WHERE treatmentId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setObject(1, followUpDate);
             preparedStatement.setString(2, treatmentId);
@@ -232,12 +234,13 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     }
 
     /**
-     * Updates only the treatment notes and follow-up date for a completed treatment.
+     * Updates only the treatment notes and follow-up date for a completed
+     * treatment.
      */
     public boolean updateNotesAndFollowUpDate(String treatmentId, String treatmentNotes, LocalDateTime followUpDate) {
         String sql = "UPDATE medical_treatment SET treatmentNotes = ?, followUpDate = ? WHERE treatmentId = ?";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-            PreparedStatement stmt = connection.prepareStatement(sql)) {
+                PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, treatmentNotes);
             if (followUpDate != null) {
                 stmt.setObject(2, followUpDate);
@@ -256,21 +259,22 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
 
     /**
      * Get the ID of the last inserted medical treatment
+     * 
      * @param connection The database connection
      * @return The generated treatment ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedTreatmentId(Connection connection) throws SQLException {
         String sql = "SELECT treatmentId FROM medical_treatment ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("treatmentId");
             }
         }
-        
+
         return null;
     }
 
@@ -281,14 +285,14 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             Patient patient = patientDao.findById(resultSet.getString("patientId"));
             Doctor doctor = doctorDao.findById(resultSet.getString("doctorId"));
             Consultation consultation = null;
-            
+
             String consultationId = resultSet.getString("consultationId");
             if (consultationId != null) {
                 consultation = consultationDao.findById(consultationId);
             }
 
             if (patient == null || doctor == null) {
-                System.err.println("Patient or Doctor not found for medical treatment: " + 
+                System.err.println("Patient or Doctor not found for medical treatment: " +
                         resultSet.getString("treatmentId"));
                 return null;
             }
@@ -303,36 +307,34 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
                 }
             }
 
-             // Create MedicalTreatment object
-             MedicalTreatment treatment = new MedicalTreatment(
-                resultSet.getString("treatmentId"),
-                patient,
-                doctor,
-                consultation,
-                resultSet.getString("diagnosis"),
-                resultSet.getString("treatmentPlan"),
-                resultSet.getString("prescribedMedications"),
-                resultSet.getString("treatmentNotes"),
-                treatmentDate != null ? treatmentDate : LocalDateTime.now(),
-                resultSet.getDouble("treatmentCost")
-             );
+            // Create MedicalTreatment object
+            MedicalTreatment treatment = new MedicalTreatment(
+                    resultSet.getString("treatmentId"),
+                    patient,
+                    doctor,
+                    consultation,
+                    resultSet.getString("diagnosis"),
+                    resultSet.getString("treatmentPlan"),
+                    resultSet.getString("prescribedMedications"),
+                    resultSet.getString("treatmentNotes"),
+                    treatmentDate != null ? treatmentDate : LocalDateTime.now(),
+                    resultSet.getDouble("treatmentCost"));
 
+            // Set additional fields (followUpDate is DATE; convert safely to start-of-day)
+            String followUpStr = resultSet.getString("followUpDate");
+            if (followUpStr != null && !followUpStr.startsWith("0000-00-00")) {
+                java.sql.Date fd = resultSet.getDate("followUpDate");
+                if (fd != null) {
+                    treatment.setFollowUpDate(fd.toLocalDate().atStartOfDay());
+                }
+            }
 
-             // Set additional fields (followUpDate is DATE; convert safely to start-of-day)
-             String followUpStr = resultSet.getString("followUpDate");
-             if (followUpStr != null && !followUpStr.startsWith("0000-00-00")) {
-                 java.sql.Date fd = resultSet.getDate("followUpDate");
-                 if (fd != null) {
-                     treatment.setFollowUpDate(fd.toLocalDate().atStartOfDay());
-                 }
-             }
-             
-             treatment.setStatus(MedicalTreatment.TreatmentStatus.valueOf(resultSet.getString("status")));
- 
-             return treatment;
-         } catch (SQLException e) {
-             System.err.println("Error mapping result set to MedicalTreatment: " + e.getMessage());
-             throw e;
-         }
-     }
- }
+            treatment.setStatus(MedicalTreatment.TreatmentStatus.valueOf(resultSet.getString("status")));
+
+            return treatment;
+        } catch (SQLException e) {
+            System.err.println("Error mapping result set to MedicalTreatment: " + e.getMessage());
+            throw e;
+        }
+    }
+}

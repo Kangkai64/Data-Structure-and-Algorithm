@@ -20,8 +20,8 @@ public class Consultation {
         SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
     }
 
-    public Consultation(String consultationId, Patient patient, Doctor doctor, 
-                       LocalDateTime consultationDate, String symptoms, double consultationFee) {
+    public Consultation(String consultationId, Patient patient, Doctor doctor,
+            LocalDateTime consultationDate, String symptoms, double consultationFee) {
         this.consultationId = consultationId;
         this.patient = patient;
         this.doctor = doctor;
@@ -32,38 +32,93 @@ public class Consultation {
     }
 
     // Getters and Setters
-    public String getConsultationId() { return consultationId; }
-    public void setConsultationId(String consultationId) { this.consultationId = consultationId; }
+    public String getConsultationId() {
+        return consultationId;
+    }
 
-    public Patient getPatient() { return patient; }
-    public void setPatient(Patient patient) { this.patient = patient; }
+    public void setConsultationId(String consultationId) {
+        this.consultationId = consultationId;
+    }
 
-    public Doctor getDoctor() { return doctor; }
-    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
+    public Patient getPatient() {
+        return patient;
+    }
 
-    public LocalDateTime getConsultationDate() { return consultationDate; }
-    public void setConsultationDate(LocalDateTime consultationDate) { this.consultationDate = consultationDate; }
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
 
-    public String getSymptoms() { return symptoms; }
-    public void setSymptoms(String symptoms) { this.symptoms = symptoms; }
+    public Doctor getDoctor() {
+        return doctor;
+    }
 
-    public String getDiagnosis() { return diagnosis; }
-    public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
 
-    public String getTreatment() { return treatment; }
-    public void setTreatment(String treatment) { this.treatment = treatment; }
+    public LocalDateTime getConsultationDate() {
+        return consultationDate;
+    }
 
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
+    public void setConsultationDate(LocalDateTime consultationDate) {
+        this.consultationDate = consultationDate;
+    }
 
-    public ConsultationStatus getStatus() { return status; }
-    public void setStatus(ConsultationStatus status) { this.status = status; }
+    public String getSymptoms() {
+        return symptoms;
+    }
 
-    public LocalDateTime getNextVisitDate() { return nextVisitDate; }
-    public void setNextVisitDate(LocalDateTime nextVisitDate) { this.nextVisitDate = nextVisitDate; }
+    public void setSymptoms(String symptoms) {
+        this.symptoms = symptoms;
+    }
 
-    public double getConsultationFee() { return consultationFee; }
-    public void setConsultationFee(double consultationFee) { this.consultationFee = consultationFee; }
+    public String getDiagnosis() {
+        return diagnosis;
+    }
+
+    public void setDiagnosis(String diagnosis) {
+        this.diagnosis = diagnosis;
+    }
+
+    public String getTreatment() {
+        return treatment;
+    }
+
+    public void setTreatment(String treatment) {
+        this.treatment = treatment;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public ConsultationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ConsultationStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getNextVisitDate() {
+        return nextVisitDate;
+    }
+
+    public void setNextVisitDate(LocalDateTime nextVisitDate) {
+        this.nextVisitDate = nextVisitDate;
+    }
+
+    public double getConsultationFee() {
+        return consultationFee;
+    }
+
+    public void setConsultationFee(double consultationFee) {
+        this.consultationFee = consultationFee;
+    }
 
     @Override
     public String toString() {
@@ -81,4 +136,4 @@ public class Consultation {
     public int hashCode() {
         return Integer.parseInt(consultationId.replaceAll("[^0-9]", ""));
     }
-} 
+}

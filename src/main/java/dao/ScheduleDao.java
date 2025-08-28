@@ -19,7 +19,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
         String sql = "SELECT * FROM schedule WHERE scheduleId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, scheduleId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -41,8 +41,8 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
         String sql = "SELECT * FROM schedule ORDER BY doctorId, dayOfWeek, fromTime";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 Schedule schedule = mapResultSet(resultSet);
@@ -64,7 +64,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
                 + "FIELD(dayOfWeek,'MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY')";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, doctorId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -89,7 +89,8 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
                 "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, schedule.getDoctorId());
             preparedStatement.setString(2, schedule.getDayOfWeek().name());
@@ -98,7 +99,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
             preparedStatement.setBoolean(5, schedule.isAvailable());
 
             int affectedRows = preparedStatement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 // Get the generated ID from the database
                 String generatedId = getLastInsertedScheduleId(connection);
@@ -107,7 +108,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
                     return true;
                 }
             }
-            
+
             return false;
 
         } catch (SQLException e) {
@@ -122,7 +123,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
                 "toTime = ?, isAvailable = ? WHERE scheduleId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, schedule.getDoctorId());
             preparedStatement.setString(2, schedule.getDayOfWeek().name());
@@ -144,7 +145,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
         String sql = "DELETE FROM schedule WHERE scheduleId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, scheduleId);
 
@@ -160,7 +161,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
         String sql = "UPDATE schedule SET isAvailable = ? WHERE scheduleId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setBoolean(1, isAvailable);
             preparedStatement.setString(2, scheduleId);
@@ -182,8 +183,7 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
                     DayOfWeek.valueOf(resultSet.getString("dayOfWeek")),
                     resultSet.getTime("fromTime").toString(),
                     resultSet.getTime("toTime").toString(),
-                    resultSet.getBoolean("isAvailable")
-            );
+                    resultSet.getBoolean("isAvailable"));
         } catch (SQLException e) {
             System.err.println("Error mapping result set to Schedule: " + e.getMessage());
             throw e;
@@ -192,21 +192,22 @@ public class ScheduleDao extends DaoTemplate<Schedule> {
 
     /**
      * Get the ID of the last inserted schedule
+     * 
      * @param connection The database connection
      * @return The generated schedule ID
      * @throws SQLException if database error occurs
      */
     private String getLastInsertedScheduleId(Connection connection) throws SQLException {
         String sql = "SELECT scheduleId FROM schedule ORDER BY createdDate DESC LIMIT 1";
-        
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            
+                ResultSet resultSet = preparedStatement.executeQuery()) {
+
             if (resultSet.next()) {
                 return resultSet.getString("scheduleId");
             }
         }
-        
+
         return null;
     }
-} 
+}

@@ -17,7 +17,8 @@ public abstract class Person {
     private Address address;
     private LocalDate registrationDate;
 
-    public Person(String fullName, String ICNumber, String email, String phoneNumber, Address address,LocalDate registrationDate) {
+    public Person(String fullName, String ICNumber, String email, String phoneNumber, Address address,
+            LocalDate registrationDate) {
         this.fullName = fullName;
         this.ICNumber = ICNumber;
         this.email = email;
@@ -117,8 +118,10 @@ public abstract class Person {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Person user = (Person) o;
         return ICNumber.equals(user.ICNumber);
     }

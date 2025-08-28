@@ -34,12 +34,13 @@ public class MainMenuUI {
             System.out.println("3. Consultation Management Module");
             System.out.println("4. Medical Treatment Management Module");
             System.out.println("5. Pharmacy Management Module");
-            System.out.println("6. Generate All Reports");
-            System.out.println("7. Exit");
-            
-            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+            System.out.println("6. Report Management Module");
+            System.out.println("7. Generate All Reports");
+            System.out.println("8. Exit");
+
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
             System.out.println();
-            
+
             switch (choice) {
                 case 1:
                     patientUI.displayPatientManagementMenu();
@@ -57,9 +58,12 @@ public class MainMenuUI {
                     pharmacyUI.displayPharmacyManagementMenu();
                     break;
                 case 6:
-                    reportUI.generateAllReports();
+                    reportUI.displayReportMenu();
                     break;
                 case 7:
+                    reportUI.generateAllReports();
+                    break;
+                case 8:
                     System.out.println("Thank you for using TAR UMT Clinic Management System!");
                     scanner.close();
                     System.exit(0);
@@ -73,4 +77,4 @@ public class MainMenuUI {
         MainMenuUI mainMenu = new MainMenuUI();
         mainMenu.displayMainMenu();
     }
-} 
+}

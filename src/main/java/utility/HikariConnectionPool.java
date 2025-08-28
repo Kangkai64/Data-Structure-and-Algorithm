@@ -50,6 +50,7 @@ public class HikariConnectionPool {
 
     /**
      * Get a connection from the pool
+     * 
      * @return Connection object
      * @throws SQLException if connection cannot be obtained
      */

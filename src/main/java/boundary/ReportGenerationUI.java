@@ -207,7 +207,6 @@ public class ReportGenerationUI {
         String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
 
         System.out.println(consultationControl.generateConsultationReport(sortBy, sortOrder));
-        ConsoleUtils.waitMessage();
     }
 
     private void generateConsultationHistoryReport() {
@@ -233,7 +232,6 @@ public class ReportGenerationUI {
         String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
 
         System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
-        ConsoleUtils.waitMessage();
     }
 
     private String getConsultationSortField(int choice) {
@@ -285,9 +283,8 @@ public class ReportGenerationUI {
         System.out.println("1. Medicine Stock Report");
         System.out.println("2. Prescription Report");
         System.out.println("3. Both Reports");
-        System.out.println("4. Back to Report Menu");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
 
         switch (choice) {
             case 1:
@@ -298,11 +295,8 @@ public class ReportGenerationUI {
                 break;
             case 3:
                 generateMedicineStockReportFromReportUI();
-                ConsoleUtils.waitMessage();
                 generatePrescriptionReportFromReportUI();
                 break;
-            case 4:
-                return;
             default:
                 System.out.println("Invalid choice.");
         }
@@ -332,7 +326,6 @@ public class ReportGenerationUI {
         String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
 
         System.out.println(pharmacyControl.generateMedicineStockReport(sortBy, sortOrder));
-        ConsoleUtils.waitMessage();
     }
 
     private void generatePrescriptionReportFromReportUI() {
@@ -358,7 +351,6 @@ public class ReportGenerationUI {
         String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
 
         System.out.println(pharmacyControl.generatePrescriptionReport(sortBy, sortOrder));
-        ConsoleUtils.waitMessage();
     }
 
     private String getMedicineSortField(int choice) {

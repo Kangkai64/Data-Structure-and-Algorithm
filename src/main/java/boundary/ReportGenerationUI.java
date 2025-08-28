@@ -187,24 +187,9 @@ public class ReportGenerationUI {
     private void generateConsultationReport() {
         ConsoleUtils.printHeader("Consultation Report");
 
-        System.out.println("Select field to sort by:");
-        System.out.println("1. Consultation ID");
-        System.out.println("2. Patient Name");
-        System.out.println("3. Doctor Name");
-        System.out.println("4. Consultation Date");
-        System.out.println("5. Status");
-        System.out.println("6. Consultation Fee");
-
-        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-
-        String sortBy = getConsultationSortField(sortFieldChoice);
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        String sortBy = getConsultationSortField();
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
 
         System.out.println(consultationControl.generateConsultationReport(sortBy, sortOrder));
     }
@@ -212,6 +197,14 @@ public class ReportGenerationUI {
     private void generateConsultationHistoryReport() {
         ConsoleUtils.printHeader("Consultation History Report");
 
+        String sortBy = getConsultationSortField();
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+
+        System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
+    }
+
+    private String getConsultationSortField() {
         System.out.println("Select field to sort by:");
         System.out.println("1. Consultation ID");
         System.out.println("2. Patient Name");
@@ -219,37 +212,15 @@ public class ReportGenerationUI {
         System.out.println("4. Consultation Date");
         System.out.println("5. Status");
         System.out.println("6. Consultation Fee");
-
-        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-
-        String sortBy = getConsultationSortField(sortFieldChoice);
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
-
-        System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
-    }
-
-    private String getConsultationSortField(int choice) {
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
         switch (choice) {
-            case 1:
-                return "id";
-            case 2:
-                return "patient";
-            case 3:
-                return "doctor";
-            case 4:
-                return "date";
-            case 5:
-                return "status";
-            case 6:
-                return "fee";
-            default:
-                return "date";
+            case 1: return "id";
+            case 2: return "patient";
+            case 3: return "doctor";
+            case 4: return "date";
+            case 5: return "status";
+            case 6: return "fee";
+            default: return "date";
         }
     }
 
@@ -305,6 +276,24 @@ public class ReportGenerationUI {
     private void generateMedicineStockReportFromReportUI() {
         ConsoleUtils.printHeader("Medicine Stock Report");
 
+        String sortBy = getMedicineSortField();
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+
+        System.out.println(pharmacyControl.generateMedicineStockReport(sortBy, sortOrder));
+    }
+
+    private void generatePrescriptionReportFromReportUI() {
+        ConsoleUtils.printHeader("Prescription Report");
+
+        String sortBy = getPrescriptionSortField();
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+
+        System.out.println(pharmacyControl.generatePrescriptionReport(sortBy, sortOrder));
+    }
+
+    private String getMedicineSortField() {
         System.out.println("Select field to sort by:");
         System.out.println("1. Medicine ID");
         System.out.println("2. Medicine Name");
@@ -313,24 +302,20 @@ public class ReportGenerationUI {
         System.out.println("5. Unit Price");
         System.out.println("6. Expiry Date");
         System.out.println("7. Status");
-
-        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-
-        String sortBy = getMedicineSortField(sortFieldChoice);
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
-
-        System.out.println(pharmacyControl.generateMedicineStockReport(sortBy, sortOrder));
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+        switch (choice) {
+            case 1: return "id";
+            case 2: return "name";
+            case 3: return "generic";
+            case 4: return "stock";
+            case 5: return "price";
+            case 6: return "expiry";
+            case 7: return "status";
+            default: return "name";
+        }
     }
 
-    private void generatePrescriptionReportFromReportUI() {
-        ConsoleUtils.printHeader("Prescription Report");
-
+    private String getPrescriptionSortField() {
         System.out.println("Select field to sort by:");
         System.out.println("1. Prescription ID");
         System.out.println("2. Patient Name");
@@ -338,58 +323,17 @@ public class ReportGenerationUI {
         System.out.println("4. Prescription Date");
         System.out.println("5. Status");
         System.out.println("6. Total Cost");
-
-        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-
-        String sortBy = getPrescriptionSortField(sortFieldChoice);
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
-
-        System.out.println(pharmacyControl.generatePrescriptionReport(sortBy, sortOrder));
-    }
-
-    private String getMedicineSortField(int choice) {
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
         switch (choice) {
-            case 1:
-                return "id";
-            case 2:
-                return "name";
-            case 3:
-                return "generic";
-            case 4:
-                return "stock";
-            case 5:
-                return "price";
-            case 6:
-                return "expiry";
-            case 7:
-                return "status";
-            default:
-                return "name";
+            case 1: return "id";
+            case 2: return "patient";
+            case 3: return "doctor";
+            case 4: return "date";
+            case 5: return "status";
+            case 6: return "cost";
+            default: return "date";
         }
     }
 
-    private String getPrescriptionSortField(int choice) {
-        switch (choice) {
-            case 1:
-                return "id";
-            case 2:
-                return "patient";
-            case 3:
-                return "doctor";
-            case 4:
-                return "date";
-            case 5:
-                return "status";
-            case 6:
-                return "cost";
-            default:
-                return "date";
-        }
-    }
+    
 }

@@ -31,12 +31,10 @@ public class PatientManagementControl {
         this.activePatients = new ArrayBucketList<String, Patient>();
     }
 
-    // Load all active patients from persistent storage into the in-memory cache
+    // Load all active patients from persistent storage into the in-memory cachea
     public void loadActivePatients() {
         try {
-            System.out.println("Loading patient data...");
             activePatients = patientDao.findAll();
-            System.out.println("Patient data loaded successfully. Total patients: " + activePatients.getSize());
         } catch (Exception exception) {
             System.err.println("Error loading active patients: " + exception.getMessage());
             System.err.println("Initializing with empty patient list...");
@@ -582,4 +580,101 @@ public class PatientManagementControl {
         return result.toString();
     }
 
+    /**
+     * Displays sorted patient search results with sorting options
+     */
+    public String displaySortedPatientSearchResults(ArrayBucketList<String, Patient> patients, String searchCriteria, String sortBy, String sortOrder) {
+        if (patients.isEmpty()) {
+            return "No patients found.";
+        }
+
+        // Convert to array for sorting
+        Patient[] patientArray = patients.toArray(Patient.class);
+        
+        // Create comparator for sorting
+        final boolean ascending = sortOrder == null || !sortOrder.equalsIgnoreCase("desc");
+        java.util.Comparator<Patient> comparator = new java.util.Comparator<Patient>() {
+            @Override
+            public int compare(Patient a, Patient b) {
+                if (a == null && b == null) return 0;
+                if (a == null) return ascending ? -1 : 1;
+                if (b == null) return ascending ? 1 : -1;
+
+                int result = 0;
+                String key = sortBy == null ? "name" : sortBy.toLowerCase();
+                switch (key) {
+                    case "id":
+                        result = safeStr(a.getPatientId()).compareToIgnoreCase(safeStr(b.getPatientId()));
+                        break;
+                    case "ic":
+                        result = safeStr(a.getICNumber()).compareToIgnoreCase(safeStr(b.getICNumber()));
+                        break;
+                    case "email":
+                        result = safeStr(a.getEmail()).compareToIgnoreCase(safeStr(b.getEmail()));
+                        break;
+                    case "phone":
+                        result = safeStr(a.getPhoneNumber()).compareToIgnoreCase(safeStr(b.getPhoneNumber()));
+                        break;
+                    case "regdate":
+                        java.time.LocalDate da = a.getRegistrationDate();
+                        java.time.LocalDate db = b.getRegistrationDate();
+                        if (da == null && db == null) result = 0;
+                        else if (da == null) result = -1;
+                        else if (db == null) result = 1;
+                        else result = da.compareTo(db);
+                        break;
+                    case "name":
+                    default:
+                        result = safeStr(a.getFullName()).compareToIgnoreCase(safeStr(b.getFullName()));
+                        break;
+                }
+                return ascending ? result : -result;
+            }
+        };
+
+        // Sort the array
+        utility.QuickSort.sort(patientArray, comparator);
+
+        StringBuilder result = new StringBuilder();
+        result.append("\n=== Patient Search Results ===\n");
+        result.append("Search Criteria: ").append(searchCriteria).append("\n");
+        result.append("Sorted By: ").append(sortBy).append(" | Order: ").append(ascending ? "Ascending" : "Descending").append("\n");
+        result.append("Search Date: ").append(
+                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm")))
+                .append("\n");
+        result.append("Total Results: ").append(patients.getSize()).append(" patient(s) found\n\n");
+
+        result.append("--- Patient List ---\n");
+        result.append(
+                "------------------------------------------------------------------------------------------------------------\n");
+        result.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-15s |\n", "Patient ID", "Full Name",
+                "IC Number", "Email", "Phone Number"));
+        result.append(
+                "------------------------------------------------------------------------------------------------------------\n");
+
+        for (Patient patient : patientArray) {
+            if (patient == null) continue;
+            
+            String id = patient.getPatientId() != null ? patient.getPatientId() : "N/A";
+            String name = patient.getFullName() != null ? patient.getFullName() : "N/A";
+            String ic = patient.getICNumber() != null ? patient.getICNumber() : "N/A";
+            String email = patient.getEmail() != null ? patient.getEmail() : "N/A";
+            String phoneNumber = patient.getPhoneNumber() != null ? patient.getPhoneNumber() : "N/A";
+
+            // Truncate long names and emails
+            if (name.length() > 25)
+                name = name.substring(0, 22) + "...";
+            if (email.length() > 25)
+                email = email.substring(0, 22) + "...";
+
+            result.append(
+                    String.format("| %-12s | %-25s | %-15s | %-25s | %-15s |\n", id, name, ic, email, phoneNumber));
+        }
+
+        result.append(
+                "------------------------------------------------------------------------------------------------------------\n");
+        result.append(">>> End of Search <<<\n");
+
+        return result.toString();
+    }
 }

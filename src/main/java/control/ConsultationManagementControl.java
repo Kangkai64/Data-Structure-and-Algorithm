@@ -277,15 +277,15 @@ public class ConsultationManagementControl {
         }
     }
 
-    public boolean cancelConsultation(String consultationId) {
+    public boolean cancelConsultation(String consultationId, String cancellationReason) {
         try {
             Consultation consultation = findConsultationById(consultationId);
             if (consultation != null && consultation.getStatus() == Consultation.ConsultationStatus.SCHEDULED) {
                 consultation.setStatus(Consultation.ConsultationStatus.CANCELLED);
 
                 // Update in database
-                boolean updated = consultationDao.updateStatus(consultationId,
-                        Consultation.ConsultationStatus.CANCELLED);
+                boolean updated = consultationDao.updateStatusWithCancellationReason(consultationId,
+                        Consultation.ConsultationStatus.CANCELLED, cancellationReason);
                 if (!updated) {
                     System.err.println("Failed to update consultation status in database");
                     return false;
@@ -586,8 +586,8 @@ public class ConsultationManagementControl {
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | %14s\n",
-                "ID", "Patient", "Doctor", "Date", "Status", "Fee"));
+        report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-30s | %14s\n",
+                "ID", "Patient", "Doctor", "Date", "Diagnosis", "Fee"));
         report.append("-".repeat(120)).append("\n");
 
         // Convert to array for sorting
@@ -609,16 +609,18 @@ public class ConsultationManagementControl {
             String date = consultation.getConsultationDate() == null
                     ? "-"
                     : consultation.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
-            String status = consultation.getStatus() == null ? "-" : consultation.getStatus().toString();
+            String diagnosis = consultation.getDiagnosis() == null ? "-" : consultation.getDiagnosis();
 
-            // Truncate long names
+            // Truncate long names and diagnosis
             if (patientName.length() > 22)
                 patientName = patientName.substring(0, 21) + "…";
             if (doctorName.length() > 22)
                 doctorName = doctorName.substring(0, 21) + "…";
+            if (diagnosis.length() > 27)
+                diagnosis = diagnosis.substring(0, 26) + "…";
 
-            report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | RM %,10.2f\n",
-                    id, patientName, doctorName, date, status, consultation.getConsultationFee()));
+            report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-27s | RM %,10.2f\n",
+                    id, patientName, doctorName, date, diagnosis, consultation.getConsultationFee()));
         }
 
         report.append("-".repeat(120)).append("\n");
@@ -934,6 +936,56 @@ public class ConsultationManagementControl {
             default -> Comparator
                     .comparing(c -> c.getConsultationDate() != null ? c.getConsultationDate() : LocalDateTime.MAX);
         };
+    }
+
+    // Public helper to render sorted search results
+    public String displaySortedConsultationSearchResults(ArrayBucketList<String, Consultation> list,
+            String searchCriteria, String sortBy, String sortOrder) {
+        if (list == null || list.isEmpty()) {
+            return "No consultations found.";
+        }
+
+        Consultation[] items = new Consultation[list.getSize()];
+        int pos = 0;
+        Iterator<Consultation> it = list.iterator();
+        while (it.hasNext() && pos < items.length) {
+            items[pos++] = it.next();
+        }
+
+        Comparator<Consultation> comparator = getConsultationComparator(sortBy);
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+        utility.QuickSort.sort(items, comparator);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n=== Consultation Search Results ===\n");
+        sb.append("Criteria: ").append(searchCriteria).append("\n");
+        sb.append(String.format("Sorted by: %s (%s)\n\n", getSortFieldDisplayName(sortBy),
+                (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) ? "DESC" : "ASC"));
+        sb.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | %14s\n",
+                "ID", "Patient", "Doctor", "Date", "Status", "Fee"));
+        sb.append("-".repeat(110)).append("\n");
+
+        for (Consultation c : items) {
+            if (c == null)
+                continue;
+            String id = c.getConsultationId() == null ? "-" : c.getConsultationId();
+            String patientName = c.getPatient() == null ? "-" : c.getPatient().getFullName();
+            String doctorName = c.getDoctor() == null ? "-" : c.getDoctor().getFullName();
+            String date = c.getConsultationDate() == null ? "-"
+                    : c.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+            String status = c.getStatus() == null ? "-" : c.getStatus().toString();
+            if (patientName.length() > 22)
+                patientName = patientName.substring(0, 21) + "…";
+            if (doctorName.length() > 22)
+                doctorName = doctorName.substring(0, 21) + "…";
+            sb.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | RM %,8.2f\n", id, patientName,
+                    doctorName, date, status, c.getConsultationFee()));
+        }
+
+        sb.append("-".repeat(110)).append("\n");
+        return sb.toString();
     }
 
 }

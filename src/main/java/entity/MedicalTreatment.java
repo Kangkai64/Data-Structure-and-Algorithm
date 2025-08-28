@@ -153,7 +153,7 @@ public class MedicalTreatment {
                 ", diagnosis='" + diagnosis + '\'' +
                 ", treatmentDate=" + treatmentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) +
                 ", status=" + status +
-                ", treatmentCost=" + treatmentCost +
+                ", treatmentCost=RM%.2f" + treatmentCost +
                 '}';
     }
 

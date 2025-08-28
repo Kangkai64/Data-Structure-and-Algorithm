@@ -345,10 +345,8 @@ public class DoctorManagementUI {
             }
         }
 
-        if (foundDoctors.getSize() > 0) {
+        if (!foundDoctors.isEmpty()) {
             System.out.println("\n=== DOCTOR FOUND ===");
-            System.out.println(
-                    "Found " + foundDoctors.getSize() + " doctor(s) with IC ending in " + lastFourDigits + ":");
             System.out.println();
 
             Iterator<Doctor> foundIterator = foundDoctors.iterator();
@@ -394,19 +392,26 @@ public class DoctorManagementUI {
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter Full Name (or partial name): ");
         ArrayBucketList<String, Doctor> doctors = doctorControl.findDoctorsByName(fullName);
 
-        if (doctors.getSize() > 0) {
+        if (!doctors.isEmpty()) {
             System.out.println("\n=== DOCTORS FOUND ===");
-            System.out.println("Found " + doctors.getSize() + " doctor(s):");
             System.out.println();
-
-            Iterator<Doctor> iterator = doctors.iterator();
-            int count = 1;
-            while (iterator.hasNext()) {
-                Doctor doctor = iterator.next();
-                System.out.println("--- Doctor " + count + " ---");
-                displayDoctorDetails(doctor);
+            
+            if (doctors.getSize() > 1) {
+                System.out.println("Found " + doctors.getSize() + " doctor(s) with name containing: " + fullName);
                 System.out.println();
-                count++;
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                
+                if (sortChoice == 1) {
+                    String sortBy = getDoctorSortField();
+                    System.out.println();
+                    String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                    System.out.println(doctorControl.displaySortedDoctorSearchResults(doctors, "Name: " + fullName, sortBy, sortOrder));
+                } else {
+                    displayDoctorsList(doctors);
+                }
+            } else {
+                displayDoctorsList(doctors);
             }
         } else {
             System.out.println("No doctors found with name containing: " + fullName);
@@ -426,19 +431,26 @@ public class DoctorManagementUI {
             }
         }
 
-        if (foundDoctors.getSize() > 0) {
+        if (!foundDoctors.isEmpty()) {
             System.out.println("\n=== DOCTORS FOUND ===");
-            System.out.println("Found " + foundDoctors.getSize() + " doctor(s):");
             System.out.println();
-
-            Iterator<Doctor> foundIterator = foundDoctors.iterator();
-            int count = 1;
-            while (foundIterator.hasNext()) {
-                Doctor doctor = foundIterator.next();
-                System.out.println("--- Doctor " + count + " ---");
-                displayDoctorDetails(doctor);
+            
+            if (foundDoctors.getSize() > 1) {
+                System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with email containing: " + email);
                 System.out.println();
-                count++;
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                
+                if (sortChoice == 1) {
+                    String sortBy = getDoctorSortField();
+                    System.out.println();
+                    String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                    System.out.println(doctorControl.displaySortedDoctorSearchResults(foundDoctors, "Email: " + email, sortBy, sortOrder));
+                } else {
+                    displayDoctorsList(foundDoctors);
+                }
+            } else {
+                displayDoctorsList(foundDoctors);
             }
         } else {
             System.out.println("No doctors found with email containing: " + email);
@@ -459,19 +471,26 @@ public class DoctorManagementUI {
             }
         }
 
-        if (foundDoctors.getSize() > 0) {
+        if (!foundDoctors.isEmpty()) {
             System.out.println("\n=== DOCTORS FOUND ===");
-            System.out.println("Found " + foundDoctors.getSize() + " doctor(s):");
             System.out.println();
-
-            Iterator<Doctor> foundIterator = foundDoctors.iterator();
-            int count = 1;
-            while (foundIterator.hasNext()) {
-                Doctor doctor = foundIterator.next();
-                System.out.println("--- Doctor " + count + " ---");
-                displayDoctorDetails(doctor);
+            
+            if (foundDoctors.getSize() > 1) {
+                System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with license number containing: " + licenseNumber);
                 System.out.println();
-                count++;
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                
+                if (sortChoice == 1) {
+                    String sortBy = getDoctorSortField();
+                    System.out.println();
+                    String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                    System.out.println(doctorControl.displaySortedDoctorSearchResults(foundDoctors, "License: " + licenseNumber, sortBy, sortOrder));
+                } else {
+                    displayDoctorsList(foundDoctors);
+                }
+            } else {
+                displayDoctorsList(foundDoctors);
             }
         } else {
             System.out.println("No doctors found with license number containing: " + licenseNumber);
@@ -480,25 +499,84 @@ public class DoctorManagementUI {
 
     private void searchBySpecialty() {
         String specialty = ConsoleUtils.getStringInput(scanner, "Enter Specialty: ");
-        ArrayBucketList<String, Doctor> doctors = doctorControl.getDoctorsBySpecialty(specialty);
+        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
+        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
 
-        if (doctors.getSize() > 0) {
+        Iterator<Doctor> iterator = allDoctors.iterator();
+        while (iterator.hasNext()) {
+            Doctor doctor = iterator.next();
+            if (doctor.getMedicalSpecialty() != null
+                    && doctor.getMedicalSpecialty().toLowerCase().contains(specialty.toLowerCase())) {
+                foundDoctors.add(doctor.getDoctorId(), doctor);
+            }
+        }
+
+        if (!foundDoctors.isEmpty()) {
             System.out.println("\n=== DOCTORS FOUND ===");
-            System.out.println("Found " + doctors.getSize() + " doctor(s) with specialty: " + specialty);
             System.out.println();
-
-            Iterator<Doctor> iterator = doctors.iterator();
-            int count = 1;
-            while (iterator.hasNext()) {
-                Doctor doctor = iterator.next();
-                System.out.println("--- Doctor " + count + " ---");
-                displayDoctorDetails(doctor);
+            
+            if (foundDoctors.getSize() > 1) {
+                System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with specialty containing: " + specialty);
                 System.out.println();
-                count++;
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                
+                if (sortChoice == 1) {
+                    String sortBy = getDoctorSortField();
+                    System.out.println();
+                    String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                    System.out.println(doctorControl.displaySortedDoctorSearchResults(foundDoctors, "Specialty: " + specialty, sortBy, sortOrder));
+                } else {
+                    displayDoctorsList(foundDoctors);
+                }
+            } else {
+                displayDoctorsList(foundDoctors);
             }
         } else {
-            System.out.println("No doctors found with specialty: " + specialty);
+            System.out.println("No doctors found with specialty containing: " + specialty);
         }
+    }
+
+    /**
+     * Display doctors list in a formatted way
+     */
+    private void displayDoctorsList(ArrayBucketList<String, Doctor> doctors) {
+        Iterator<Doctor> foundIterator = doctors.iterator();
+        int count = 1;
+        while (foundIterator.hasNext()) {
+            Doctor doctor = foundIterator.next();
+            System.out.println("--- Doctor " + count + " ---");
+            displayDoctorDetails(doctor);
+            System.out.println();
+            count++;
+        }
+    }
+
+    /**
+     * Get the sort field for doctor search results
+     */
+    private String getDoctorSortField() {
+        System.out.println("\nSelect field to sort by:");
+        System.out.println("1. Doctor ID");
+        System.out.println("2. Full Name");
+        System.out.println("3. License Number");
+        System.out.println("4. Specialty");
+        System.out.println("5. Experience");
+        System.out.println("6. Email");
+        System.out.println("7. Phone Number");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+        
+        return switch (choice) {
+            case 1 -> "id";
+            case 2 -> "name";
+            case 3 -> "license";
+            case 4 -> "specialty";
+            case 5 -> "experience";
+            case 6 -> "email";
+            case 7 -> "phone";
+            default -> "name";
+        };
     }
 
     private void displayDoctorDetails(Doctor doctor) {

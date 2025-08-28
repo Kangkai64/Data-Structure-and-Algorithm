@@ -371,6 +371,23 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     }
 
     /**
+     * Converts the ArrayBucketList to an array for sorting purposes
+     * 
+     * @param arrayClass the class of the array elements
+     * @return an array containing all values from the bucket list
+     */
+    @SuppressWarnings("unchecked")
+    public V[] toArray(Class<V> arrayClass) {
+        V[] array = (V[]) java.lang.reflect.Array.newInstance(arrayClass, numberOfEntries);
+        int index = 0;
+        Iterator<V> iterator = this.iterator();
+        while (iterator.hasNext() && index < numberOfEntries) {
+            array[index++] = iterator.next();
+        }
+        return array;
+    }
+
+    /**
      * Inner LinkedList class for bucket implementation
      */
     private class LinkedList implements Iterable<Node> {

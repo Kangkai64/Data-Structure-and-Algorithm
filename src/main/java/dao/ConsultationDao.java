@@ -196,7 +196,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     // Cancel consultations that are past their scheduled datetime and not
     // completed.
     public int cancelExpiredConsultations() throws SQLException {
-        String sql = "UPDATE consultation SET status = 'CANCELLED' " +
+        String sql = "UPDATE consultation SET status = 'CANCELLED', cancellationReason = 'Consultation date has expired' " +
                 "WHERE consultationDate < CURDATE() AND status IN ('SCHEDULED', 'IN_PROGRESS')";
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -436,8 +436,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     @Override
     public boolean insertAndReturnId(Consultation consultation) throws SQLException {
         String sql = "INSERT INTO consultation (patientId, doctorId, consultationDate, " +
-                "symptoms, diagnosis, treatment, notes, status, nextVisitDate, consultationFee) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "symptoms, diagnosis, treatment, notes, status, cancellationReason, nextVisitDate, consultationFee) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql,
@@ -451,15 +451,16 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             preparedStatement.setString(6, consultation.getTreatment());
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
+            preparedStatement.setString(9, consultation.getCancellationReason());
 
             // Handle nextVisitDate - convert from LocalDateTime to Date for database
             if (consultation.getNextVisitDate() != null) {
-                preparedStatement.setDate(9, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
+                preparedStatement.setDate(10, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
             } else {
-                preparedStatement.setNull(9, java.sql.Types.DATE);
+                preparedStatement.setNull(10, java.sql.Types.DATE);
             }
 
-            preparedStatement.setDouble(10, consultation.getConsultationFee());
+            preparedStatement.setDouble(11, consultation.getConsultationFee());
 
             int affectedRows = preparedStatement.executeUpdate();
 
@@ -484,7 +485,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     public boolean update(Consultation consultation) throws SQLException {
         String sql = "UPDATE consultation SET patientId = ?, doctorId = ?, consultationDate = ?, " +
                 "symptoms = ?, diagnosis = ?, treatment = ?, notes = ?, status = ?, " +
-                "nextVisitDate = ?, consultationFee = ? WHERE consultationId = ?";
+                "cancellationReason = ?, nextVisitDate = ?, consultationFee = ? WHERE consultationId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -497,16 +498,17 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             preparedStatement.setString(6, consultation.getTreatment());
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
+            preparedStatement.setString(9, consultation.getCancellationReason());
 
             // Handle nextVisitDate - convert from LocalDateTime to Date for database
             if (consultation.getNextVisitDate() != null) {
-                preparedStatement.setDate(9, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
+                preparedStatement.setDate(10, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
             } else {
-                preparedStatement.setNull(9, java.sql.Types.DATE);
+                preparedStatement.setNull(10, java.sql.Types.DATE);
             }
 
-            preparedStatement.setDouble(10, consultation.getConsultationFee());
-            preparedStatement.setString(11, consultation.getConsultationId());
+            preparedStatement.setDouble(11, consultation.getConsultationFee());
+            preparedStatement.setString(12, consultation.getConsultationId());
 
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;
@@ -546,6 +548,24 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Error updating consultation status: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public boolean updateStatusWithCancellationReason(String consultationId, Consultation.ConsultationStatus status, String cancellationReason) throws SQLException {
+        String sql = "UPDATE consultation SET status = ?, cancellationReason = ? WHERE consultationId = ?";
+
+        try (Connection connection = HikariConnectionPool.getInstance().getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, status.name());
+            preparedStatement.setString(2, cancellationReason);
+            preparedStatement.setString(3, consultationId);
+
+            int affectedRows = preparedStatement.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating consultation status with cancellation reason: " + e.getMessage());
             throw e;
         }
     }
@@ -661,6 +681,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             consultation.setTreatment(resultSet.getString("treatment"));
             consultation.setNotes(resultSet.getString("notes"));
             consultation.setStatus(Consultation.ConsultationStatus.valueOf(resultSet.getString("status")));
+            consultation.setCancellationReason(resultSet.getString("cancellationReason"));
 
             // Handle nextVisitDate - convert from Date to LocalDateTime
             java.sql.Date nextVisitDate = resultSet.getDate("nextVisitDate");

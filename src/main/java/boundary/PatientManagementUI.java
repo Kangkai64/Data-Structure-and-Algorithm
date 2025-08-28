@@ -398,7 +398,24 @@ public class PatientManagementUI {
             System.out.println("No patients found.");
         } else {
             System.out.println();
-            System.out.println(patientControl.displayPatientSearchResults(patients, "Name: " + name));
+            if (patients.getSize() > 1) {
+                System.out.println("Found " + patients.getSize() + " patients.");
+                System.out.println();
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                System.out.println();
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                
+                if (sortChoice == 1) {
+                    String sortBy = getPatientSortField();
+                    System.out.println();
+                    String sortOrder = getSortOrder();
+                    System.out.println(patientControl.displaySortedPatientSearchResults(patients, "Name: " + name, sortBy, sortOrder));
+                } else {
+                    System.out.println(patientControl.displayPatientSearchResults(patients, "Name: " + name));
+                }
+            } else {
+                System.out.println(patientControl.displayPatientSearchResults(patients, "Name: " + name));
+            }
         }
         ConsoleUtils.waitMessage();
     }
@@ -411,31 +428,93 @@ public class PatientManagementUI {
             System.out.println("No patients found.");
         } else {
             System.out.println();
-            System.out.println(patientControl.displayPatientSearchResults(patients, "Email: " + email));
+            if (patients.getSize() > 1) {
+                System.out.println("Found " + patients.getSize() + " patients.");
+                System.out.println();
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                System.out.println();
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                
+                if (sortChoice == 1) {
+                    String sortBy = getPatientSortField();
+                    System.out.println();
+                    String sortOrder = getSortOrder();
+                    System.out.println(patientControl.displaySortedPatientSearchResults(patients, "Email: " + email, sortBy, sortOrder));
+                } else {
+                    System.out.println(patientControl.displayPatientSearchResults(patients, "Email: " + email));
+                }
+            } else {
+                System.out.println(patientControl.displayPatientSearchResults(patients, "Email: " + email));
+            }
         }
         ConsoleUtils.waitMessage();
     }
 
     private void searchPatientByIcNumber() {
-        ConsoleUtils.printHeader("Search Patient by IC Number (Patient Details)");
-        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC Number (XXXXXX-XX-XXXX): ");
-
-        // Validate IC number format
-        if (!icNumber.matches("\\d{6}-\\d{2}-\\d{4}")) {
-            System.out.println("Invalid IC number format. Please use format: XXXXXX-XX-XXXX");
-            ConsoleUtils.waitMessage();
-            return;
-        }
-
-        // Search for exact IC number match
-        Patient patient = patientControl.findPatientByIcNumber(icNumber);
-        if (patient == null) {
-            System.out.println("Patient not found.");
+        ConsoleUtils.printHeader("Search Patients by IC Number (Patient List)");
+        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number (partial match): ");
+        ArrayBucketList<String, Patient> patients = patientControl.findPatientsByIcNumber(icNumber);
+        if (patients.isEmpty()) {
+            System.out.println("No patients found.");
         } else {
-            System.out.println(patientControl.displayPatientSearchResult(patient, "IC Number: " + icNumber));
+            System.out.println();
+            if (patients.getSize() > 1) {
+                System.out.println("Found " + patients.getSize() + " patients.");
+                System.out.println();
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                System.out.println();
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                
+                if (sortChoice == 1) {
+                    String sortBy = getPatientSortField();
+                    System.out.println();
+                    String sortOrder = getSortOrder();
+                    System.out.println(patientControl.displaySortedPatientSearchResults(patients, "IC Number: " + icNumber, sortBy, sortOrder));
+                } else {
+                    System.out.println(patientControl.displayPatientSearchResults(patients, "IC Number: " + icNumber));
+                }
+            } else {
+                System.out.println(patientControl.displayPatientSearchResults(patients, "IC Number: " + icNumber));
+            }
         }
         ConsoleUtils.waitMessage();
+    }
 
+    /**
+     * Get the sort field for patient search results
+     */
+    private String getPatientSortField() {
+        System.out.println("\nSelect field to sort by:");
+        System.out.println("1. Patient ID");
+        System.out.println("2. Full Name");
+        System.out.println("3. IC Number");
+        System.out.println("4. Email");
+        System.out.println("5. Phone Number");
+        System.out.println("6. Registration Date");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        return switch (choice) {
+            case 1 -> "id";
+            case 2 -> "name";
+            case 3 -> "ic";
+            case 4 -> "email";
+            case 5 -> "phone";
+            case 6 -> "regdate";
+            default -> "name";
+        };
+    }
+
+    /**
+     * Get the sort order for search results
+     */
+    private String getSortOrder() {
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, 0-9, oldest first)");
+        System.out.println("2. Descending (Z-A, 9-0, newest first)");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        return choice == 1 ? "asc" : "desc";
     }
 
     private void generatePatientReports() {
@@ -451,11 +530,8 @@ public class PatientManagementUI {
         System.out.println("8. Blood Type");
         System.out.println("9. Allergies");
         int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 9);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
 
         String sortBy;
         switch (sortFieldChoice) {
@@ -490,7 +566,6 @@ public class PatientManagementUI {
                 sortBy = "name";
                 break;
         }
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
 
         System.out.println(patientControl.generatePatientRecordSummaryReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();

@@ -343,15 +343,112 @@ public class DoctorManagementControl {
     }
 
     public ArrayBucketList<String, Doctor> findDoctorsByName(String name) {
-        ArrayBucketList<String, Doctor> results = new ArrayBucketList<String, Doctor>();
-        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor doctor = doctorIterator.next();
-            if (doctor.getFullName().toLowerCase().contains(name.toLowerCase())) {
-                results.add(doctor.getDoctorId(), doctor);
+        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
+        Iterator<Doctor> iterator = getAllActiveDoctors().iterator();
+        while (iterator.hasNext()) {
+            Doctor doctor = iterator.next();
+            if (doctor.getFullName() != null
+                    && doctor.getFullName().toLowerCase().contains(name.toLowerCase())) {
+                foundDoctors.add(doctor.getDoctorId(), doctor);
             }
         }
-        return results;
+        return foundDoctors;
+    }
+
+    /**
+     * Displays sorted doctor search results with sorting options
+     */
+    public String displaySortedDoctorSearchResults(ArrayBucketList<String, Doctor> doctors, String searchCriteria, String sortBy, String sortOrder) {
+        if (doctors.isEmpty()) {
+            return "No doctors found.";
+        }
+
+        // Convert to array for sorting
+        Doctor[] doctorArray = doctors.toArray(Doctor.class);
+        
+        // Create comparator for sorting
+        final boolean ascending = sortOrder == null || !sortOrder.equalsIgnoreCase("desc");
+        java.util.Comparator<Doctor> comparator = new java.util.Comparator<Doctor>() {
+            @Override
+            public int compare(Doctor a, Doctor b) {
+                if (a == null && b == null) return 0;
+                if (a == null) return ascending ? -1 : 1;
+                if (b == null) return ascending ? 1 : -1;
+
+                int result = 0;
+                String key = sortBy == null ? "name" : sortBy.toLowerCase();
+                switch (key) {
+                    case "id":
+                        result = safeStr(a.getDoctorId()).compareToIgnoreCase(safeStr(b.getDoctorId()));
+                        break;
+                    case "license":
+                        result = safeStr(a.getLicenseNumber()).compareToIgnoreCase(safeStr(b.getLicenseNumber()));
+                        break;
+                    case "specialty":
+                        result = safeStr(a.getMedicalSpecialty()).compareToIgnoreCase(safeStr(b.getMedicalSpecialty()));
+                        break;
+                    case "experience":
+                        int expA = a.getExpYears();
+                        int expB = b.getExpYears();
+                        result = Integer.compare(expA, expB);
+                        break;
+                    case "email":
+                        result = safeStr(a.getEmail()).compareToIgnoreCase(safeStr(b.getEmail()));
+                        break;
+                    case "phone":
+                        result = safeStr(a.getPhoneNumber()).compareToIgnoreCase(safeStr(b.getPhoneNumber()));
+                        break;
+                    case "name":
+                    default:
+                        result = safeStr(a.getFullName()).compareToIgnoreCase(safeStr(b.getFullName()));
+                        break;
+                }
+                return ascending ? result : -result;
+            }
+        };
+
+        // Sort the array
+        utility.QuickSort.sort(doctorArray, comparator);
+
+        StringBuilder result = new StringBuilder();
+        result.append("\n=== Doctor Search Results ===\n");
+        result.append("Search Criteria: ").append(searchCriteria).append("\n");
+        result.append("Sorted By: ").append(sortBy).append(" | Order: ").append(ascending ? "Ascending" : "Descending").append("\n");
+        result.append("Total Results: ").append(doctors.getSize()).append(" doctor(s) found\n\n");
+
+        result.append("--- Doctor List ---\n");
+        result.append("-".repeat(120)).append("\n");
+        result.append(String.format("| %-12s | %-25s | %-20s | %-15s | %-12s | %-25s |\n", 
+                "Doctor ID", "Full Name", "Specialty", "Experience", "License", "Email"));
+        result.append("-".repeat(120)).append("\n");
+
+        for (Doctor doctor : doctorArray) {
+            if (doctor == null) continue;
+            
+            String id = doctor.getDoctorId() != null ? doctor.getDoctorId() : "N/A";
+            String name = doctor.getFullName() != null ? doctor.getFullName() : "N/A";
+            String specialty = doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "N/A";
+            String experience = doctor.getExpYears() + " years";
+            String license = doctor.getLicenseNumber() != null ? doctor.getLicenseNumber() : "N/A";
+            String email = doctor.getEmail() != null ? doctor.getEmail() : "N/A";
+
+            // Truncate long names and emails
+            if (name.length() > 25) name = name.substring(0, 22) + "...";
+            if (specialty.length() > 20) specialty = specialty.substring(0, 17) + "...";
+            if (email.length() > 25) email = email.substring(0, 22) + "...";
+
+            result.append(String.format("| %-12s | %-25s | %-20s | %-15s | %-12s | %-25s |\n", 
+                    id, name, specialty, experience, license, email));
+        }
+
+        result.append("-".repeat(120)).append("\n");
+        result.append(">>> End of Search <<<\n");
+
+        return result.toString();
+    }
+
+    private String safeStr(String str) {
+        return str == null ? "" : str;
     }
 
     public ArrayBucketList<String, Doctor> getAllActiveDoctors() {

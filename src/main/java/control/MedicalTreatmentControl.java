@@ -288,6 +288,59 @@ public class MedicalTreatmentControl {
         return doctorTreatments;
     }
 
+    // Public helper to render sorted search results for treatments
+    public String displaySortedTreatmentSearchResults(ArrayBucketList<String, MedicalTreatment> list,
+            String searchCriteria, String sortBy, String sortOrder) {
+        if (list == null || list.isEmpty()) {
+            return "No treatments found.";
+        }
+
+        MedicalTreatment[] items = new MedicalTreatment[list.getSize()];
+        int pos = 0;
+        Iterator<MedicalTreatment> it = list.iterator();
+        while (it.hasNext() && pos < items.length) {
+            items[pos++] = it.next();
+        }
+
+        Comparator<MedicalTreatment> comparator = getTreatmentComparator(sortBy);
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+        QuickSort.sort(items, comparator);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n=== Treatment Search Results ===\n");
+        sb.append("Criteria: ").append(searchCriteria).append("\n");
+        sb.append(String.format("Sorted by: %s (%s)\n\n", getTreatmentSortFieldDisplayName(sortBy),
+                (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) ? "DESC" : "ASC"));
+        sb.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | %9s | %-10s\n",
+                "Treatment ID", "Patient Name", "Doctor Name", "Diagnosis", "Status", "Cost", "Date"));
+        sb.append("-".repeat(120)).append("\n");
+
+        for (MedicalTreatment t : items) {
+            if (t == null)
+                continue;
+            String id = t.getTreatmentId() == null ? "-" : t.getTreatmentId();
+            String patientName = t.getPatient() == null ? "-" : t.getPatient().getFullName();
+            String doctorName = t.getDoctor() == null ? "-" : t.getDoctor().getFullName();
+            String diagnosis = t.getDiagnosis() == null ? "-" : t.getDiagnosis();
+            String status = t.getStatus() == null ? "-" : t.getStatus().toString();
+            String date = t.getTreatmentDate() == null ? "-"
+                    : t.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+            if (patientName.length() > 20)
+                patientName = patientName.substring(0, 19) + "…";
+            if (doctorName.length() > 20)
+                doctorName = doctorName.substring(0, 19) + "…";
+            if (diagnosis.length() > 15)
+                diagnosis = diagnosis.substring(0, 14) + "…";
+            sb.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | RM %6.2f | %-10s\n", id, patientName,
+                    doctorName, diagnosis, status, t.getTreatmentCost(), date));
+        }
+
+        sb.append("-".repeat(120)).append("\n");
+        return sb.toString();
+    }
+
     public ArrayBucketList<String, MedicalTreatment> findTreatmentsByConsultationId(String consultationId) {
         ArrayBucketList<String, MedicalTreatment> results = new ArrayBucketList<String, MedicalTreatment>();
         if (consultationId == null) {
@@ -501,7 +554,7 @@ public class MedicalTreatmentControl {
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getTreatmentSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | %8s | %-10s\n",
+        report.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | %9s | %-10s\n",
                 "Treatment ID", "Patient Name", "Doctor Name", "Diagnosis", "Status", "Cost", "Date"));
         report.append("-".repeat(120)).append("\n");
 
@@ -535,7 +588,7 @@ public class MedicalTreatmentControl {
             if (diagnosis.length() > 15)
                 diagnosis = diagnosis.substring(0, 14) + "…";
 
-            report.append(String.format("%-10s | %-20s | %-20s | %-15s | %-12s | RM %6.2f | %-10s\n",
+            report.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | RM %6.2f | %-10s\n",
                     id, patientName, doctorName, diagnosis, status, treatment.getTreatmentCost(), date));
         }
 
@@ -652,7 +705,7 @@ public class MedicalTreatmentControl {
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getTreatmentSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | %8s | %-10s\n",
+        report.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | %9s | %-10s\n",
                 "Treatment ID", "Patient Name", "Doctor Name", "Diagnosis", "Status", "Cost", "Date"));
         report.append("-".repeat(120)).append("\n");
 
@@ -686,7 +739,7 @@ public class MedicalTreatmentControl {
             if (diagnosis.length() > 15)
                 diagnosis = diagnosis.substring(0, 14) + "…";
 
-            report.append(String.format("%-10s | %-20s | %-20s | %-15s | %-12s | RM %6.2f | %-10s\n",
+            report.append(String.format("%-12s | %-20s | %-20s | %-15s | %-12s | RM %6.2f | %-10s\n",
                     id, patientName, doctorName, diagnosis, status, treatment.getTreatmentCost(), date));
         }
 

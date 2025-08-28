@@ -136,7 +136,7 @@ public class MedicalTreatmentUI {
         System.out.println("Treatment Plan: " + treatmentPlan);
         System.out.println("Medications: " + medications);
         System.out.println("Notes: " + notes);
-        System.out.println("Cost: " + cost);
+        System.out.println("Cost: RM" + String.format("%.2f", cost));
         boolean confirm = ConsoleUtils.getBooleanInput(scanner,
                 "\nAre you sure you want to add this treatment? (Y/N): ");
         if (!confirm) {
@@ -165,7 +165,7 @@ public class MedicalTreatmentUI {
             System.out.println("Treatment Plan: " + treatmentPlan);
             System.out.println("Medications: " + medications);
             System.out.println("Notes: " + notes);
-            System.out.println("Cost: " + cost);
+            System.out.println("Cost: RM" + String.format("%.2f", cost));
         } else {
             System.out.println("✗ Failed to create treatment. Please try again.");
         }
@@ -315,11 +315,11 @@ public class MedicalTreatmentUI {
                         System.out.println("✓ Medications updated to: " + updateData.medications);
                         break;
                     case 4:
-                        System.out.println("Original Cost: RM" + updateData.originalCost);
+                        System.out.println("Original Cost: RM" + String.format("%.2f", updateData.originalCost));
                         double newCost = ConsoleUtils.getDoubleInput(scanner, "New cost (enter -1 to keep original): ",
                                 -1, 100000.0);
                         updateData.cost = (newCost == -1) ? updateData.originalCost : newCost;
-                        System.out.println("✓ Cost updated to: RM" + updateData.cost);
+                        System.out.println("✓ Cost updated to: RM" + String.format("%.2f", updateData.cost));
                         break;
                     case 5:
                         System.out.println("Original Notes: " + updateData.originalNotes);
@@ -608,8 +608,25 @@ public class MedicalTreatmentUI {
                 String patientId = ConsoleUtils.getStringInput(scanner, "Enter Patient ID: ");
                 ArrayBucketList<String, MedicalTreatment> patientTreatments = treatmentControl
                         .findTreatmentsByPatient(patientId);
-                if (patientTreatments.getSize() > 0) {
-                    displayTreatmentList(patientTreatments, "Treatments for Patient ID: " + patientId);
+                if (!patientTreatments.isEmpty()) {
+                    if (patientTreatments.getSize() > 1) {
+                        System.out.println("Found " + patientTreatments.getSize() + " treatments for Patient ID: " + patientId);
+                        System.out.println();
+                        System.out.println("Sort results?\n1. Yes\n2. No");
+                        int choiceSort = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
+                        if (choiceSort == 1) {
+                            String sortBy = getTreatmentSortField();
+                            System.out.println();
+                            String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                            System.out.println(treatmentControl.displaySortedTreatmentSearchResults(patientTreatments,
+                                    "Patient ID: " + patientId, sortBy, sortOrder));
+                        } else {
+                            displayTreatmentList(patientTreatments, "Treatments for Patient ID: " + patientId);
+                        }
+                    } else {
+                        displayTreatmentList(patientTreatments, "Treatments for Patient ID: " + patientId);
+                    }
                 } else {
                     System.out.println("No treatments found for Patient ID: " + patientId);
                 }
@@ -619,8 +636,25 @@ public class MedicalTreatmentUI {
                 String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
                 ArrayBucketList<String, MedicalTreatment> doctorTreatments = treatmentControl
                         .findTreatmentsByDoctor(doctorId);
-                if (doctorTreatments.getSize() > 0) {
-                    displayTreatmentList(doctorTreatments, "Treatments by Doctor ID: " + doctorId);
+                if (!doctorTreatments.isEmpty()) {
+                    if (doctorTreatments.getSize() > 1) {
+                        System.out.println("Found " + doctorTreatments.getSize() + " treatments for Doctor ID: " + doctorId);
+                        System.out.println();
+                        System.out.println("Sort results?\n1. Yes\n2. No");
+                        int choiceSort = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
+                        if (choiceSort == 1) {
+                            String sortBy = getTreatmentSortField();
+                            System.out.println();
+                            String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                            System.out.println(treatmentControl.displaySortedTreatmentSearchResults(doctorTreatments,
+                                    "Doctor ID: " + doctorId, sortBy, sortOrder));
+                        } else {
+                            displayTreatmentList(doctorTreatments, "Treatments by Doctor ID: " + doctorId);
+                        }
+                    } else {
+                        displayTreatmentList(doctorTreatments, "Treatments by Doctor ID: " + doctorId);
+                    }
                 } else {
                     System.out.println("No treatments found for Doctor ID: " + doctorId);
                 }
@@ -630,9 +664,28 @@ public class MedicalTreatmentUI {
                 String consultationIdSearch = ConsoleUtils.getStringInput(scanner, "Enter Consultation ID: ");
                 ArrayBucketList<String, MedicalTreatment> consultationTreatments = treatmentControl
                         .findTreatmentsByConsultationId(consultationIdSearch);
-                if (consultationTreatments.getSize() > 0) {
-                    displayTreatmentList(consultationTreatments,
-                            "Treatments for Consultation ID: " + consultationIdSearch);
+                if (!consultationTreatments.isEmpty()) {
+                    if (consultationTreatments.getSize() > 1) {
+                        System.out.println("Found " + consultationTreatments.getSize() + " treatments for Consultation ID: " + consultationIdSearch);
+                        System.out.println();
+                        System.out.println("Sort results?\n1. Yes\n2. No");
+                        int choiceSort = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
+                        if (choiceSort == 1) {
+                            String sortBy = getTreatmentSortField();
+                            System.out.println();
+                            String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                            System.out.println(
+                                    treatmentControl.displaySortedTreatmentSearchResults(consultationTreatments,
+                                            "Consultation ID: " + consultationIdSearch, sortBy, sortOrder));
+                        } else {
+                            displayTreatmentList(consultationTreatments,
+                                    "Treatments for Consultation ID: " + consultationIdSearch);
+                        }
+                    } else {
+                        displayTreatmentList(consultationTreatments,
+                                "Treatments for Consultation ID: " + consultationIdSearch);
+                    }
                 } else {
                     System.out.println("No treatments found for Consultation ID: " + consultationIdSearch);
                 }
@@ -653,8 +706,26 @@ public class MedicalTreatmentUI {
                     }
                 }
 
-                if (statusTreatments.getSize() > 0) {
-                    displayTreatmentList(statusTreatments, "Treatments with Status: " + status);
+                if (!statusTreatments.isEmpty()) {
+                    if (statusTreatments.getSize() > 1) {
+                        System.out.println("Found " + statusTreatments.getSize() + " treatments with status: " + status);
+                        System.out.println();
+                        System.out.println("Sort results?\n1. Yes\n2. No");
+                        int choiceSort = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
+                        if (choiceSort == 1) {
+                            String sortBy = getTreatmentSortField();
+                            System.out.println();
+                            String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                            System.out.println(
+                                    treatmentControl.displaySortedTreatmentSearchResults(statusTreatments,
+                                            "Status: " + status, sortBy, sortOrder));
+                        } else {
+                            displayTreatmentList(statusTreatments, "Treatments with Status: " + status);
+                        }
+                    } else {
+                        displayTreatmentList(statusTreatments, "Treatments with Status: " + status);
+                    }
                 } else {
                     System.out.println("No treatments found with status: " + status);
                 }
@@ -673,10 +744,50 @@ public class MedicalTreatmentUI {
                 }
                 ArrayBucketList<String, MedicalTreatment> rangeTreatments = treatmentControl
                         .findTreatmentsByDateRange(startDate, endDate);
-                if (rangeTreatments.getSize() > 0) {
-                    displayTreatmentList(rangeTreatments,
-                            "Treatments from " + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + " to "
-                                    + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+                if (!rangeTreatments.isEmpty()) {
+                    if (rangeTreatments.getSize() > 1) {
+                        System.out.println("Found " + rangeTreatments.getSize() + " treatments in the given date range.");
+                        System.out.println();
+                        System.out.println("Sort results?\n1. Yes\n2. No");
+                        int choiceSort = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
+                        if (choiceSort == 1) {
+                            System.out.println("Select field to sort by:");
+                            System.out.println("1. Treatment ID");
+                            System.out.println("2. Patient Name");
+                            System.out.println("3. Doctor Name");
+                            System.out.println("4. Diagnosis");
+                            System.out.println("5. Status");
+                            System.out.println("6. Treatment Cost");
+                            System.out.println("7. Treatment Date");
+                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+                            System.out.println();
+                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+                            System.out.println();
+                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+                            System.out.println();
+                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+                            System.out.println();
+                            String sortBy = getTreatmentSortField();
+                            String sortOrder = getSortOrder();
+                            System.out.println(
+                                    treatmentControl.displaySortedTreatmentSearchResults(rangeTreatments,
+                                            String.format("Date Range: %s to %s",
+                                                    startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")),
+                                                    endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))),
+                                            sortBy, sortOrder));
+                        } else {
+                            displayTreatmentList(rangeTreatments,
+                                    "Treatments from "
+                                            + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + " to "
+                                            + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+                        }
+                    } else {
+                        displayTreatmentList(rangeTreatments,
+                                "Treatments from "
+                                        + startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + " to "
+                                        + endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+                    }
                 } else {
                     System.out.println("No treatments found in the given date range.");
                 }
@@ -721,25 +832,9 @@ public class MedicalTreatmentUI {
     private void generateTreatmentAnalysisReport() {
         ConsoleUtils.printHeader("Treatment Analysis Report");
 
-        System.out.println("Select field to sort by:");
-        System.out.println("1. Treatment ID");
-        System.out.println("2. Patient Name");
-        System.out.println("3. Doctor Name");
-        System.out.println("4. Diagnosis");
-        System.out.println("5. Status");
-        System.out.println("6. Treatment Cost");
-        System.out.println("7. Treatment Date");
-
-        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-
-        String sortBy = getTreatmentSortField(sortFieldChoice);
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        String sortBy = getTreatmentSortField();
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
 
         System.out.println(treatmentControl.generateTreatmentAnalysisReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
@@ -748,6 +843,15 @@ public class MedicalTreatmentUI {
     private void generateTreatmentStatusReport() {
         ConsoleUtils.printHeader("Treatment Status Report");
 
+        String sortBy = getTreatmentSortField();
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+
+        System.out.println(treatmentControl.generateTreatmentStatusReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
+    private String getTreatmentSortField() {
         System.out.println("Select field to sort by:");
         System.out.println("1. Treatment ID");
         System.out.println("2. Patient Name");
@@ -756,40 +860,16 @@ public class MedicalTreatmentUI {
         System.out.println("5. Status");
         System.out.println("6. Treatment Cost");
         System.out.println("7. Treatment Date");
-
-        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-
-        String sortBy = getTreatmentSortField(sortFieldChoice);
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
-
-        System.out.println(treatmentControl.generateTreatmentStatusReport(sortBy, sortOrder));
-        ConsoleUtils.waitMessage();
-    }
-
-    private String getTreatmentSortField(int choice) {
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
         switch (choice) {
-            case 1:
-                return "id";
-            case 2:
-                return "patient";
-            case 3:
-                return "doctor";
-            case 4:
-                return "diagnosis";
-            case 5:
-                return "status";
-            case 6:
-                return "cost";
-            case 7:
-                return "date";
-            default:
-                return "id";
+            case 1: return "id";
+            case 2: return "patient";
+            case 3: return "doctor";
+            case 4: return "diagnosis";
+            case 5: return "status";
+            case 6: return "cost";
+            case 7: return "date";
+            default: return "date";
         }
     }
 
@@ -807,7 +887,7 @@ public class MedicalTreatmentUI {
         System.out.println("Treatment Date: "
                 + treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
         System.out.println("Status: " + treatment.getStatus());
-        System.out.println("Cost: RM" + treatment.getTreatmentCost());
+        System.out.println("Cost: RM" + String.format("%.2f", treatment.getTreatmentCost()));
         if (treatment.getFollowUpDate() != null) {
             System.out.println(
                     "Follow-up Date: " + treatment.getFollowUpDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
@@ -827,7 +907,7 @@ public class MedicalTreatmentUI {
             System.out.println("Doctor: " + treatment.getDoctor().getFullName());
             System.out.println("Diagnosis: " + treatment.getDiagnosis());
             System.out.println("Status: " + treatment.getStatus());
-            System.out.println("Cost: RM" + treatment.getTreatmentCost());
+            System.out.println("Cost: RM" + String.format("%.2f", treatment.getTreatmentCost()));
             System.out.println("----------------------------------------");
         }
     }
@@ -882,4 +962,11 @@ public class MedicalTreatmentUI {
         }
     }
 
+    private String getSortOrder() {
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, 0-9, oldest first)");
+        System.out.println("2. Descending (Z-A, 9-0, newest first)");
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        return sortOrderChoice == 1 ? "asc" : "desc";
+    }
 }

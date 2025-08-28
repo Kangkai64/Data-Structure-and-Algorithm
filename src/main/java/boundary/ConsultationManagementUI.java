@@ -250,7 +250,7 @@ public class ConsultationManagementUI {
         boolean confirm = ConsoleUtils.getBooleanInput(scanner,
                 "Are you sure you want to cancel this consultation? (Y/N): ");
         if (confirm) {
-            if (consultationControl.cancelConsultation(consultationId)) {
+            if (consultationControl.cancelConsultation(consultationId, reason)) {
                 System.out.println("Consultation cancelled successfully.");
             } else {
                 System.out.println("Consultation not cancelled.");
@@ -321,8 +321,24 @@ public class ConsultationManagementUI {
         } else {
             System.out.println("Found " + consultations.getSize() + " consultation(s) for patient ID: " + patientId);
             System.out.println();
-            for (Consultation consultation : consultations) {
-                printConsultationDetails(consultation);
+            if (consultations.getSize() > 1) {
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
+                if (choice == 1) {
+                    String sortBy = getConsultationSortField();
+                    String sortOrder = getSortOrder();
+                    System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
+                            "Patient ID: " + patientId, sortBy, sortOrder));
+                } else {
+                    for (Consultation consultation : consultations) {
+                        printConsultationDetails(consultation);
+                    }
+                }
+            } else {
+                for (Consultation consultation : consultations) {
+                    printConsultationDetails(consultation);
+                }
             }
         }
     }
@@ -340,8 +356,24 @@ public class ConsultationManagementUI {
         } else {
             System.out.println("Found " + consultations.getSize() + " consultation(s) for doctor ID: " + doctorId);
             System.out.println();
-            for (Consultation consultation : consultations) {
-                printConsultationDetails(consultation);
+            if (consultations.getSize() > 1) {
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
+                if (choice == 1) {
+                    String sortBy = getConsultationSortField();
+                    String sortOrder = getSortOrder();
+                    System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
+                            "Doctor ID: " + doctorId, sortBy, sortOrder));
+                } else {
+                    for (Consultation consultation : consultations) {
+                        printConsultationDetails(consultation);
+                    }
+                }
+            } else {
+                for (Consultation consultation : consultations) {
+                    printConsultationDetails(consultation);
+                }
             }
         }
     }
@@ -371,8 +403,27 @@ public class ConsultationManagementUI {
         } else {
             System.out.println("Found " + consultations.getSize() + " consultation(s) in the specified date range:");
             System.out.println();
-            for (Consultation consultation : consultations) {
-                printConsultationDetails(consultation);
+            if (consultations.getSize() > 1) {
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
+                if (choice == 1) {
+                    String sortBy = getConsultationSortField();
+                    String sortOrder = getSortOrder();
+                    System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
+                            String.format("Date Range: %s to %s",
+                                    startDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")),
+                                    endDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))),
+                            sortBy, sortOrder));
+                } else {
+                    for (Consultation consultation : consultations) {
+                        printConsultationDetails(consultation);
+                    }
+                }
+            } else {
+                for (Consultation consultation : consultations) {
+                    printConsultationDetails(consultation);
+                }
             }
         }
     }
@@ -409,8 +460,24 @@ public class ConsultationManagementUI {
         } else {
             System.out.println("Found " + consultations.getSize() + " consultation(s) with status: " + status);
             System.out.println();
-            for (Consultation consultation : consultations) {
-                printConsultationDetails(consultation);
+            if (consultations.getSize() > 1) {
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
+                if (choice == 1) {
+                    String sortBy = getConsultationSortField();
+                    String sortOrder = getSortOrder();
+                    System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
+                            "Status: " + status, sortBy, sortOrder));
+                } else {
+                    for (Consultation consultation : consultations) {
+                        printConsultationDetails(consultation);
+                    }
+                }
+            } else {
+                for (Consultation consultation : consultations) {
+                    printConsultationDetails(consultation);
+                }
             }
         }
     }
@@ -443,25 +510,9 @@ public class ConsultationManagementUI {
 
     private void generateConsultationReport() {
         ConsoleUtils.printHeader("Consultation Report");
-
-        System.out.println("Select field to sort by:");
-        System.out.println("1. Consultation ID");
-        System.out.println("2. Patient Name");
-        System.out.println("3. Doctor Name");
-        System.out.println("4. Consultation Date");
-        System.out.println("5. Status");
-        System.out.println("6. Consultation Fee");
-
-        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-
-        String sortBy = getConsultationSortField(sortFieldChoice);
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
+        String sortBy = getConsultationSortField();
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
 
         System.out.println(consultationControl.generateConsultationReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
@@ -469,7 +520,15 @@ public class ConsultationManagementUI {
 
     private void generateConsultationHistoryReport() {
         ConsoleUtils.printHeader("Consultation History Report");
+        String sortBy = getConsultationSortField();
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
 
+        System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
+    private String getConsultationSortField() {
         System.out.println("Select field to sort by:");
         System.out.println("1. Consultation ID");
         System.out.println("2. Patient Name");
@@ -477,39 +536,24 @@ public class ConsultationManagementUI {
         System.out.println("4. Consultation Date");
         System.out.println("5. Status");
         System.out.println("6. Consultation Fee");
-
-        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-
-        System.out.println("Select sort order:");
-        System.out.println("1. Ascending (A-Z, Low to High)");
-        System.out.println("2. Descending (Z-A, High to Low)");
-
-        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-
-        String sortBy = getConsultationSortField(sortFieldChoice);
-        String sortOrder = sortOrderChoice == 1 ? "asc" : "desc";
-
-        System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
-        ConsoleUtils.waitMessage();
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        switch (choice) {
+            case 1: return "id";
+            case 2: return "patient";
+            case 3: return "doctor";
+            case 4: return "date";
+            case 5: return "status";
+            case 6: return "fee";
+            default: return "date";
+        }
     }
 
-    private String getConsultationSortField(int choice) {
-        switch (choice) {
-            case 1:
-                return "id";
-            case 2:
-                return "patient";
-            case 3:
-                return "doctor";
-            case 4:
-                return "date";
-            case 5:
-                return "status";
-            case 6:
-                return "fee";
-            default:
-                return "date";
-        }
+    private String getSortOrder() {
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, 0-9, oldest first)");
+        System.out.println("2. Descending (Z-A, 9-0, newest first)");
+        int sortOrder = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        return sortOrder == 1 ? "asc" : "desc";
     }
 
     private void printConsultationDetails(Consultation consultation) {
@@ -521,6 +565,16 @@ public class ConsultationManagementUI {
                 + consultation.getDoctor().getDoctorId() + ")");
         System.out.println("Date: " + consultation.getConsultationDate().format(dateTimeFormatter));
         System.out.println("Status: " + consultation.getStatus());
+        System.out.println("Symptoms: " + consultation.getSymptoms());
+        if (consultation.getStatus() == Consultation.ConsultationStatus.COMPLETED) {
+            System.out.println("Diagnosis: " + consultation.getDiagnosis());
+            System.out.println("Treatment: " + consultation.getTreatment());
+            System.out.println("Notes: " + consultation.getNotes());
+        }
+        if (consultation.getStatus() == Consultation.ConsultationStatus.CANCELLED && 
+            consultation.getCancellationReason() != null && !consultation.getCancellationReason().trim().isEmpty()) {
+            System.out.println("Cancellation Reason: " + consultation.getCancellationReason());
+        }
         System.out.println("Fee: RM" + consultation.getConsultationFee());
         System.out.println("----------------------------------------");
     }

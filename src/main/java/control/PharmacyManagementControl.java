@@ -456,6 +456,107 @@ public class PharmacyManagementControl {
         return prescriptions.getSize();
     }
 
+    // Sorted display for search results (Medicines)
+    public String displaySortedMedicineSearchResults(ArrayBucketList<String, Medicine> list, String searchCriteria,
+            String sortBy, String sortOrder) {
+        if (list == null || list.isEmpty()) {
+            return "No medicines found.";
+        }
+
+        // Copy to array
+        Medicine[] items = new Medicine[list.getSize()];
+        int pos = 0;
+        Iterator<Medicine> it = list.iterator();
+        while (it.hasNext() && pos < items.length) {
+            items[pos++] = it.next();
+        }
+
+        Comparator<Medicine> comparator = getMedicineComparator(sortBy);
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+        utility.QuickSort.sort(items, comparator);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("\n=== Medicine Search Results ===\n");
+        stringBuilder.append("Criteria: ").append(searchCriteria).append("\n");
+        stringBuilder.append(String.format("Sorted by: %s (%s)\n\n", getSortFieldDisplayName(sortBy),
+                (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) ? "DESC" : "ASC"));
+        stringBuilder.append(String.format("%-10s | %-20s | %-16s | %6s | %-10s | %13s | %-10s\n",
+                "ID", "Name", "Generic", "Stock", "Status", "Price", "Expiry"));
+        stringBuilder.append("-".repeat(105)).append("\n");
+
+        for (Medicine medicine : items) {
+            if (medicine == null)
+                continue;
+            String id = medicine.getMedicineId() == null ? "-" : medicine.getMedicineId();
+            String name = medicine.getMedicineName() == null ? "-" : medicine.getMedicineName();
+            String gen = medicine.getGenericName() == null ? "-" : medicine.getGenericName();
+            String status = medicine.getStatus() == null ? "-" : medicine.getStatus().toString();
+            String expiry = medicine.getExpiryDate() == null ? "-"
+                    : medicine.getExpiryDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+            if (name.length() > 20)
+                name = name.substring(0, 19) + "…";
+            if (gen.length() > 16)
+                gen = gen.substring(0, 15) + "…";
+            stringBuilder.append(String.format("%-10s | %-20s | %-16s | %,6d | %-10s | RM %,10.2f | %-10s\n", id, name, gen,
+                    medicine.getQuantityInStock(), status, medicine.getUnitPrice(), expiry));
+        }
+
+        stringBuilder.append("-".repeat(105)).append("\n");
+        return stringBuilder.toString();
+    }
+
+    // Sorted display for search results (Prescriptions)
+    public String displaySortedPrescriptionSearchResults(ArrayBucketList<String, Prescription> list,
+            String searchCriteria, String sortBy, String sortOrder) {
+        if (list == null || list.isEmpty()) {
+            return "No prescriptions found.";
+        }
+
+        Prescription[] items = new Prescription[list.getSize()];
+        int pos = 0;
+        Iterator<Prescription> it = list.iterator();
+        while (it.hasNext() && pos < items.length) {
+            items[pos++] = it.next();
+        }
+
+        Comparator<Prescription> comparator = getPrescriptionComparator(sortBy);
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+        utility.QuickSort.sort(items, comparator);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("\n=== Prescription Search Results ===\n");
+        stringBuilder.append("Criteria: ").append(searchCriteria).append("\n");
+        stringBuilder.append(String.format("Sorted by: %s (%s)\n\n", getSortFieldDisplayName(sortBy),
+                (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) ? "DESC" : "ASC"));
+        stringBuilder.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | %14s\n",
+                "ID", "Patient", "Doctor", "Date", "Status", "Total"));
+        stringBuilder.append("-".repeat(110)).append("\n");
+
+        for (Prescription prescription : items) {
+            if (prescription == null)
+                continue;
+            String id = prescription.getPrescriptionId() == null ? "-" : prescription.getPrescriptionId();
+            String patientName = prescription.getPatient() == null ? "-" : prescription.getPatient().getFullName();
+            String doctorName = prescription.getDoctor() == null ? "-" : prescription.getDoctor().getFullName();
+            String date = prescription.getPrescriptionDate() == null ? "-"
+                    : prescription.getPrescriptionDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+            String status = prescription.getStatus() == null ? "-" : prescription.getStatus().toString();
+            if (patientName.length() > 22)
+                patientName = patientName.substring(0, 21) + "…";
+            if (doctorName.length() > 22)
+                doctorName = doctorName.substring(0, 21) + "…";
+            stringBuilder.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | RM %,10.2f\n", id, patientName,
+                    doctorName, date, status, prescription.getTotalCost()));
+        }
+
+        stringBuilder.append("-".repeat(110)).append("\n");
+        return stringBuilder.toString();
+    }
+
     // Reporting Methods
     public String generateMedicineStockReport(String sortBy, String sortOrder) {
         StringBuilder report = new StringBuilder();

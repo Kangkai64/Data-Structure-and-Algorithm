@@ -15,10 +15,11 @@ public class ConsoleUtils {
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) {
                 System.out.println("Input cannot be empty");
+            } else if (!PatternChecker.CONTAIN_ALPHABETS_PATTERN.matcher(input).matches()) {
+                System.out.println("Input must contain at least one alphabet");
             } else {
                 return input;
             }
-
         }
     }
 
@@ -276,6 +277,14 @@ public class ConsoleUtils {
                 System.out.println("Invalid input. Please enter Y or N.");
             }
         }
+    }
+
+    public static String getSortOrder(Scanner scanner) {
+        System.out.println("Select sort order:");
+        System.out.println("1. Ascending (A-Z, 0-9, oldest first)");
+        System.out.println("2. Descending (Z-A, 9-0, newest first)");
+        int sortOrderChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        return sortOrderChoice == 1 ? "asc" : "desc";
     }
 
     public static void printHeader(String title) {

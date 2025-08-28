@@ -14,7 +14,6 @@ public class Doctor extends Person {
     private int expYears;
     private boolean isAvailable;
     private ArrayBucketList<String, Patient> patients;
-    private ArrayBucketList<String, Appointment> appointments;
     private ArrayBucketList<String, Schedule> schedules;
 
     public Doctor(String fullName, String ICNumber, String email, String phoneNumber,
@@ -27,7 +26,6 @@ public class Doctor extends Person {
         this.expYears = expYears;
         this.isAvailable = true;
         this.patients = new ArrayBucketList<String, Patient>();
-        this.appointments = new ArrayBucketList<String, Appointment>();
         this.schedules = new ArrayBucketList<String, Schedule>();
     }
 
@@ -66,31 +64,6 @@ public class Doctor extends Person {
 
     public int getNumberOfPatients() {
         return patients.getSize();
-    }
-
-    // Appointment Management
-    public boolean addAppointment(Appointment appointment) {
-        return appointments.add(appointment.getAppointmentId(), appointment) != null;
-    }
-
-    public boolean addAppointment(int position, Appointment appointment) {
-        return appointments.add(appointment.getAppointmentId(), appointment) != null;
-    }
-
-    public Appointment removeAppointment(String appointmentId) {
-        return appointments.remove(appointmentId);
-    }
-
-    public Appointment getAppointment(String appointmentId) {
-        return appointments.getValue(appointmentId);
-    }
-
-    public boolean isAppointmentExist(String appointmentId) {
-        return appointments.contains(appointmentId);
-    }
-
-    public int getNumberOfAppointment() {
-        return appointments.getSize();
     }
 
     // Schedule Management

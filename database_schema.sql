@@ -78,6 +78,7 @@ CREATE TABLE consultation (
     treatment TEXT,
     notes TEXT,
     status ENUM('SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED') DEFAULT 'SCHEDULED',
+    cancellationReason TEXT,
     nextVisitDate DATE,
     consultationFee DECIMAL(10,2) NOT NULL,
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

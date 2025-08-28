@@ -250,7 +250,7 @@ public class ConsultationManagementUI {
         boolean confirm = ConsoleUtils.getBooleanInput(scanner,
                 "Are you sure you want to cancel this consultation? (Y/N): ");
         if (confirm) {
-            if (consultationControl.cancelConsultation(consultationId)) {
+            if (consultationControl.cancelConsultation(consultationId, reason)) {
                 System.out.println("Consultation cancelled successfully.");
             } else {
                 System.out.println("Consultation not cancelled.");
@@ -521,6 +521,16 @@ public class ConsultationManagementUI {
                 + consultation.getDoctor().getDoctorId() + ")");
         System.out.println("Date: " + consultation.getConsultationDate().format(dateTimeFormatter));
         System.out.println("Status: " + consultation.getStatus());
+        System.out.println("Symptoms: " + consultation.getSymptoms());
+        if (consultation.getStatus() == Consultation.ConsultationStatus.COMPLETED) {
+            System.out.println("Diagnosis: " + consultation.getDiagnosis());
+            System.out.println("Treatment: " + consultation.getTreatment());
+            System.out.println("Notes: " + consultation.getNotes());
+        }
+        if (consultation.getStatus() == Consultation.ConsultationStatus.CANCELLED && 
+            consultation.getCancellationReason() != null && !consultation.getCancellationReason().trim().isEmpty()) {
+            System.out.println("Cancellation Reason: " + consultation.getCancellationReason());
+        }
         System.out.println("Fee: RM" + consultation.getConsultationFee());
         System.out.println("----------------------------------------");
     }

@@ -13,6 +13,7 @@ public class Consultation {
     private String treatment;
     private String notes;
     private ConsultationStatus status;
+    private String cancellationReason;
     private LocalDateTime nextVisitDate;
     private double consultationFee;
 
@@ -102,6 +103,14 @@ public class Consultation {
 
     public void setStatus(ConsultationStatus status) {
         this.status = status;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 
     public LocalDateTime getNextVisitDate() {

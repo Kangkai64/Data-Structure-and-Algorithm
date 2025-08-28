@@ -100,6 +100,18 @@ public class Doctor extends Person {
         return schedules.remove(scheduleId);
     }
 
+    public boolean updateSchedule(Schedule updatedSchedule) {
+        if (updatedSchedule != null && updatedSchedule.getScheduleId() != null) {
+            Schedule existingSchedule = schedules.getValue(updatedSchedule.getScheduleId());
+            if (existingSchedule != null) {
+                schedules.remove(updatedSchedule.getScheduleId());
+                schedules.add(updatedSchedule.getScheduleId(), updatedSchedule);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Schedule getSchedule(String scheduleId) {
         return schedules.getValue(scheduleId);
     }

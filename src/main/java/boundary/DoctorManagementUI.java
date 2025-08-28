@@ -30,7 +30,7 @@ public class DoctorManagementUI {
             System.out.println("\n=== DOCTOR MANAGEMENT MODULE ===");
             System.out.println("1. Register New Doctor");
             System.out.println("2. Update Doctor Information");
-            System.out.println("3. Add Doctor Schedule");
+            System.out.println("3. Manage Doctor Schedule");
             System.out.println("4. Set Availability");
             System.out.println("5. Search Doctor");
             System.out.println("6. Generate Reports");
@@ -46,7 +46,7 @@ public class DoctorManagementUI {
                     updateDoctorInfo();
                     break;
                 case 3:
-                    addDoctorSchedule();
+                    manageDoctorSchedule();
                     break;
                 case 4:
                     setAvailabilityMenu();
@@ -190,9 +190,80 @@ public class DoctorManagementUI {
         }
     }
 
-    private void addDoctorSchedule() {
-        System.out.println("\n=== ADD DOCTOR SCHEDULE ===");
+    private void manageDoctorSchedule() {
+        System.out.println("\n=== MANAGE DOCTOR SCHEDULE ===");
+        
+        // First, get doctor ID and verify doctor exists
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
+        Doctor doctor = doctorControl.findDoctorById(doctorId);
+        if (doctor == null) {
+            System.out.println("Doctor not found with ID: " + doctorId);
+            return;
+        }
+        
+        System.out.println("Managing schedules for Doctor: " + doctor.getFullName());
+        
+        // Get all current schedules for the doctor (already sorted by day of week)
+        entity.Schedule[] schedulesArray = doctorControl.getDoctorSchedulesOrderedArray(doctorId);
+        
+        if (schedulesArray.length == 0) {
+            System.out.println("\nNo schedules found for this doctor.");
+            System.out.println("1. Add New Schedule");
+            System.out.println("2. Back to Main Menu");
+            
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+            if (choice == 1) {
+                addDoctorSchedule(doctorId, doctor.getFullName());
+            }
+            return;
+        }
+        
+        // Display all schedules
+        System.out.println("\nCurrent Schedules:");
+        System.out.println("-".repeat(80));
+        
+        for (int i = 0; i < schedulesArray.length; i++) {
+            entity.Schedule s = schedulesArray[i];
+            System.out.printf("%d. [%s] %s %s-%s | %s%n", 
+                (i + 1), 
+                s.getScheduleId(), 
+                s.getDayOfWeek(), 
+                s.getFromTime(), 
+                s.getToTime(), 
+                (s.isAvailable() ? "Available" : "Not Available"));
+        }
+        System.out.println("-".repeat(80));
+        
+        // Show management options
+        System.out.println("\nManagement Options:");
+        System.out.println("1. Add New Schedule");
+        System.out.println("2. Update Existing Schedule");
+        System.out.println("3. Remove Schedule");
+        System.out.println("4. Back to Main Menu");
+
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+
+        switch (choice) {
+            case 1:
+                addDoctorSchedule(doctorId, doctor.getFullName());
+                break;
+            case 2:
+                updateDoctorSchedule(doctorId, doctor.getFullName(), schedulesArray);
+                break;
+            case 3:
+                removeDoctorSchedule(doctorId, doctor.getFullName(), schedulesArray);
+                break;
+            case 4:
+                return;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
+    }
+
+    private void addDoctorSchedule(String doctorId, String doctorName) {
+        System.out.println("\n=== ADD DOCTOR SCHEDULE ===");
+        System.out.println("Adding schedule for Doctor: " + doctorName);
+        
         String dayInput = ConsoleUtils.getStringInput(scanner, "Enter day of week (e.g., MONDAY): ");
         DayOfWeek dayOfWeek;
         try {
@@ -207,8 +278,87 @@ public class DoctorManagementUI {
         System.out.println(added ? "Schedule added successfully." : "Failed to add schedule.");
     }
 
+    private void updateDoctorSchedule(String doctorId, String doctorName, entity.Schedule[] schedules) {
+        System.out.println("\n=== UPDATE DOCTOR SCHEDULE ===");
+        System.out.println("Updating schedule for Doctor: " + doctorName);
+        
+        // Display current schedules
+        System.out.println("\nCurrent Schedules:");
+        System.out.println("-".repeat(80));
+        for (int index = 0; index < schedules.length; index++) {
+            entity.Schedule s = schedules[index];
+            System.out.printf("%d. [%s] %s %s-%s | %s%n", 
+                (index + 1), 
+                s.getScheduleId(), 
+                s.getDayOfWeek(), 
+                s.getFromTime(), 
+                s.getToTime(), 
+                (s.isAvailable() ? "Available" : "Not Available"));
+        }
+        System.out.println("-".repeat(80));
+        
+        // Let user choose by number instead of entering schedule ID
+        int scheduleChoice = ConsoleUtils.getIntInput(scanner, "Enter the number of schedule to update: ", 1, schedules.length);
+        entity.Schedule selectedSchedule = schedules[scheduleChoice - 1];
+        
+        System.out.println("Updating Schedule: [" + selectedSchedule.getScheduleId() + "] " + 
+                          selectedSchedule.getDayOfWeek() + " " + selectedSchedule.getFromTime() + "-" + selectedSchedule.getToTime());
+        
+        String dayInput = ConsoleUtils.getStringInput(scanner, "Enter new day of week (e.g., MONDAY): ");
+        DayOfWeek dayOfWeek;
+        try {
+            dayOfWeek = DayOfWeek.valueOf(dayInput.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            System.out.println("Invalid day. Please enter MONDAY to SUNDAY.");
+            return;
+        }
+        String startTime = ConsoleUtils.getTimeInput(scanner, "Enter new start time (HH:mm:ss): ");
+        String endTime = ConsoleUtils.getTimeInput(scanner, "Enter new end time (HH:mm:ss): ");
+        
+        boolean updated = doctorControl.updateSchedule(selectedSchedule.getScheduleId(), dayOfWeek, startTime, endTime);
+        System.out.println(updated ? "Schedule updated successfully." : "Failed to update schedule.");
+    }
+
+    private void removeDoctorSchedule(String doctorId, String doctorName, entity.Schedule[] schedules) {
+        System.out.println("\n=== REMOVE DOCTOR SCHEDULE ===");
+        System.out.println("Removing schedule for Doctor: " + doctorName);
+        
+        // Display current schedules
+        System.out.println("\nCurrent Schedules:");
+        System.out.println("-".repeat(80));
+        for (int index = 0; index < schedules.length; index++) {
+            entity.Schedule s = schedules[index];
+            System.out.printf("%d. [%s] %s %s-%s | %s%n", 
+                (index + 1), 
+                s.getScheduleId(), 
+                s.getDayOfWeek(), 
+                s.getFromTime(), 
+                s.getToTime(), 
+                (s.isAvailable() ? "Available" : "Not Available"));
+        }
+        System.out.println("-".repeat(80));
+        
+        // Let user choose by number instead of entering schedule ID
+        int scheduleChoice = ConsoleUtils.getIntInput(scanner, "Enter the number of schedule to remove: ", 1, schedules.length);
+        entity.Schedule selectedSchedule = schedules[scheduleChoice - 1];
+        
+        System.out.println("Removing Schedule: [" + selectedSchedule.getScheduleId() + "] " + 
+                          selectedSchedule.getDayOfWeek() + " " + selectedSchedule.getFromTime() + "-" + selectedSchedule.getToTime());
+        
+        // Confirm removal
+        System.out.print("Are you sure you want to remove this schedule? (yes/no): ");
+        String confirm = scanner.nextLine().trim().toLowerCase();
+        if (!confirm.equals("yes") && !confirm.equals("y")) {
+            System.out.println("Schedule removal cancelled.");
+            return;
+        }
+        
+        boolean removed = doctorControl.removeSchedule(doctorId, selectedSchedule.getScheduleId());
+        System.out.println(removed ? "Schedule removed successfully." : "Failed to remove schedule.");
+    }
+
     private void setAvailabilityMenu() {
-        System.out.println("\n=== SET AVAILABILITY ===");
+        System.out.println("\n=== DOCTOR AVAILABILITY MANAGEMENT ===");
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
         Doctor doctor = doctorControl.findDoctorById(doctorId);
         if (doctor == null) {
@@ -216,50 +366,117 @@ public class DoctorManagementUI {
             return;
         }
 
-        // Show current doctor availability
-        System.out.println("Current Doctor Availability: " + (doctor.isAvailable() ? "Available" : "Not Available"));
+        // Show current doctor information
+        System.out.println("Doctor: " + doctor.getFullName());
+        System.out.println("Current Status: " + (doctor.isAvailable() ? "Active" : "Inactive"));
+        System.out.println("Current Availability: " + (doctor.isAvailable() ? "Available" : "Not Available"));
 
         // Load and display schedules for the doctor
-        entity.Schedule[] schedules = doctorControl.getDoctorSchedulesOrderedArray(doctorId);
-        if (schedules.length == 0) {
+        entity.Schedule[] schedulesArray = doctorControl.getDoctorSchedulesOrderedArray(doctorId);
+        
+        if (schedulesArray.length == 0) {
             System.out.println("No schedules found for this doctor.");
         } else {
             System.out.println("\nDoctor Schedules:");
-            for (int index = 0; index < schedules.length; index++) {
-                entity.Schedule s = schedules[index];
-                System.out.println(
-                        (index + 1) + ". [" + s.getScheduleId() + "] " + s.getDayOfWeek() + " " + s.getFromTime() + "-"
-                                + s.getToTime() + " | " + (s.isAvailable() ? "Available" : "Not Available"));
+            System.out.println("-".repeat(80));
+            
+            for (int i = 0; i < schedulesArray.length; i++) {
+                entity.Schedule s = schedulesArray[i];
+                System.out.printf("%d. [%s] %s %s-%s | %s%n", 
+                    (i + 1), 
+                    s.getScheduleId(), 
+                    s.getDayOfWeek(), 
+                    s.getFromTime(), 
+                    s.getToTime(), 
+                    (s.isAvailable() ? "Available" : "Not Available"));
             }
+            System.out.println("-".repeat(80));
         }
 
-        System.out.println("\n1. Set Doctor Availability");
+        System.out.println("\nManagement Options:");
+        System.out.println("1. Set Doctor Availability");
         System.out.println("2. Set Schedule Availability");
-        int choice = ConsoleUtils.getIntInput(scanner, "Choose option (1-2): ", 1, 2);
+        System.out.println("3. Back to Main Menu");
+        int choice = ConsoleUtils.getIntInput(scanner, "Choose option (1-3): ", 1, 3);
 
-        if (choice == 1) {
-            System.out.print("Set doctor availability (true/false): ");
-            boolean isAvailable = getBooleanInput();
-            boolean ok = doctorControl.setDoctorAvailability(doctorId, isAvailable);
+        switch (choice) {
+            case 1:
+                handleDoctorAvailability(doctorId, doctor.getFullName());
+                break;
+            case 2:
+                handleScheduleAvailability(doctorId, schedulesArray);
+                break;
+            case 3:
+                return;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
+    }
+
+    private void handleDoctorAvailability(String doctorId, String doctorName) {
+        System.out.println("\n=== SET DOCTOR AVAILABILITY ===");
+        System.out.println("Doctor: " + doctorName);
+        System.out.println("Note: This will set the doctor's availability status.");
+        
+        System.out.print("Set doctor availability (true/false): ");
+        boolean isAvailable = getBooleanInput();
+        
+        boolean ok;
+        if (isAvailable) {
+            // Use setDoctorAvailability for setting to available
+            ok = doctorControl.setDoctorAvailability(doctorId, true);
             if (ok) {
-                System.out.println("Doctor availability updated. " + (isAvailable ? "Available" : "Not Available"));
-                if (!isAvailable) {
-                    System.out.println("All schedules have been set to Not Available.");
-                }
+                System.out.println("Doctor availability updated successfully.");
+                System.out.println("Status: Available");
             } else {
                 System.out.println("Failed to update doctor availability.");
             }
         } else {
-            if (schedules.length == 0) {
-                System.out.println("No schedules to update.");
-                return;
+            // Use deactivateDoctor for setting to unavailable
+            ok = doctorControl.deactivateDoctor(doctorId);
+            if (ok) {
+                System.out.println("Doctor deactivated successfully.");
+                System.out.println("Status: Not Available (Deactivated)");
+                System.out.println("Doctor has been removed from active doctors list.");
+            } else {
+                System.out.println("Failed to deactivate doctor.");
             }
-            String scheduleId = ConsoleUtils.getStringInput(scanner, "Enter schedule ID to update: ");
-            System.out.print("Set schedule availability (true/false): ");
-            boolean isAvailable = getBooleanInput();
-            boolean ok = doctorControl.setScheduleAvailability(scheduleId, isAvailable);
-            System.out.println(ok ? "Schedule availability updated." : "Failed to update schedule availability.");
         }
+    }
+
+    private void handleScheduleAvailability(String doctorId, entity.Schedule[] schedules) {
+        System.out.println("\n=== SET SCHEDULE AVAILABILITY ===");
+        
+        if (schedules.length == 0) {
+            System.out.println("No schedules found for this doctor.");
+            return;
+        }
+
+        // Display schedules with numbers
+        System.out.println("Available Schedules:");
+        System.out.println("-".repeat(80));
+        for (int index = 0; index < schedules.length; index++) {
+            entity.Schedule s = schedules[index];
+            System.out.printf("%d. [%s] %s %s-%s | %s%n", 
+                (index + 1), 
+                s.getScheduleId(), 
+                s.getDayOfWeek(), 
+                s.getFromTime(), 
+                s.getToTime(), 
+                (s.isAvailable() ? "Available" : "Not Available"));
+        }
+        System.out.println("-".repeat(80));
+
+        int scheduleChoice = ConsoleUtils.getIntInput(scanner, "Enter the number of schedule to update: ", 1, schedules.length);
+        entity.Schedule selectedSchedule = schedules[scheduleChoice - 1];
+        
+        System.out.println("Updating Schedule: [" + selectedSchedule.getScheduleId() + "] " + 
+                          selectedSchedule.getDayOfWeek() + " " + selectedSchedule.getFromTime() + "-" + selectedSchedule.getToTime());
+        
+        System.out.print("Set schedule availability (true/false): ");
+        boolean isAvailable = getBooleanInput();
+        boolean ok = doctorControl.setScheduleAvailability(selectedSchedule.getScheduleId(), isAvailable);
+        System.out.println(ok ? "Schedule availability updated successfully." : "Failed to update schedule availability.");
     }
 
     private void searchDoctor() {
@@ -502,17 +719,7 @@ public class DoctorManagementUI {
 
     private void searchBySpecialty() {
         String specialty = ConsoleUtils.getStringInput(scanner, "Enter Specialty: ");
-        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
-        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
-
-        Iterator<Doctor> iterator = allDoctors.iterator();
-        while (iterator.hasNext()) {
-            Doctor doctor = iterator.next();
-            if (doctor.getMedicalSpecialty() != null
-                    && doctor.getMedicalSpecialty().toLowerCase().contains(specialty.toLowerCase())) {
-                foundDoctors.add(doctor.getDoctorId(), doctor);
-            }
-        }
+        ArrayBucketList<String, Doctor> foundDoctors = doctorControl.getDoctorsBySpecialty(specialty);
 
         if (!foundDoctors.isEmpty()) {
             System.out.println("\n=== DOCTORS FOUND ===");

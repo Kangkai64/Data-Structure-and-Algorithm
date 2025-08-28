@@ -174,6 +174,31 @@ public class DoctorManagementControl {
         }
     }
 
+    public boolean updateSchedule(String scheduleId, DayOfWeek dayOfWeek, String startTime, String endTime) {
+        try {
+            Schedule schedule = scheduleDao.findById(scheduleId);
+            if (schedule != null) {
+                schedule.setDayOfWeek(dayOfWeek);
+                schedule.setFromTime(startTime);
+                schedule.setToTime(endTime);
+                boolean updated = scheduleDao.update(schedule);
+                if (updated) {
+                    // Update the doctor's in-memory schedule list
+                    Doctor doctor = doctorDao.findById(schedule.getDoctorId());
+                    if (doctor != null) {
+                        doctor.updateSchedule(schedule);
+                        updateActiveDoctorsList(doctor);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception exception) {
+            System.err.println("Error updating schedule: " + exception.getMessage());
+            return false;
+        }
+    }
+
     public boolean removeSchedule(String doctorId, String scheduleId) {
         try {
             Doctor doctor = doctorDao.findById(doctorId);
@@ -203,41 +228,7 @@ public class DoctorManagementControl {
         }
     }
 
-    public ArrayBucketList<String, Schedule> getDoctorSchedulesOrdered(String doctorId) {
-        try {
-            ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
-            int size = schedules.getSize();
-            Schedule[] arr = new Schedule[size];
-            int idx = 0;
-            Iterator<Schedule> it = schedules.iterator();
-            while (it.hasNext()) {
-                arr[idx++] = it.next();
-            }
-
-            java.util.Comparator<Schedule> byDay = new java.util.Comparator<Schedule>() {
-                @Override
-                public int compare(Schedule a, Schedule b) {
-                    return Integer.compare(a.getDayOfWeek().ordinal(), b.getDayOfWeek().ordinal());
-                }
-            };
-
-            QuickSort.sort(arr, byDay);
-
-            ArrayBucketList<String, Schedule> sorted = new ArrayBucketList<String, Schedule>();
-            // Note: returning ArrayBucketList here will not preserve iteration order due to
-            // hashing.
-            // Prefer getDoctorSchedulesOrderedArray() when display order must be
-            // guaranteed.
-            for (int i = 0; i < arr.length; i++) {
-                Schedule s = arr[i];
-                sorted.add(s.getScheduleId(), s);
-            }
-            return sorted;
-        } catch (Exception exception) {
-            System.err.println("Error ordering doctor schedules: " + exception.getMessage());
-            return getDoctorSchedules(doctorId);
-        }
-    }
+    
 
     public Schedule[] getDoctorSchedulesOrderedArray(String doctorId) {
         try {
@@ -250,9 +241,13 @@ public class DoctorManagementControl {
                 arr[idx++] = it.next();
             }
 
+            // Sort the array to ensure proper day-of-week ordering
             java.util.Comparator<Schedule> byDay = new java.util.Comparator<Schedule>() {
                 @Override
                 public int compare(Schedule a, Schedule b) {
+                    if (a == null && b == null) return 0;
+                    if (a == null) return -1;
+                    if (b == null) return 1;
                     return Integer.compare(a.getDayOfWeek().ordinal(), b.getDayOfWeek().ordinal());
                 }
             };
@@ -325,7 +320,9 @@ public class DoctorManagementControl {
         Iterator<Doctor> doctorIterator = activeDoctors.iterator();
         while (doctorIterator.hasNext()) {
             Doctor doctor = doctorIterator.next();
-            if (doctor.getMedicalSpecialty().equalsIgnoreCase(specialty) && doctor.isAvailable()) {
+            if (doctor.getMedicalSpecialty() != null
+                    && doctor.getMedicalSpecialty().toLowerCase().contains(specialty.toLowerCase()) 
+                    && doctor.isAvailable()) {
                 specialtyDoctors.add(doctor.getDoctorId(), doctor);
             }
         }
@@ -655,16 +652,6 @@ public class DoctorManagementControl {
         report.append(centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
         report.append(repeatChar('=', REPORT_WIDTH));
         return report.toString();
-    }
-
-    private void appendDoctorLineItems(StringBuilder report, Doctor doctor) {
-        report.append("Doctor ID: ").append(doctor.getDoctorId()).append("\n");
-        report.append("Name: ").append(doctor.getFullName()).append("\n");
-        report.append("Specialty: ").append(doctor.getMedicalSpecialty()).append("\n");
-        report.append("License: ").append(doctor.getLicenseNumber()).append("\n");
-        report.append("Experience: ").append(doctor.getExpYears()).append(" years\n");
-        report.append("Status: ").append(doctor.isAvailable() ? "Available" : "Unavailable").append("\n");
-        report.append("----------------------------------------\n");
     }
 
     private int compareDoctors(Doctor a, Doctor b, String sortBy, boolean ascending) {

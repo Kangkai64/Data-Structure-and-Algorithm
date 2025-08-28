@@ -404,6 +404,7 @@ public class PatientManagementUI {
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 System.out.println();
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
                 
                 if (sortChoice == 1) {
                     String sortBy = getPatientSortField();
@@ -434,6 +435,7 @@ public class PatientManagementUI {
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 System.out.println();
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
                 
                 if (sortChoice == 1) {
                     String sortBy = getPatientSortField();
@@ -464,6 +466,7 @@ public class PatientManagementUI {
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 System.out.println();
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
                 
                 if (sortChoice == 1) {
                     String sortBy = getPatientSortField();
@@ -484,7 +487,7 @@ public class PatientManagementUI {
      * Get the sort field for patient search results
      */
     private String getPatientSortField() {
-        System.out.println("\nSelect field to sort by:");
+        System.out.println("Select field to sort by:");
         System.out.println("1. Patient ID");
         System.out.println("2. Full Name");
         System.out.println("3. IC Number");

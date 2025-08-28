@@ -327,6 +327,7 @@ public class ConsultationManagementUI {
                 System.out.println();
                 if (choice == 1) {
                     String sortBy = getConsultationSortField();
+                    System.out.println();
                     String sortOrder = getSortOrder();
                     System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
                             "Patient ID: " + patientId, sortBy, sortOrder));
@@ -362,6 +363,7 @@ public class ConsultationManagementUI {
                 System.out.println();
                 if (choice == 1) {
                     String sortBy = getConsultationSortField();
+                    System.out.println();
                     String sortOrder = getSortOrder();
                     System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
                             "Doctor ID: " + doctorId, sortBy, sortOrder));
@@ -409,6 +411,7 @@ public class ConsultationManagementUI {
                 System.out.println();
                 if (choice == 1) {
                     String sortBy = getConsultationSortField();
+                    System.out.println();
                     String sortOrder = getSortOrder();
                     System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
                             String.format("Date Range: %s to %s",
@@ -466,6 +469,7 @@ public class ConsultationManagementUI {
                 System.out.println();
                 if (choice == 1) {
                     String sortBy = getConsultationSortField();
+                    System.out.println();
                     String sortOrder = getSortOrder();
                     System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
                             "Status: " + status, sortBy, sortOrder));

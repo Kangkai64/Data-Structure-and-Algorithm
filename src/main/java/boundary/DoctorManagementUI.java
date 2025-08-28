@@ -401,6 +401,7 @@ public class DoctorManagementUI {
                 System.out.println();
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
                 
                 if (sortChoice == 1) {
                     String sortBy = getDoctorSortField();
@@ -440,6 +441,7 @@ public class DoctorManagementUI {
                 System.out.println();
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
                 
                 if (sortChoice == 1) {
                     String sortBy = getDoctorSortField();
@@ -480,6 +482,7 @@ public class DoctorManagementUI {
                 System.out.println();
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
                 
                 if (sortChoice == 1) {
                     String sortBy = getDoctorSortField();
@@ -520,6 +523,7 @@ public class DoctorManagementUI {
                 System.out.println();
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
                 
                 if (sortChoice == 1) {
                     String sortBy = getDoctorSortField();
@@ -556,7 +560,7 @@ public class DoctorManagementUI {
      * Get the sort field for doctor search results
      */
     private String getDoctorSortField() {
-        System.out.println("\nSelect field to sort by:");
+        System.out.println("Select field to sort by:");
         System.out.println("1. Doctor ID");
         System.out.println("2. Full Name");
         System.out.println("3. License Number");

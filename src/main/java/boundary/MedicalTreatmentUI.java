@@ -752,23 +752,8 @@ public class MedicalTreatmentUI {
                         int choiceSort = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
                         System.out.println();
                         if (choiceSort == 1) {
-                            System.out.println("Select field to sort by:");
-                            System.out.println("1. Treatment ID");
-                            System.out.println("2. Patient Name");
-                            System.out.println("3. Doctor Name");
-                            System.out.println("4. Diagnosis");
-                            System.out.println("5. Status");
-                            System.out.println("6. Treatment Cost");
-                            System.out.println("7. Treatment Date");
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-                            System.out.println();
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-                            System.out.println();
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-                            System.out.println();
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-                            System.out.println();
                             String sortBy = getTreatmentSortField();
+                            System.out.println();
                             String sortOrder = getSortOrder();
                             System.out.println(
                                     treatmentControl.displaySortedTreatmentSearchResults(rangeTreatments,

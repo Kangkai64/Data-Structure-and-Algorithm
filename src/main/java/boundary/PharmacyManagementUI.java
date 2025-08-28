@@ -693,17 +693,6 @@ public class PharmacyManagementUI {
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
                         if (sortChoice == 1) {
                             System.out.println();
-                            // Ask for sort field/order
-                            System.out.println("Select field to sort by:");
-                            System.out.println("1. Medicine ID");
-                            System.out.println("2. Medicine Name");
-                            System.out.println("3. Generic Name");
-                            System.out.println("4. Stock Quantity");
-                            System.out.println("5. Unit Price");
-                            System.out.println("6. Expiry Date");
-                            System.out.println("7. Status");
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
-                            System.out.println();
                             String sortBy = getMedicineSortField();
                             System.out.println();
                             String sortOrder = ConsoleUtils.getSortOrder(scanner);
@@ -733,15 +722,6 @@ public class PharmacyManagementUI {
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
                         if (sortChoice == 1) {
-                            System.out.println("Select field to sort by:");
-                            System.out.println("1. Medicine ID");
-                            System.out.println("2. Medicine Name");
-                            System.out.println("3. Generic Name");
-                            System.out.println("4. Stock Quantity");
-                            System.out.println("5. Unit Price");
-                            System.out.println("6. Expiry Date");
-                            System.out.println("7. Status");
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
                             System.out.println();
                             String sortBy = getMedicineSortField();
                             System.out.println();
@@ -806,16 +786,9 @@ public class PharmacyManagementUI {
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
                         if (sortChoice == 1) {
-                            System.out.println("Select field to sort by:");
-                            System.out.println("1. Prescription ID");
-                            System.out.println("2. Patient Name");
-                            System.out.println("3. Doctor Name");
-                            System.out.println("4. Prescription Date");
-                            System.out.println("5. Status");
-                            System.out.println("6. Total Cost");
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
                             System.out.println();
                             String sortBy = getPrescriptionSortField();
+                            System.out.println();
                             String sortOrder = ConsoleUtils.getSortOrder(scanner);
                             System.out.println(pharmacyControl.displaySortedPrescriptionSearchResults(prescriptions,
                                     "Patient ID: " + patientId, sortBy, sortOrder));
@@ -841,16 +814,9 @@ public class PharmacyManagementUI {
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
                         if (sortChoice == 1) {
-                            System.out.println("Select field to sort by:");
-                            System.out.println("1. Prescription ID");
-                            System.out.println("2. Patient Name");
-                            System.out.println("3. Doctor Name");
-                            System.out.println("4. Prescription Date");
-                            System.out.println("5. Status");
-                            System.out.println("6. Total Cost");
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
                             System.out.println();
                             String sortBy = getPrescriptionSortField();
+                            System.out.println();
                             String sortOrder = ConsoleUtils.getSortOrder(scanner);
                             System.out.println(pharmacyControl.displaySortedPrescriptionSearchResults(prescriptions,
                                     "Doctor ID: " + doctorId, sortBy, sortOrder));
@@ -878,16 +844,8 @@ public class PharmacyManagementUI {
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
                         if (sortChoice == 1) {
-                            System.out.println("Select field to sort by:");
-                            System.out.println("1. Prescription ID");
-                            System.out.println("2. Patient Name");
-                            System.out.println("3. Doctor Name");
-                            System.out.println("4. Prescription Date");
-                            System.out.println("5. Status");
-                            System.out.println("6. Total Cost");
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-                            System.out.println();
                             String sortBy = getPrescriptionSortField();
+                            System.out.println();
                             String sortOrder = ConsoleUtils.getSortOrder(scanner);
                             System.out.println(pharmacyControl.displaySortedPrescriptionSearchResults(prescriptions,
                                     "Status", sortBy, sortOrder));
@@ -916,16 +874,9 @@ public class PharmacyManagementUI {
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
                         if (sortChoice == 1) {
-                            System.out.println("Select field to sort by:");
-                            System.out.println("1. Prescription ID");
-                            System.out.println("2. Patient Name");
-                            System.out.println("3. Doctor Name");
-                            System.out.println("4. Prescription Date");
-                            System.out.println("5. Status");
-                            System.out.println("6. Total Cost");
-                            ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
                             System.out.println();
                             String sortBy = getPrescriptionSortField();
+                            System.out.println();
                             String sortOrder = ConsoleUtils.getSortOrder(scanner);
                             System.out.println(pharmacyControl.displaySortedPrescriptionSearchResults(prescriptions,
                                     String.format("Date Range: %s to %s", startDate, endDate), sortBy, sortOrder));

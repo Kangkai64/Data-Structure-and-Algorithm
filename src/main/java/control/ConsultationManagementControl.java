@@ -282,6 +282,7 @@ public class ConsultationManagementControl {
             Consultation consultation = findConsultationById(consultationId);
             if (consultation != null && consultation.getStatus() == Consultation.ConsultationStatus.SCHEDULED) {
                 consultation.setStatus(Consultation.ConsultationStatus.CANCELLED);
+                consultation.setCancellationReason(cancellationReason);
 
                 // Update in database
                 boolean updated = consultationDao.updateStatusWithCancellationReason(consultationId,
@@ -736,7 +737,7 @@ public class ConsultationManagementControl {
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-20s | %14s\n",
+        report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-30s | %14s\n",
                 "ID", "Patient", "Doctor", "Date", "Diagnosis", "Fee"));
         report.append("-".repeat(120)).append("\n");
 
@@ -766,10 +767,10 @@ public class ConsultationManagementControl {
                 patientName = patientName.substring(0, 21) + "…";
             if (doctorName.length() > 22)
                 doctorName = doctorName.substring(0, 21) + "…";
-            if (diagnosis.length() > 20)
-                diagnosis = diagnosis.substring(0, 19) + "…";
+            if (diagnosis.length() > 27)
+                diagnosis = diagnosis.substring(0, 26) + "…";
 
-            report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-20s | RM %,10.2f\n",
+            report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-27s | RM %,10.2f\n",
                     id, patientName, doctorName, date, diagnosis, consultation.getConsultationFee()));
         }
 

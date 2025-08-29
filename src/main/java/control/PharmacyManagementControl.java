@@ -46,7 +46,6 @@ public class PharmacyManagementControl {
         this.patientDao = new PatientDao();
         this.doctorDao = new DoctorDao();
         this.consultationDao = new ConsultationDao();
-        loadPharmacyData();
     }
 
     public void loadPharmacyData() {

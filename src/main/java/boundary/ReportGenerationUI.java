@@ -28,6 +28,11 @@ public class ReportGenerationUI {
         this.consultationControl = new ConsultationManagementControl();
         this.treatmentControl = new MedicalTreatmentControl();
         this.pharmacyControl = new PharmacyManagementControl();
+        this.patientControl.loadActivePatients();
+        this.doctorControl.loadActiveDoctors();
+        this.consultationControl.loadConsultationData();
+        this.treatmentControl.loadTreatmentData();
+        this.pharmacyControl.loadPharmacyData();
     }
 
     public void generateAllReports() {

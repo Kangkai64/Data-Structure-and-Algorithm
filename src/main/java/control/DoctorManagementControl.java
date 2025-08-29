@@ -36,7 +36,6 @@ public class DoctorManagementControl {
         this.scheduleDao = new ScheduleDao();
         this.activeDoctors = new ArrayBucketList<String, Doctor>();
         this.consultationDao = new ConsultationDao();
-        loadActiveDoctors();
     }
 
     public void loadActiveDoctors() {

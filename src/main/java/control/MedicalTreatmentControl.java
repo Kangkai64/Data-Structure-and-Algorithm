@@ -28,7 +28,6 @@ public class MedicalTreatmentControl {
         this.treatments = new ArrayBucketList<String, MedicalTreatment>();
         this.activeTreatments = new ArrayBucketList<String, MedicalTreatment>();
         this.treatmentDao = new MedicalTreatmentDao();
-        loadTreatmentData();
     }
 
     public void loadTreatmentData() {

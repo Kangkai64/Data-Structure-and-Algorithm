@@ -45,7 +45,6 @@ public class ConsultationManagementControl {
         this.scheduleDao = new ScheduleDao();
         this.patientDao = new PatientDao();
         this.doctorDao = new DoctorDao();
-        loadConsultationData();
     }
 
     public void loadConsultationData() {

@@ -23,6 +23,8 @@ public class DoctorManagementUI {
     public DoctorManagementUI() {
         this.scanner = new Scanner(System.in);
         this.doctorControl = new DoctorManagementControl();
+        // Ensure active doctors are loaded for reporting and searches
+        this.doctorControl.loadActiveDoctors();
     }
 
     public void displayDoctorManagementMenu() {
@@ -903,6 +905,8 @@ public class DoctorManagementUI {
     }
 
     private void generateReportsMenu() {
+        // Refresh active doctors before generating any report to ensure data is available
+        doctorControl.loadActiveDoctors();
         System.out.println("\n=== GENERATE REPORTS ===");
         System.out.println("1. Doctor Activity Report");
         System.out.println("2. Doctor Workload Report");

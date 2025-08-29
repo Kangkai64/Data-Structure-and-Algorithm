@@ -154,6 +154,7 @@ public class PatientManagementUI {
         System.out.println("1. A_POSITIVE  2. A_NEGATIVE  3. B_POSITIVE  4. B_NEGATIVE");
         System.out.println("5. AB_POSITIVE 6. AB_NEGATIVE 7. O_POSITIVE  8. O_NEGATIVE  9. OTHERS");
         System.out.println("\n>>> Current: " + patient.getBloodType());
+        System.out.println("[Notice] If value is out of range. Defaulting to A_POSITIVE.");
         int defaultChoice;
         switch (patient.getBloodType()) {
             case A_POSITIVE:

@@ -737,10 +737,10 @@ public class MedicalTreatmentUI {
                 LocalDate endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ",
                         DateType.NO_RESTRICTION);
                 if (endDate.isBefore(startDate)) {
-                    // Swap to ensure valid range
-                    LocalDate temp = startDate;
-                    startDate = endDate;
-                    endDate = temp;
+                    System.out.println("Error: End date cannot be before start date.");
+                    System.out.println("Please enter a valid date range.");
+                    ConsoleUtils.waitMessage();
+                    return;
                 }
                 ArrayBucketList<String, MedicalTreatment> rangeTreatments = treatmentControl
                         .findTreatmentsByDateRange(startDate, endDate);

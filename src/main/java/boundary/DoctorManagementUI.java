@@ -9,7 +9,6 @@ import entity.Address;
 import entity.DayOfWeek;
 import entity.Doctor;
 import utility.ConsoleUtils;
-import utility.PatternChecker;
 
 /**
  * Author: Lee Yong Kang
@@ -70,7 +69,7 @@ public class DoctorManagementUI {
         System.out.println("\n=== REGISTER NEW DOCTOR ===");
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter full name: ");
         String icNumber = ConsoleUtils.getICInput(scanner, "Enter IC number (YYMMDD-XX-XXXX): ");
-        String email = ConsoleUtils.getStringInput(scanner, "Enter email: ");
+        String email = ConsoleUtils.getEmailInput(scanner, "Enter email: ");
         String phoneNumber = ConsoleUtils.getPhoneInput(scanner, "Enter phone number (0XX-XXXXXXX): ");
         String specialty = ConsoleUtils.getStringInput(scanner, "Enter medical specialty: ");
         String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter license number: ");
@@ -126,56 +125,32 @@ public class DoctorManagementUI {
 
         switch (choice) {
             case 1:
-                System.out.print("Enter new full name: ");
-                String newFullName = scanner.nextLine().trim();
-                fullNameToUpdate = (newFullName.trim().isEmpty()) ? null : newFullName;
+                fullNameToUpdate = ConsoleUtils.getStringInput(scanner, "Enter new full name: ", currentDoctor.getFullName());
                 break;
             case 2:
-                System.out.print("Enter new email: ");
-                String newEmail = scanner.nextLine().trim();
-                emailToUpdate = (newEmail.trim().isEmpty()) ? null : newEmail;
+                emailToUpdate = ConsoleUtils.getEmailInput(scanner, "Enter new email: ", currentDoctor.getEmail());
                 break;
             case 3:
-                System.out.print("Enter new phone number: ");
-                String newPhoneNumber = scanner.nextLine().trim();
-                // Validate phone number if provided
-                if (!newPhoneNumber.isEmpty() && !PatternChecker.PHONE_PATTERN.matcher(newPhoneNumber).matches()) {
-                    System.out.println("Invalid phone number format. Must be in format: 0XX-XXXXXXX");
-                    System.out.println("Skipping phone number update.");
-                    newPhoneNumber = "";
-                }
-                phoneToUpdate = (newPhoneNumber.trim().isEmpty()) ? null : newPhoneNumber;
+                phoneToUpdate = ConsoleUtils.getPhoneInput(scanner, "Enter new phone number: ", currentDoctor.getPhoneNumber());
                 break;
             case 4:
-                System.out.print("Enter new medical specialty: ");
-                String newSpecialty = scanner.nextLine().trim();
-                specialtyToUpdate = (newSpecialty.trim().isEmpty()) ? null : newSpecialty;
+                specialtyToUpdate = ConsoleUtils.getStringInput(scanner, "Enter new medical specialty: ", currentDoctor.getMedicalSpecialty());
                 break;
             case 5:
-                System.out.print("Enter new experience years: ");
-                String expYearsInput = scanner.nextLine();
-                int newExpYears = -1;
-                if (!expYearsInput.trim().isEmpty()) {
-                    try {
-                        newExpYears = Integer.parseInt(expYearsInput.trim());
-                        if (newExpYears < 0 || newExpYears > 50) {
-                            System.out.println("Invalid experience years. Must be between 0-50. Skipping this field.");
-                            newExpYears = -1;
-                        }
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid experience years format. Skipping this field.");
-                        newExpYears = -1;
-                    }
-                }
-                expYearsToUpdate = newExpYears;
+                expYearsToUpdate = ConsoleUtils.getIntInput(scanner, "Enter new experience years: ", currentDoctor.getExpYears());
                 break;
             case 6:
-                String newStreet = ConsoleUtils.getStringInput(scanner, "Enter new street: ");
-                String newCity = ConsoleUtils.getStringInput(scanner, "Enter new city: ");
-                String newState = ConsoleUtils.getStringInput(scanner, "Enter new state: ");
-                Integer newPostalCode = ConsoleUtils.getIntInput(scanner, "Enter new postal code: ", 0, 99999);
-                String newCountry = ConsoleUtils.getStringInput(scanner, "Enter new country: ");
-                newAddress = new Address(newStreet, newCity, newState, newPostalCode.toString(), newCountry);
+                String curStreet = currentDoctor.getAddress() == null ? "" : currentDoctor.getAddress().getStreet();
+                String curCity = currentDoctor.getAddress() == null ? "" : currentDoctor.getAddress().getCity();
+                String curState = currentDoctor.getAddress() == null ? "" : currentDoctor.getAddress().getState();
+                String curPostal = currentDoctor.getAddress() == null ? "" : currentDoctor.getAddress().getZipCode();
+                String curCountry = currentDoctor.getAddress() == null ? "" : currentDoctor.getAddress().getCountry();
+                String newStreet = ConsoleUtils.getStringInput(scanner, "Enter new street: ", curStreet);
+                String newCity = ConsoleUtils.getStringInput(scanner, "Enter new city: ", curCity);
+                String newState = ConsoleUtils.getStringInput(scanner, "Enter new state: ", curState);
+                String newPostal = ConsoleUtils.getPostalCodeInput(scanner, "Enter new postal code: ", curPostal == null ? "" : curPostal);
+                String newCountry = ConsoleUtils.getStringInput(scanner, "Enter new country: ", curCountry);
+                newAddress = new Address(newStreet, newCity, newState, newPostal, newCountry);
                 break;
             default:
                 System.out.println("Invalid choice. Please try again.");
@@ -347,9 +322,8 @@ public class DoctorManagementUI {
                           selectedSchedule.getDayOfWeek() + " " + selectedSchedule.getFromTime() + "-" + selectedSchedule.getToTime());
         
         // Confirm removal
-        System.out.print("Are you sure you want to remove this schedule? (yes/no): ");
-        String confirm = scanner.nextLine().trim().toLowerCase();
-        if (!confirm.equals("yes") && !confirm.equals("y")) {
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to remove this schedule? (Y/N): ");
+        if (!confirm) {
             System.out.println("Schedule removal cancelled.");
             return;
         }
@@ -419,8 +393,7 @@ public class DoctorManagementUI {
         System.out.println("Doctor: " + doctorName);
         System.out.println("Note: This will set the doctor's availability status.");
         
-        System.out.print("Set doctor availability (true/false): ");
-        boolean isAvailable = getBooleanInput();
+        boolean isAvailable = ConsoleUtils.getBooleanInput(scanner, "Set doctor availability (Y/N): ");
         
         boolean ok;
         if (isAvailable) {
@@ -474,8 +447,7 @@ public class DoctorManagementUI {
         System.out.println("Updating Schedule: [" + selectedSchedule.getScheduleId() + "] " + 
                           selectedSchedule.getDayOfWeek() + " " + selectedSchedule.getFromTime() + "-" + selectedSchedule.getToTime());
         
-        System.out.print("Set schedule availability (true/false): ");
-        boolean isAvailable = getBooleanInput();
+        boolean isAvailable = ConsoleUtils.getBooleanInput(scanner, "Set schedule availability (Y/N): ");
         boolean ok = doctorControl.setScheduleAvailability(selectedSchedule.getScheduleId(), isAvailable);
         System.out.println(ok ? "Schedule availability updated successfully." : "Failed to update schedule availability.");
     }
@@ -591,7 +563,7 @@ public class DoctorManagementUI {
             System.out.println();
             
             if (foundDoctors.getSize() > 1) {
-                System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with email containing: " + email);
+                System.out.println("Found " + foundDoctors.getSize() + " doctor with email containing: " + email);
                 System.out.println();
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
@@ -770,9 +742,7 @@ public class DoctorManagementUI {
 
     private void generateDoctorInformationReportUI() {
         System.out.println("\n=== DOCTOR ACTIVITY REPORT ===");
-        System.out.println("Sort report?");
-        System.out.print("Enter yes/no: ");
-        boolean wantSort = getBooleanInput();
+        boolean wantSort = ConsoleUtils.getBooleanInput(scanner, "Sort report? (Y/N): ");
 
         String sortBy = "";
         boolean ascending = true;
@@ -804,9 +774,7 @@ public class DoctorManagementUI {
 
     private void generateScheduleReportUI() {
         System.out.println("\n=== DOCTOR WORKLOAD REPORT ===");
-        System.out.println("Sort report?");
-        System.out.print("Enter yes/no: ");
-        boolean wantSort = getBooleanInput();
+        boolean wantSort = ConsoleUtils.getBooleanInput(scanner, "Sort report? (Y/N): ");
 
         String sortBy = "";
         boolean ascending = true;
@@ -851,16 +819,5 @@ public class DoctorManagementUI {
         }
     }
 
-    private boolean getBooleanInput() {
-        while (true) {
-            String input = scanner.nextLine().toLowerCase();
-            if (input.equals("true") || input.equals("yes") || input.equals("1")) {
-                return true;
-            } else if (input.equals("false") || input.equals("no") || input.equals("0")) {
-                return false;
-            } else {
-                System.out.print("Please enter true/false, yes/no, or 1/0: ");
-            }
-        }
-    }
+    
 }

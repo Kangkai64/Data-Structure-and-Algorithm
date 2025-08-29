@@ -356,26 +356,12 @@ public class DoctorManagementUI {
         
         boolean isAvailable = ConsoleUtils.getBooleanInput(scanner, "Set doctor availability (Y/N): ");
         
-        boolean ok;
-        if (isAvailable) {
-            // Use setDoctorAvailability for setting to available
-            ok = doctorControl.setDoctorAvailability(doctorId, true);
-            if (ok) {
-                System.out.println("Doctor availability updated successfully.");
-                System.out.println("Status: Available");
-            } else {
-                System.out.println("Failed to update doctor availability.");
-            }
+        boolean ok = doctorControl.setDoctorAvailability(doctorId, isAvailable);
+        if (ok) {
+            System.out.println("Doctor availability updated successfully.");
+            System.out.println("Status: " + (isAvailable ? "Available" : "Not Available (Deactivated)"));
         } else {
-            // Use deactivateDoctor for setting to unavailable
-            ok = doctorControl.deactivateDoctor(doctorId);
-            if (ok) {
-                System.out.println("Doctor deactivated successfully.");
-                System.out.println("Status: Not Available (Deactivated)");
-                System.out.println("Doctor has been removed from active doctors list.");
-            } else {
-                System.out.println("Failed to deactivate doctor.");
-            }
+            System.out.println("Failed to update doctor availability.");
         }
     }
 

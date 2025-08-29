@@ -208,8 +208,6 @@ public class DoctorManagementControl {
         }
     }
 
-    
-
     public Schedule[] getDoctorSchedulesOrderedArray(String doctorId) {
         try {
             ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
@@ -260,13 +258,23 @@ public class DoctorManagementControl {
                 Schedule s = it.next();
                 try {
                     scheduleDao.updateAvailability(s.getScheduleId(), isAvailable);
+                    // Update in-memory schedule availability if doctor holds schedules
+                    Schedule inMem = doctor.getSchedule(s.getScheduleId());
+                    if (inMem != null) {
+                        inMem.setAvailable(isAvailable);
+                        doctor.updateSchedule(inMem);
+                    }
                 } catch (Exception e) {
                     System.err.println("Failed to update schedule availability for schedule " + s.getScheduleId() + ": "
                             + e.getMessage());
                 }
             }
-
-            updateActiveDoctorsList(doctor);
+            // Reflect activeDoctors cache: remove when unavailable, update/add when available
+            if (isAvailable) {
+                updateActiveDoctorsList(doctor);
+            } else {
+                removeFromActiveDoctors(doctor);
+            }
             return true;
         } catch (Exception exception) {
             System.err.println("Error setting doctor availability: " + exception.getMessage());

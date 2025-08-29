@@ -371,8 +371,8 @@ public class MedicalTreatmentControl {
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             java.time.LocalDate treatmentLocalDate = treatment.getTreatmentDate().toLocalDate();
-            boolean inLowerBound = (startDate == null) || !treatmentLocalDate.isBefore(startDate);
-            boolean inUpperBound = (endDate == null) || !treatmentLocalDate.isAfter(endDate);
+            boolean inLowerBound = (startDate == null) || !treatmentLocalDate.isBefore(startDate.minusDays(1));
+            boolean inUpperBound = (endDate == null) || !treatmentLocalDate.isAfter(endDate.plusDays(1));
             if (inLowerBound && inUpperBound) {
                 results.add(treatment.getTreatmentId(), treatment);
             }

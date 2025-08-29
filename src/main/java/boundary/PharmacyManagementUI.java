@@ -26,7 +26,7 @@ public class PharmacyManagementUI {
 
     public void displayPharmacyManagementMenu() {
         while (true) {
-            pharmacyControl.loadPhramacyData();
+            pharmacyControl.loadPharmacyData();
             ConsoleUtils.printHeader("Pharmacy Management Module");
             System.out.println("1. Add Medicine");
             System.out.println("2. Update Medicine");
@@ -132,16 +132,16 @@ public class PharmacyManagementUI {
         System.out.println();
         switch (choice) {
             case 1:
-                updateMedicineStock(medicineId, medicine);
+                updateMedicineStock(medicine);
                 break;
             case 2:
-                updateMedicinePrice(medicineId, medicine);
+                updateMedicinePrice(medicine);
                 break;
             case 3:
                 discontinueMedicine(medicineId);
                 break;
             case 4:
-                updateMedicineDetails(medicineId, medicine);
+                updateMedicineDetails(medicine);
                 break;
             case 5:
                 return;
@@ -151,7 +151,7 @@ public class PharmacyManagementUI {
         ConsoleUtils.waitMessage();
     }
 
-    private void updateMedicineStock(String medicineId, Medicine medicine) {
+    private void updateMedicineStock(Medicine medicine) {
         ConsoleUtils.printHeader("Update Medicine Stock");
         System.out.println("1. Add stock");
         System.out.println("2. Remove stock");
@@ -162,17 +162,17 @@ public class PharmacyManagementUI {
         switch (choice) {
             case 1:
                 int addQuantity = ConsoleUtils.getIntInput(scanner, "Enter quantity to add: ", 1, 10000);
-                pharmacyControl.updateMedicineStock(medicineId, medicine.getQuantityInStock() + addQuantity);
+                pharmacyControl.updateMedicineStock(medicine.getMedicineId(), medicine.getQuantityInStock() + addQuantity);
                 System.out.println("Medicine stock updated.");
                 break;
             case 2:
                 int removeQuantity = ConsoleUtils.getIntInput(scanner, "Enter quantity to remove: ", 1, 10000);
-                pharmacyControl.updateMedicineStock(medicineId, medicine.getQuantityInStock() - removeQuantity);
+                pharmacyControl.updateMedicineStock(medicine.getMedicineId(), medicine.getQuantityInStock() - removeQuantity);
                 System.out.println("Medicine stock updated.");
                 break;
             case 3:
                 int newQuantity = ConsoleUtils.getIntInput(scanner, "Enter new quantity: ", 0, 10000);
-                pharmacyControl.updateMedicineStock(medicineId, newQuantity);
+                pharmacyControl.updateMedicineStock(medicine.getMedicineId(), newQuantity);
                 System.out.println("Medicine stock updated.");
                 break;
             default:
@@ -181,10 +181,10 @@ public class PharmacyManagementUI {
         }
     }
 
-    private void updateMedicinePrice(String medicineId, Medicine medicine) {
+    private void updateMedicinePrice(Medicine medicine) {
         ConsoleUtils.printHeader("Update Medicine Price");
         double price = ConsoleUtils.getDoubleInput(scanner, "Enter price: ", 0.0, 10000.0);
-        pharmacyControl.updateMedicinePrice(medicineId, price);
+        pharmacyControl.updateMedicinePrice(medicine.getMedicineId(), price);
         System.out.println("Medicine price updated.");
     }
 
@@ -193,7 +193,7 @@ public class PharmacyManagementUI {
         System.out.println("Medicine discontinued.");
     }
 
-    private void updateMedicineDetails(String medicineId, Medicine medicine) {
+    private void updateMedicineDetails(Medicine medicine) {
         ConsoleUtils.printHeader("Update Medicine Details");
         System.out.println("Leave blank if you don't want to update the field.");
         if (medicine == null) {
@@ -578,6 +578,9 @@ public class PharmacyManagementUI {
     }
 
     private void dispensePrescription() {
+        System.out.println(pharmacyControl.displayActivePrescriptions("Prescription Date", "DESC"));
+        System.out.println();
+
         ConsoleUtils.printHeader("Dispense Prescription");
         String prescriptionId = ConsoleUtils.getStringInput(scanner, "Enter prescription ID: ");
         System.out.println();
@@ -862,6 +865,13 @@ public class PharmacyManagementUI {
                         DateType.PAST_DATE_ONLY);
                 LocalDate endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ",
                         DateType.PAST_DATE_ONLY);
+
+                // Validate date range
+                if (startDate.isAfter(endDate)) {
+                    System.out.println("Start date cannot be after end date.");
+                    return;
+                }
+
                 prescriptions = pharmacyControl.findPrescriptionsByDateRange(startDate, endDate);
                 if (prescriptions.isEmpty()) {
                     System.out.println("No prescriptions found.");

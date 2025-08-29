@@ -377,7 +377,7 @@ public class ConsultationManagementControl {
         while (consultationIterator.hasNext()) {
             Consultation consultation = consultationIterator.next();
             LocalDate consultationDate = consultation.getConsultationDate().toLocalDate();
-            if (!consultationDate.isBefore(startDate) && !consultationDate.isAfter(endDate)) {
+            if (!consultationDate.isBefore(startDate.minusDays(1)) && !consultationDate.isAfter(endDate.plusDays(1))) {
                 dateRangeConsultations.add(consultation.getConsultationId(), consultation);
             }
         }

@@ -529,83 +529,19 @@ public class DoctorManagementUI {
     }
 
     private void searchByIC() {
-        String lastFourDigits = ConsoleUtils.getStringInput(scanner, "Enter last 4 digits of IC number: ");
+        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter doctor IC number: ");
 
-        // Validate input - should be exactly 4 digits
-        if (lastFourDigits.length() != 4 || !lastFourDigits.matches("\\d{4}")) {
-            System.out.println("Invalid input. Please enter exactly 4 digits.");
-            return;
-        }
+        Doctor doctor = doctorControl.findDoctorByIcNumber(icNumber);
 
-        // Use hash function to find doctors with matching IC last 4 digits
-        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
-        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
-
-        // Calculate hash for the search input
-        int searchHash = hashLastFourDigits(lastFourDigits);
-
-        Iterator<Doctor> iterator = allDoctors.iterator();
-        while (iterator.hasNext()) {
-            Doctor doctor = iterator.next();
-            if (doctor.getICNumber() != null) {
-                // Extract last 4 digits from IC number (format: YYMMDD-XX-XXXX)
-                String icNumber = doctor.getICNumber();
-                if (icNumber.length() >= 4) {
-                    String doctorLastFour = icNumber.substring(icNumber.length() - 4);
-                    // Calculate hash for doctor's last 4 digits
-                    int doctorHash = hashLastFourDigits(doctorLastFour);
-
-                    // Compare hashes - if they match, then compare the actual strings
-                    if (doctorHash == searchHash && doctorLastFour.equals(lastFourDigits)) {
-                        foundDoctors.add(doctor.getDoctorId(), doctor);
-                    }
-                }
-            }
-        }
-
-        if (!foundDoctors.isEmpty()) {
-            System.out.println("\n=== DOCTOR FOUND ===");
+        if (doctor != null) {
             System.out.println();
-
-            Iterator<Doctor> foundIterator = foundDoctors.iterator();
-            int count = 1;
-            while (foundIterator.hasNext()) {
-                Doctor doctor = foundIterator.next();
-                System.out.println("--- Doctor " + count + " ---");
-                displayDoctorDetails(doctor);
-                System.out.println();
-                count++;
-            }
+            displayDoctorDetails(doctor);
         } else {
-            System.out.println("No doctors found with IC number ending in: " + lastFourDigits);
+            System.out.println("No doctors found with IC number: " + icNumber);
         }
+        System.out.println();
     }
-
-    /**
-     * Hash function for the last 4 digits of IC number
-     * Uses the same algorithm as ArrayBucketList's hashEntity method
-     */
-    private int hashLastFourDigits(String lastFourDigits) {
-        if (lastFourDigits == null) {
-            return 0;
-        }
-
-        int hash = 0;
-
-        // Use a prime multiplier and process each character
-        // This helps break up patterns in sequential IDs
-        for (int i = 0; i < lastFourDigits.length(); i++) {
-            hash = hash * 31 + lastFourDigits.charAt(i);
-        }
-
-        // Additional mixing to improve distribution
-        hash ^= (hash >>> 16); // XOR with upper bits
-        hash *= 0x85ebca6b; // Multiply by a large prime-like number
-        hash ^= (hash >>> 13); // More mixing
-
-        return Math.abs(hash);
-    }
-
+    
     private void searchByFullName() {
         String fullName = ConsoleUtils.getStringInput(scanner, "Enter Full Name (or partial name): ");
         ArrayBucketList<String, Doctor> doctors = doctorControl.findDoctorsByName(fullName);

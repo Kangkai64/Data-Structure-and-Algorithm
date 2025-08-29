@@ -21,13 +21,13 @@ public class PatientManagementControl {
 
     private PatientDao patientDao;
     private AddressDao addressDao;
-    private ArrayBucketList<String, Patient> patientList;
+    private ArrayBucketList<String, Patient> patienQueue;
     private ArrayBucketList<String, Patient> activePatients;
 
     public PatientManagementControl() {
         this.patientDao = new PatientDao();
         this.addressDao = new AddressDao();
-        this.patientList = new ArrayBucketList<String, Patient>();
+        this.patienQueue = new ArrayBucketList<String, Patient>();
         this.activePatients = new ArrayBucketList<String, Patient>();
     }
 
@@ -159,44 +159,47 @@ public class PatientManagementControl {
         if (patient == null || !patient.isActive()) {
             return false;
         }
-        if (patientList.queueContains(patient.getPatientId())) {
+        if (patienQueue.queueContains(patient.getPatientId())) {
             return false;
         }
-        patientList.addToQueue(patient.getPatientId(), patient);
+        patienQueue.addToQueue(patient.getPatientId(), patient);
         return true;
     }
 
     // Removes and returns the next patient from the queue
     public Patient getNextPatientFromQueue() {
-        return patientList.removeFront();
+        return patienQueue.removeFront();
     }
 
     public Patient peekNextPatient() {
-        return patientList.peekFront();
+        return patienQueue.peekFront();
     }
 
     public int getQueueSize() {
-        return patientList.getQueueSize();
+        return patienQueue.getQueueSize();
     }
 
     public boolean isPatientInQueue(Patient patient) {
         if (patient == null)
             return false;
-        return patientList.queueContains(patient.getPatientId());
+        return patienQueue.queueContains(patient.getPatientId());
     }
 
     public void clearQueue() {
-        patientList.clear();
+        patienQueue.clear();
     }
 
     // Search and Retrieval Methods
     public Patient findPatientById(String patientId) {
-        try {
-            return patientDao.findById(patientId);
-        } catch (SQLException exception) {
-            System.err.println("Error finding patient by ID: " + exception.getMessage());
-            return null;
+        Patient patient = null;
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient p = patientIterator.next();
+            if (p.getPatientId().equals(patientId)) {
+                patient = p;
+            }
         }
+        return patient;
     }
 
     // Finds a patient by exact IC number
@@ -270,37 +273,8 @@ public class PatientManagementControl {
     }
 
     // Finds a patient by IC number
-    public ArrayBucketList<String, Patient> findPatientsByIcNumber(String icNumber) {
-        ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
-
-        if (icNumber == null) {
-            return results;
-        }
-
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            if (patient.getICNumber() != null && hasMatchingIcNumber(patient.getICNumber(), icNumber)) {
-                results.add(patient.getPatientId(), patient);
-            }
-        }
-
-        return results;
-    }
-
-    // Check if a patient's IC number matches the search criteria
-    private boolean hasMatchingIcNumber(String patientIcNumber, String searchIc) {
-        if (patientIcNumber == null || searchIc == null) {
-            return false;
-        }
-
-        if (searchIc.length() == 4 && searchIc.matches("\\d{4}")) {
-            return patientIcNumber.length() >= 4 &&
-                    patientIcNumber.substring(patientIcNumber.length() - 4).equals(searchIc);
-        }
-
-        return patientIcNumber.equals(searchIc);
+    public Patient findPatientsByIcNumber(String icNumber) {
+       return activePatients.getValue(icNumber);
     }
 
     // Returns the active patients

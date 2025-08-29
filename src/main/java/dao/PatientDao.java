@@ -51,7 +51,7 @@ public class PatientDao extends DaoTemplate<Patient> {
                 while (resultSet.next()) {
                     Patient patient = mapResultSet(resultSet);
                     if (patient != null) {
-                        patients.add(patient.getPatientId(), patient);
+                        patients.add(patient.getICNumber(), patient);
                     }
                 }
             }

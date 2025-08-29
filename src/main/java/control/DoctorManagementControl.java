@@ -330,12 +330,15 @@ public class DoctorManagementControl {
 
     // Search and Retrieval Methods
     public Doctor findDoctorById(String doctorId) {
-        try {
-            return doctorDao.findById(doctorId);
-        } catch (Exception exception) {
-            System.err.println("Error finding doctor by ID: " + exception.getMessage());
-            return null;
+        Doctor foundDoctor = null;
+        Iterator<Doctor> iterator = getAllActiveDoctors().iterator();
+        while (iterator.hasNext()) {
+            Doctor doctor = iterator.next();
+            if (doctor.getDoctorId().equals(doctorId)) {
+                foundDoctor = doctor;
+            }
         }
+        return foundDoctor;
     }
 
     public ArrayBucketList<String, Doctor> findDoctorsByName(String name) {
@@ -349,6 +352,10 @@ public class DoctorManagementControl {
             }
         }
         return foundDoctors;
+    }
+
+    public Doctor findDoctorByIcNumber(String icNumber) {
+        return activeDoctors.getValue(icNumber);
     }
 
     /**

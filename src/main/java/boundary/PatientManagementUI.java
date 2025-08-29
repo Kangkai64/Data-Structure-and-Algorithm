@@ -455,32 +455,15 @@ public class PatientManagementUI {
     }
 
     private void searchPatientByIcNumber() {
-        ConsoleUtils.printHeader("Search Patients by IC Number (Patient List)");
-        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter IC number (partial match): ");
-        ArrayBucketList<String, Patient> patients = patientControl.findPatientsByIcNumber(icNumber);
-        if (patients.isEmpty()) {
-            System.out.println("No patients found.");
+        ConsoleUtils.printHeader("Search Patients by IC Number");
+        String icNumber = ConsoleUtils.getICInput(scanner, "Enter IC number (YYMMDD-XX-XXXX): ");
+
+        Patient patient = patientControl.findPatientsByIcNumber(icNumber);
+        if (patient == null) {
+            System.out.println("No patients found with IC number: " + icNumber);
         } else {
             System.out.println();
-            if (patients.getSize() > 1) {
-                System.out.println("Found " + patients.getSize() + " patients.");
-                System.out.println();
-                System.out.println("Sort results?\n1. Yes\n2. No");
-                System.out.println();
-                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
-                System.out.println();
-                
-                if (sortChoice == 1) {
-                    String sortBy = getPatientSortField();
-                    System.out.println();
-                    String sortOrder = getSortOrder();
-                    System.out.println(patientControl.displaySortedPatientSearchResults(patients, "IC Number: " + icNumber, sortBy, sortOrder));
-                } else {
-                    System.out.println(patientControl.displayPatientSearchResults(patients, "IC Number: " + icNumber));
-                }
-            } else {
-                System.out.println(patientControl.displayPatientSearchResults(patients, "IC Number: " + icNumber));
-            }
+            System.out.println(patientControl.displayPatientSearchResult(patient, "IC Number: " + icNumber));
         }
         ConsoleUtils.waitMessage();
     }

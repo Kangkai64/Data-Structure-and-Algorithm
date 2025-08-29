@@ -243,24 +243,7 @@ public class MedicalTreatmentControl {
 
     // Search and Retrieval Methods
     public MedicalTreatment findTreatmentById(String treatmentId) {
-        MedicalTreatment cached = treatments.getValue(treatmentId);
-        if (cached != null) {
-            return cached;
-        }
-        try {
-
-            MedicalTreatment fromDb = treatmentDao.findById(treatmentId);
-            if (fromDb != null) {
-                treatments.add(fromDb.getTreatmentId(), fromDb);
-                if (fromDb.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
-                    activeTreatments.add(fromDb.getTreatmentId(), fromDb);
-                }
-            }
-            return fromDb;
-        } catch (Exception e) {
-            System.err.println("Error fetching treatment by ID: " + e.getMessage());
-            return null;
-        }
+        return treatments.getValue(treatmentId);
     }
 
     public ArrayBucketList<String, MedicalTreatment> findTreatmentsByPatient(String patientId) {

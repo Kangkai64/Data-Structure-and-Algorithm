@@ -27,6 +27,7 @@ public class PatientManagementUI {
 
     public void displayPatientManagementMenu() {
         while (true) {
+            patientControl.loadActivePatients();
             ConsoleUtils.printHeader("Patient Management Module");
             System.out.println("1. Register New Patient");
             System.out.println("2. Update Patient Record");

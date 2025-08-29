@@ -27,6 +27,7 @@ public class DoctorManagementUI {
 
     public void displayDoctorManagementMenu() {
         while (true) {
+            doctorControl.loadActiveDoctors();
             System.out.println("\n=== DOCTOR MANAGEMENT MODULE ===");
             System.out.println("1. Register New Doctor");
             System.out.println("2. Update Doctor Information");

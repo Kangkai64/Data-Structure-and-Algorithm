@@ -286,6 +286,8 @@ public class PharmacyManagementControl {
 
                 // Update prescription status
                 prescription.setStatus(Prescription.PrescriptionStatus.DISPENSED);
+                // Mark as paid on successful dispensing
+                prescription.setPaymentStatus(Prescription.PaymentStatus.PAID);
                 prescriptionDao.update(prescription);
                 dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
                 prescriptions.add(prescription.getPrescriptionId(), prescription);
@@ -412,6 +414,22 @@ public class PharmacyManagementControl {
             }
         }
         return statusPrescriptions;
+    }
+
+    public ArrayBucketList<String, Prescription> findPrescriptionsByPaymentStatus(
+            Prescription.PaymentStatus paymentStatus) {
+        ArrayBucketList<String, Prescription> results = new ArrayBucketList<>();
+        if (paymentStatus == null) {
+            return results;
+        }
+        Iterator<Prescription> iterator = prescriptions.iterator();
+        while (iterator.hasNext()) {
+            Prescription p = iterator.next();
+            if (p.getPaymentStatus() == paymentStatus) {
+                results.add(p.getPrescriptionId(), p);
+            }
+        }
+        return results;
     }
 
     public ArrayBucketList<String, Prescription> findPrescriptionsByDateRange(LocalDate startDate, LocalDate endDate) {
@@ -1055,6 +1073,8 @@ public class PharmacyManagementControl {
             case "total" -> Comparator.comparing(Prescription::getTotalCost);
             case "cost" -> Comparator.comparing(Prescription::getTotalCost);
             case "status" -> Comparator.comparing(p -> p.getStatus() != null ? p.getStatus().toString() : "");
+            case "payment" -> Comparator
+                    .comparing(p -> p.getPaymentStatus() != null ? p.getPaymentStatus().toString() : "");
             case "id" -> Comparator.comparing(p -> p.getPrescriptionId() != null ? p.getPrescriptionId() : "");
             default -> Comparator
                     .comparing(p -> p.getPrescriptionDate() != null ? p.getPrescriptionDate() : LocalDate.MAX);

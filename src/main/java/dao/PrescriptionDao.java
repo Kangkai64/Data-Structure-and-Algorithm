@@ -86,8 +86,8 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
     @Override
     public boolean insertAndReturnId(Prescription prescription) throws SQLException {
         String sql = "INSERT INTO prescription (patientId, doctorId, consultationId, " +
-                "prescriptionDate, instructions, expiryDate, status, totalCost) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                "prescriptionDate, instructions, expiryDate, status, totalCost, paymentStatus) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql,
@@ -102,6 +102,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             preparedStatement.setObject(6, prescription.getExpiryDate());
             preparedStatement.setString(7, prescription.getStatus().name());
             preparedStatement.setDouble(8, prescription.getTotalCost());
+            preparedStatement.setString(9, prescription.getPaymentStatus().name());
 
             int affectedRows = preparedStatement.executeUpdate();
 
@@ -146,7 +147,7 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
     @Override
     public boolean update(Prescription prescription) throws SQLException {
         String sql = "UPDATE prescription SET patientId = ?, doctorId = ?, consultationId = ?, " +
-                "prescriptionDate = ?, instructions = ?, expiryDate = ?, status = ?, totalCost = ? " +
+                "prescriptionDate = ?, instructions = ?, expiryDate = ?, status = ?, totalCost = ?, paymentStatus = ? " +
                 "WHERE prescriptionId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -161,7 +162,8 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             preparedStatement.setObject(6, prescription.getExpiryDate());
             preparedStatement.setString(7, prescription.getStatus().name());
             preparedStatement.setDouble(8, prescription.getTotalCost());
-            preparedStatement.setString(9, prescription.getPrescriptionId());
+            preparedStatement.setString(9, prescription.getPaymentStatus().name());
+            preparedStatement.setString(10, prescription.getPrescriptionId());
 
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;
@@ -379,6 +381,10 @@ public class PrescriptionDao extends DaoTemplate<Prescription> {
             // Set additional fields
             prescription.setStatus(Prescription.PrescriptionStatus.valueOf(resultSet.getString("status")));
             prescription.setTotalCost(resultSet.getDouble("totalCost"));
+            String paymentStatus = resultSet.getString("paymentStatus");
+            if (paymentStatus != null) {
+                prescription.setPaymentStatus(Prescription.PaymentStatus.valueOf(paymentStatus));
+            }
 
             return prescription;
         } catch (SQLException e) {

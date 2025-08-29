@@ -771,6 +771,8 @@ public class MedicalTreatmentControl {
                 return Comparator.comparing(t -> t.getDiagnosis() != null ? t.getDiagnosis() : "");
             case "status":
                 return Comparator.comparing(t -> t.getStatus() != null ? t.getStatus().toString() : "");
+            case "payment":
+                return Comparator.comparing(t -> t.getPaymentStatus() != null ? t.getPaymentStatus().toString() : "");
             case "cost":
                 return Comparator.comparing(MedicalTreatment::getTreatmentCost);
             case "date":
@@ -793,6 +795,8 @@ public class MedicalTreatmentControl {
                 return "Diagnosis";
             case "status":
                 return "Status";
+            case "payment":
+                return "Payment Status";
             case "cost":
                 return "Treatment Cost";
             case "date":
@@ -938,5 +942,22 @@ public class MedicalTreatmentControl {
                 break;
             }
         }
+    }
+
+    // Payment Status search
+    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByPaymentStatus(
+            MedicalTreatment.PaymentStatus paymentStatus) {
+        ArrayBucketList<String, MedicalTreatment> results = new ArrayBucketList<String, MedicalTreatment>();
+        if (paymentStatus == null) {
+            return results;
+        }
+        Iterator<MedicalTreatment> iterator = treatments.iterator();
+        while (iterator.hasNext()) {
+            MedicalTreatment treatment = iterator.next();
+            if (treatment.getPaymentStatus() == paymentStatus) {
+                results.add(treatment.getTreatmentId(), treatment);
+            }
+        }
+        return results;
     }
 }

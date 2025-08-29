@@ -589,9 +589,10 @@ public class MedicalTreatmentUI {
         System.out.println("3. Search by Doctor ID");
         System.out.println("4. Search by Consultation ID");
         System.out.println("5. Search by Status");
-        System.out.println("6. Search by Date Range");
+        System.out.println("6. Search by Payment Status");
+        System.out.println("7. Search by Date Range");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
 
         switch (choice) {
             case 1:
@@ -732,15 +733,47 @@ public class MedicalTreatmentUI {
                 ConsoleUtils.waitMessage();
                 break;
             case 6:
+                System.out.println("Select payment status:");
+                System.out.println("1. PAID  2. PENDING  3. CANCELLED");
+                int payChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+                MedicalTreatment.PaymentStatus payStatus = MedicalTreatment.PaymentStatus.values()[payChoice - 1];
+                ArrayBucketList<String, MedicalTreatment> payTreatments = treatmentControl
+                        .findTreatmentsByPaymentStatus(payStatus);
+                if (!payTreatments.isEmpty()) {
+                    if (payTreatments.getSize() > 1) {
+                        System.out.println("Found " + payTreatments.getSize() + " treatments with payment status: " + payStatus);
+                        System.out.println();
+                        System.out.println("Sort results?\n1. Yes\n2. No");
+                        int choiceSort = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
+                        if (choiceSort == 1) {
+                            String sortBy = getTreatmentSortField();
+                            System.out.println();
+                            String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                            System.out.println(
+                                    treatmentControl.displaySortedTreatmentSearchResults(payTreatments,
+                                            "Payment Status: " + payStatus, sortBy, sortOrder));
+                        } else {
+                            displayTreatmentList(payTreatments, "Treatments with Payment Status: " + payStatus);
+                        }
+                    } else {
+                        displayTreatmentList(payTreatments, "Treatments with Payment Status: " + payStatus);
+                    }
+                } else {
+                    System.out.println("No treatments found with payment status: " + payStatus);
+                }
+                ConsoleUtils.waitMessage();
+                break;
+            case 7:
                 LocalDate startDate = ConsoleUtils.getDateInput(scanner, "Enter start date (DD-MM-YYYY): ",
                         DateType.NO_RESTRICTION);
                 LocalDate endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ",
                         DateType.NO_RESTRICTION);
                 if (endDate.isBefore(startDate)) {
-                    // Swap to ensure valid range
-                    LocalDate temp = startDate;
-                    startDate = endDate;
-                    endDate = temp;
+                    System.out.println("Error: End date cannot be before start date.");
+                    System.out.println("Please enter a valid date range.");
+                    ConsoleUtils.waitMessage();
+                    return;
                 }
                 ArrayBucketList<String, MedicalTreatment> rangeTreatments = treatmentControl
                         .findTreatmentsByDateRange(startDate, endDate);
@@ -843,17 +876,19 @@ public class MedicalTreatmentUI {
         System.out.println("3. Doctor Name");
         System.out.println("4. Diagnosis");
         System.out.println("5. Status");
-        System.out.println("6. Treatment Cost");
-        System.out.println("7. Treatment Date");
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+        System.out.println("6. Payment Status");
+        System.out.println("7. Treatment Cost");
+        System.out.println("8. Treatment Date");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
         switch (choice) {
             case 1: return "id";
             case 2: return "patient";
             case 3: return "doctor";
             case 4: return "diagnosis";
             case 5: return "status";
-            case 6: return "cost";
-            case 7: return "date";
+            case 6: return "payment";
+            case 7: return "cost";
+            case 8: return "date";
             default: return "date";
         }
     }
@@ -872,6 +907,7 @@ public class MedicalTreatmentUI {
         System.out.println("Treatment Date: "
                 + treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
         System.out.println("Status: " + treatment.getStatus());
+        System.out.println("Payment Status: " + treatment.getPaymentStatus());
         System.out.println("Cost: RM" + String.format("%.2f", treatment.getTreatmentCost()));
         if (treatment.getFollowUpDate() != null) {
             System.out.println(

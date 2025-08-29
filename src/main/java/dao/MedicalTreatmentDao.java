@@ -85,7 +85,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     public boolean insertAndReturnId(MedicalTreatment treatment) throws SQLException {
         String sql = "INSERT INTO medical_treatment (patientId, doctorId, consultationId, " +
                 "diagnosis, treatmentPlan, prescribedMedications, treatmentNotes, treatmentDate, " +
-                "followUpDate, status, treatmentCost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "followUpDate, status, treatmentCost, paymentStatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql,
@@ -119,6 +119,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             preparedStatement.setObject(9, treatment.getFollowUpDate());
             preparedStatement.setString(10, treatment.getStatus().name());
             preparedStatement.setDouble(11, treatment.getTreatmentCost());
+            preparedStatement.setString(12, treatment.getPaymentStatus().name());
 
             int affectedRows = preparedStatement.executeUpdate();
 
@@ -154,7 +155,7 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
     public boolean update(MedicalTreatment treatment) throws SQLException {
         String sql = "UPDATE medical_treatment SET patientId = ?, doctorId = ?, consultationId = ?, " +
                 "diagnosis = ?, treatmentPlan = ?, prescribedMedications = ?, treatmentNotes = ?, " +
-                "treatmentDate = ?, followUpDate = ?, status = ?, treatmentCost = ? " +
+                "treatmentDate = ?, followUpDate = ?, status = ?, treatmentCost = ?, paymentStatus = ? " +
                 "WHERE treatmentId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
@@ -172,7 +173,8 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             preparedStatement.setObject(9, treatment.getFollowUpDate());
             preparedStatement.setString(10, treatment.getStatus().name());
             preparedStatement.setDouble(11, treatment.getTreatmentCost());
-            preparedStatement.setString(12, treatment.getTreatmentId());
+            preparedStatement.setString(12, treatment.getPaymentStatus().name());
+            preparedStatement.setString(13, treatment.getTreatmentId());
 
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;
@@ -330,6 +332,10 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
             }
 
             treatment.setStatus(MedicalTreatment.TreatmentStatus.valueOf(resultSet.getString("status")));
+            String ps = resultSet.getString("paymentStatus");
+            if (ps != null) {
+                treatment.setPaymentStatus(MedicalTreatment.PaymentStatus.valueOf(ps));
+            }
 
             return treatment;
         } catch (SQLException e) {

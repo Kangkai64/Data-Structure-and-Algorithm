@@ -16,9 +16,14 @@ public class Prescription {
     private LocalDate expiryDate;
     private PrescriptionStatus status;
     private double totalCost;
+    private PaymentStatus paymentStatus;
 
     public enum PrescriptionStatus {
         ACTIVE, DISPENSED, EXPIRED, CANCELLED
+    }
+
+    public enum PaymentStatus {
+        PAID, PENDING, CANCELLED
     }
 
     public Prescription(String prescriptionId, Patient patient, Doctor doctor,
@@ -33,6 +38,7 @@ public class Prescription {
         this.prescribedMedicines = new ArrayBucketList<>();
         this.status = PrescriptionStatus.ACTIVE;
         this.totalCost = 0.0;
+        this.paymentStatus = PaymentStatus.PENDING;
     }
 
     // Getters and Setters
@@ -116,6 +122,14 @@ public class Prescription {
         this.totalCost = totalCost;
     }
 
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
     // Business Logic Methods
     public PrescribedMedicine findPrescribedMedicineById(String prescribedMedicineId) {
         return prescribedMedicines.getValue(prescribedMedicineId);
@@ -189,6 +203,7 @@ public class Prescription {
                 "Doctor: " + doctor.getFullName() + "\n" +
                 "Prescription Date: " + prescriptionDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + "\n" +
                 "Status: " + status + "\n" +
+                "Payment Status: " + paymentStatus + "\n" +
                 "Total Cost: RM " + String.format("%.2f", totalCost) + "\n";
     }
 

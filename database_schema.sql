@@ -81,6 +81,7 @@ CREATE TABLE consultation (
     cancellationReason TEXT,
     nextVisitDate DATE,
     consultationFee DECIMAL(10,2) NOT NULL,
+    paymentStatus ENUM('PAID', 'PENDING', 'CANCELLED') DEFAULT 'PENDING',
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patientId) REFERENCES patient(patientId) ON DELETE CASCADE,
     FOREIGN KEY (doctorId) REFERENCES doctor(doctorId) ON DELETE CASCADE
@@ -100,6 +101,7 @@ CREATE TABLE medical_treatment (
     followUpDate DATE,
     status ENUM('PRESCRIBED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED') DEFAULT 'PRESCRIBED',
     treatmentCost DECIMAL(10,2) NOT NULL,
+    paymentStatus ENUM('PAID', 'PENDING', 'CANCELLED') DEFAULT 'PENDING',
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patientId) REFERENCES patient(patientId) ON DELETE CASCADE,
     FOREIGN KEY (doctorId) REFERENCES doctor(doctorId) ON DELETE CASCADE,
@@ -136,6 +138,7 @@ CREATE TABLE prescription (
     expiryDate DATE NOT NULL,
     status ENUM('ACTIVE', 'DISPENSED', 'EXPIRED', 'CANCELLED') DEFAULT 'ACTIVE',
     totalCost DECIMAL(10,2) DEFAULT 0.00,
+    paymentStatus ENUM('PAID', 'PENDING', 'CANCELLED') DEFAULT 'PENDING',
     createdDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patientId) REFERENCES patient(patientId) ON DELETE CASCADE,
     FOREIGN KEY (doctorId) REFERENCES doctor(doctorId) ON DELETE CASCADE,
@@ -390,6 +393,18 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Trigger to update payment status to cancelled when consultation is cancelled
+DELIMITER //
+CREATE TRIGGER tr_consultation_payment_status_update_on_cancel
+BEFORE UPDATE ON consultation
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'CANCELLED' AND OLD.status != 'CANCELLED' THEN
+        SET NEW.paymentStatus = 'CANCELLED';
+    END IF;
+END//
+DELIMITER ;
+
 -- Create views for common queries
 
 -- View for active patients with their details
@@ -623,40 +638,40 @@ INSERT INTO consultation (patientId, doctorId, consultationDate, symptoms, diagn
 ('P000000050', 'D000000002', '2025-04-25 14:30:00', 'Shortness of breath', 'Dyspnea on exertion', 'Cardiac evaluation and monitoring', 'Dyspnea on exertion confirmed. Cardiac evaluation and regular monitoring required.', '2025-05-25', 80.00, 'COMPLETED');
 
 -- Sample Medical Treatments (20 treatments)
-INSERT INTO medical_treatment (patientId, doctorId, consultationId, diagnosis, treatmentPlan, prescribedMedications, treatmentNotes, treatmentDate, followUpDate, treatmentCost, status) VALUES
-('P000000001', 'D000000001', 'C000000001', 'Common cold with fever', 'Rest, fluids, and paracetamol for fever', 'Paracetamol 500mg', 'Patient shows symptoms of common cold with fever. Advised rest and increased fluid intake.', '2021-03-20 10:30:00', '2021-03-27', 25.00, 'COMPLETED'),
-('P000000002', 'D000000002', 'C000000002', 'Hypertension', 'Lifestyle changes and medication monitoring', 'Amlodipine 10mg', 'Patient diagnosed with stage 1 hypertension. Lifestyle modifications and medication prescribed.', '2021-04-21 14:30:00', '2021-05-21', 45.00, 'COMPLETED'),
-('P000000003', 'D000000001', 'C000000003', 'Gastritis', 'Diet modification and omeprazole', 'Omeprazole 20mg', 'Patient has gastritis due to stress and poor diet. Medication and dietary changes recommended.', '2021-05-22 11:30:00', '2021-06-22', 35.00, 'COMPLETED'),
-('P000000004', 'D000000002', 'C000000004', 'Essential hypertension', 'Blood pressure medication and diet', 'Lisinopril 10mg', 'Essential hypertension diagnosed. Medication and low-sodium diet prescribed.', '2021-06-25 09:30:00', '2021-07-25', 50.00, 'COMPLETED'),
-('P000000005', 'D000000001', 'C000000005', 'Upper respiratory infection', 'Antibiotics and rest', 'Amoxicillin 250mg', 'Upper respiratory infection confirmed. Antibiotics prescribed for 7 days.', '2021-07-28 15:30:00', '2021-08-28', 30.00, 'COMPLETED'),
-('P000000006', 'D000000002', 'C000000006', 'Atrial fibrillation', 'Heart rhythm medication', 'Metoprolol 25mg', 'Atrial fibrillation detected. Beta-blocker medication prescribed for rhythm control.', '2021-08-30 13:30:00', '2021-09-30', 60.00, 'COMPLETED'),
-('P000000007', 'D000000001', 'C000000007', 'Lower back strain', 'Pain medication and physiotherapy', 'Ibuprofen 400mg', 'Lower back strain from heavy lifting. Pain medication and physiotherapy recommended.', '2021-09-02 10:30:00', '2021-10-02', 40.00, 'COMPLETED'),
-('P000000008', 'D000000002', 'C000000008', 'Congestive heart failure', 'Diuretics and heart medication', 'Furosemide 40mg', 'Congestive heart failure confirmed. Diuretics and heart medication prescribed.', '2021-10-05 16:30:00', '2021-11-05', 70.00, 'COMPLETED'),
-('P000000009', 'D000000001', 'C000000009', 'Contact dermatitis', 'Topical steroids and avoidance', 'Hydrocortisone 1% cream', 'Contact dermatitis from chemical exposure. Topical steroids and avoidance of irritants advised.', '2021-11-08 11:30:00', '2021-12-08', 25.00, 'COMPLETED'),
-('P000000010', 'D000000002', 'C000000010', 'Angina pectoris', 'Nitroglycerin and lifestyle changes', 'Nitroglycerin 0.4mg', 'Stable angina diagnosed. Nitroglycerin for acute attacks and lifestyle changes recommended.', '2021-12-10 14:30:00', '2022-01-10', 55.00, 'COMPLETED'),
-('P000000011', 'D000000001', 'C000000011', 'Influenza', 'Antiviral medication and rest', 'Oseltamivir 75mg', 'Influenza A confirmed. Antiviral medication prescribed for 5 days.', '2022-01-15 09:30:00', '2022-02-15', 35.00, 'COMPLETED'),
-('P000000012', 'D000000002', 'C000000012', 'Dyspnea', 'Bronchodilators and oxygen therapy', 'Salbutamol inhaler', 'Dyspnea due to bronchospasm. Bronchodilator inhaler prescribed.', '2022-02-18 15:30:00', '2022-03-18', 65.00, 'COMPLETED'),
-('P000000013', 'D000000001', 'C000000013', 'Gastroenteritis', 'Anti-nausea medication and hydration', 'Ondansetron 4mg', 'Viral gastroenteritis diagnosed. Anti-nausea medication and hydration therapy.', '2022-03-22 12:30:00', '2022-04-22', 30.00, 'COMPLETED'),
-('P000000014', 'D000000002', 'C000000014', 'Coronary artery disease', 'Statin therapy and aspirin', 'Atorvastatin 20mg, Aspirin 100mg', 'Coronary artery disease confirmed. Statin and aspirin therapy initiated.', '2022-04-25 10:30:00', '2022-05-25', 75.00, 'COMPLETED'),
-('P000000015', 'D000000001', 'C000000015', 'Tension headache', 'Pain relievers and stress management', 'Paracetamol 500mg', 'Tension headache due to stress. Pain relievers and stress management techniques.', '2022-05-28 13:30:00', '2022-06-28', 20.00, 'COMPLETED'),
-('P000000016', 'D000000002', 'C000000016', 'Supraventricular tachycardia', 'Anti-arrhythmic medication', 'Verapamil 80mg', 'Supraventricular tachycardia confirmed. Calcium channel blocker prescribed.', '2022-06-30 16:30:00', '2022-07-30', 60.00, 'COMPLETED'),
-('P000000017', 'D000000001', 'C000000017', 'Osteoarthritis', 'Anti-inflammatory medication and exercise', 'Celecoxib 200mg', 'Osteoarthritis of knee joints. Anti-inflammatory medication and exercise program.', '2022-07-05 11:30:00', '2022-08-05', 45.00, 'COMPLETED'),
-('P000000018', 'D000000002', 'C000000018', 'Cardiomyopathy', 'Heart failure medication and monitoring', 'Carvedilol 6.25mg', 'Dilated cardiomyopathy diagnosed. Beta-blocker therapy and close monitoring.', '2022-08-08 14:30:00', '2022-09-08', 80.00, 'COMPLETED'),
-('P000000019', 'D000000001', 'C000000019', 'Allergic rhinitis', 'Antihistamines and nasal sprays', 'Cetirizine 10mg, Fluticasone nasal spray', 'Seasonal allergic rhinitis. Antihistamine and nasal steroid spray prescribed.', '2022-09-12 09:30:00', '2022-10-12', 25.00, 'COMPLETED'),
-('P000000020', 'D000000002', 'C000000020', 'Stable angina', 'Beta-blockers and nitrates', 'Metoprolol 50mg, Isosorbide mononitrate 20mg', 'Stable angina confirmed. Beta-blocker and nitrate therapy prescribed.', '2022-10-15 15:30:00', '2022-11-15', 50.00, 'COMPLETED');
+INSERT INTO medical_treatment (patientId, doctorId, consultationId, diagnosis, treatmentPlan, prescribedMedications, treatmentNotes, treatmentDate, followUpDate, treatmentCost, status, paymentStatus) VALUES
+('P000000001', 'D000000001', 'C000000001', 'Common cold with fever', 'Rest, fluids, and paracetamol for fever', 'Paracetamol 500mg', 'Patient shows symptoms of common cold with fever. Advised rest and increased fluid intake.', '2021-03-20 10:30:00', '2021-03-27', 25.00, 'COMPLETED', 'PAID'),
+('P000000002', 'D000000002', 'C000000002', 'Hypertension', 'Lifestyle changes and medication monitoring', 'Amlodipine 10mg', 'Patient diagnosed with stage 1 hypertension. Lifestyle modifications and medication prescribed.', '2021-04-21 14:30:00', '2021-05-21', 45.00, 'COMPLETED', 'PAID'),
+('P000000003', 'D000000001', 'C000000003', 'Gastritis', 'Diet modification and omeprazole', 'Omeprazole 20mg', 'Patient has gastritis due to stress and poor diet. Medication and dietary changes recommended.', '2021-05-22 11:30:00', '2021-06-22', 35.00, 'COMPLETED', 'PAID'),
+('P000000004', 'D000000002', 'C000000004', 'Essential hypertension', 'Blood pressure medication and diet', 'Lisinopril 10mg', 'Essential hypertension diagnosed. Medication and low-sodium diet prescribed.', '2021-06-25 09:30:00', '2021-07-25', 50.00, 'COMPLETED', 'PAID'),
+('P000000005', 'D000000001', 'C000000005', 'Upper respiratory infection', 'Antibiotics and rest', 'Amoxicillin 250mg', 'Upper respiratory infection confirmed. Antibiotics prescribed for 7 days.', '2021-07-28 15:30:00', '2021-08-28', 30.00, 'COMPLETED', 'PAID'),
+('P000000006', 'D000000002', 'C000000006', 'Atrial fibrillation', 'Heart rhythm medication', 'Metoprolol 25mg', 'Atrial fibrillation detected. Beta-blocker medication prescribed for rhythm control.', '2021-08-30 13:30:00', '2021-09-30', 60.00, 'COMPLETED', 'PAID'),
+('P000000007', 'D000000001', 'C000000007', 'Lower back strain', 'Pain medication and physiotherapy', 'Ibuprofen 400mg', 'Lower back strain from heavy lifting. Pain medication and physiotherapy recommended.', '2021-09-02 10:30:00', '2021-10-02', 40.00, 'COMPLETED', 'PAID'),
+('P000000008', 'D000000002', 'C000000008', 'Congestive heart failure', 'Diuretics and heart medication', 'Furosemide 40mg', 'Congestive heart failure confirmed. Diuretics and heart medication prescribed.', '2021-10-05 16:30:00', '2021-11-05', 70.00, 'COMPLETED', 'PAID'),
+('P000000009', 'D000000001', 'C000000009', 'Contact dermatitis', 'Topical steroids and avoidance', 'Hydrocortisone 1% cream', 'Contact dermatitis from chemical exposure. Topical steroids and avoidance of irritants advised.', '2021-11-08 11:30:00', '2021-12-08', 25.00, 'COMPLETED', 'PAID'),
+('P000000010', 'D000000002', 'C000000010', 'Angina pectoris', 'Nitroglycerin and lifestyle changes', 'Nitroglycerin 0.4mg', 'Stable angina diagnosed. Nitroglycerin for acute attacks and lifestyle changes recommended.', '2021-12-10 14:30:00', '2022-01-10', 55.00, 'COMPLETED', 'PAID'),
+('P000000011', 'D000000001', 'C000000011', 'Influenza', 'Antiviral medication and rest', 'Oseltamivir 75mg', 'Influenza A confirmed. Antiviral medication prescribed for 5 days.', '2022-01-15 09:30:00', '2022-02-15', 35.00, 'COMPLETED', 'PAID'),
+('P000000012', 'D000000002', 'C000000012', 'Dyspnea', 'Bronchodilators and oxygen therapy', 'Salbutamol inhaler', 'Dyspnea due to bronchospasm. Bronchodilator inhaler prescribed.', '2022-02-18 15:30:00', '2022-03-18', 65.00, 'COMPLETED', 'PAID'),
+('P000000013', 'D000000001', 'C000000013', 'Gastroenteritis', 'Anti-nausea medication and hydration', 'Ondansetron 4mg', 'Viral gastroenteritis diagnosed. Anti-nausea medication and hydration therapy.', '2022-03-22 12:30:00', '2022-04-22', 30.00, 'COMPLETED', 'PAID'),
+('P000000014', 'D000000002', 'C000000014', 'Coronary artery disease', 'Statin therapy and aspirin', 'Atorvastatin 20mg, Aspirin 100mg', 'Coronary artery disease confirmed. Statin and aspirin therapy initiated.', '2022-04-25 10:30:00', '2022-05-25', 75.00, 'COMPLETED', 'PAID'),
+('P000000015', 'D000000001', 'C000000015', 'Tension headache', 'Pain relievers and stress management', 'Paracetamol 500mg', 'Tension headache due to stress. Pain relievers and stress management techniques.', '2022-05-28 13:30:00', '2022-06-28', 20.00, 'COMPLETED', 'PAID'),
+('P000000016', 'D000000002', 'C000000016', 'Supraventricular tachycardia', 'Anti-arrhythmic medication', 'Verapamil 80mg', 'Supraventricular tachycardia confirmed. Calcium channel blocker prescribed.', '2022-06-30 16:30:00', '2022-07-30', 60.00, 'COMPLETED', 'PAID'),
+('P000000017', 'D000000001', 'C000000017', 'Osteoarthritis', 'Anti-inflammatory medication and exercise', 'Celecoxib 200mg', 'Osteoarthritis of knee joints. Anti-inflammatory medication and exercise program.', '2022-07-05 11:30:00', '2022-08-05', 45.00, 'COMPLETED', 'PAID'),
+('P000000018', 'D000000002', 'C000000018', 'Cardiomyopathy', 'Heart failure medication and monitoring', 'Carvedilol 6.25mg', 'Dilated cardiomyopathy diagnosed. Beta-blocker therapy and close monitoring.', '2022-08-08 14:30:00', '2022-09-08', 80.00, 'COMPLETED', 'PAID'),
+('P000000019', 'D000000001', 'C000000019', 'Allergic rhinitis', 'Antihistamines and nasal sprays', 'Cetirizine 10mg, Fluticasone nasal spray', 'Seasonal allergic rhinitis. Antihistamine and nasal steroid spray prescribed.', '2022-09-12 09:30:00', '2022-10-12', 25.00, 'COMPLETED', 'PAID'),
+('P000000020', 'D000000002', 'C000000020', 'Stable angina', 'Beta-blockers and nitrates', 'Metoprolol 50mg, Isosorbide mononitrate 20mg', 'Stable angina confirmed. Beta-blocker and nitrate therapy prescribed.', '2022-10-15 15:30:00', '2022-11-15', 50.00, 'COMPLETED', 'PAID');
 
 -- Sample Prescriptions (50 prescriptions)
-INSERT INTO prescription (patientId, doctorId, consultationId, prescriptionDate, instructions, expiryDate, status) VALUES
-('P000000001', 'D000000001', 'C000000001', '2021-03-20 10:30:00', 'Take 2 tablets every 6 hours for fever', '2021-04-20', 'DISPENSED'),
-('P000000002', 'D000000002', 'C000000002', '2021-04-21 14:30:00', 'Take 1 tablet daily with food', '2021-05-21', 'DISPENSED'),
-('P000000003', 'D000000001', 'C000000003', '2021-05-22 11:30:00', 'Take 1 capsule daily before breakfast', '2021-06-22', 'DISPENSED'),
-('P000000004', 'D000000002', 'C000000004', '2021-06-25 09:30:00', 'Take 1 tablet twice daily', '2021-07-25', 'DISPENSED'),
-('P000000005', 'D000000001', 'C000000005', '2021-07-28 15:30:00', 'Take 1 tablet every 8 hours', '2021-08-28', 'DISPENSED'),
-('P000000006', 'D000000002', 'C000000006', '2021-08-30 13:30:00', 'Take 1 tablet daily', '2021-09-30', 'DISPENSED'),
-('P000000007', 'D000000001', 'C000000007', '2021-09-02 10:30:00', 'Take 1 tablet every 12 hours', '2021-10-02', 'DISPENSED'),
-('P000000008', 'D000000002', 'C000000008', '2021-10-05 16:30:00', 'Take 1 tablet twice daily', '2021-11-05', 'DISPENSED'),
-('P000000009', 'D000000001', 'C000000009', '2021-11-08 11:30:00', 'Apply cream twice daily', '2021-12-08', 'DISPENSED'),
-('P000000010', 'D000000002', 'C000000010', '2021-12-10 14:30:00', 'Take 1 tablet as needed', '2022-01-10', 'DISPENSED'),
+INSERT INTO prescription (patientId, doctorId, consultationId, prescriptionDate, instructions, expiryDate, status, paymentStatus) VALUES
+('P000000001', 'D000000001', 'C000000001', '2021-03-20 10:30:00', 'Take 2 tablets every 6 hours for fever', '2021-04-20', 'DISPENSED', 'PAID'),
+('P000000002', 'D000000002', 'C000000002', '2021-04-21 14:30:00', 'Take 1 tablet daily with food', '2021-05-21', 'DISPENSED', 'PAID'),
+('P000000003', 'D000000001', 'C000000003', '2021-05-22 11:30:00', 'Take 1 capsule daily before breakfast', '2021-06-22', 'DISPENSED', 'PAID'),
+('P000000004', 'D000000002', 'C000000004', '2021-06-25 09:30:00', 'Take 1 tablet twice daily', '2021-07-25', 'DISPENSED', 'PAID'),
+('P000000005', 'D000000001', 'C000000005', '2021-07-28 15:30:00', 'Take 1 tablet every 8 hours', '2021-08-28', 'DISPENSED', 'PAID'),
+('P000000006', 'D000000002', 'C000000006', '2021-08-30 13:30:00', 'Take 1 tablet daily', '2021-09-30', 'DISPENSED', 'PAID'),
+('P000000007', 'D000000001', 'C000000007', '2021-09-02 10:30:00', 'Take 1 tablet every 12 hours', '2021-10-02', 'DISPENSED', 'PAID'),
+('P000000008', 'D000000002', 'C000000008', '2021-10-05 16:30:00', 'Take 1 tablet twice daily', '2021-11-05', 'DISPENSED', 'PAID'),
+('P000000009', 'D000000001', 'C000000009', '2021-11-08 11:30:00', 'Apply cream twice daily', '2021-12-08', 'DISPENSED', 'PAID'),
+('P000000010', 'D000000002', 'C000000010', '2021-12-10 14:30:00', 'Take 1 tablet as needed', '2022-01-10', 'DISPENSED', 'PAID'),
 ('P000000011', 'D000000001', 'C000000011', '2022-01-15 09:30:00', 'Take 1 tablet every 6 hours', '2022-02-15', 'DISPENSED'),
 ('P000000012', 'D000000002', 'C000000012', '2022-02-18 15:30:00', 'Take 1 tablet daily', '2022-03-18', 'DISPENSED'),
 ('P000000013', 'D000000001', 'C000000013', '2022-03-22 12:30:00', 'Take 1 tablet every 8 hours', '2022-04-22', 'DISPENSED'),
@@ -765,6 +780,11 @@ UPDATE medical_treatment SET status = 'COMPLETED' WHERE treatmentId = 'T00000000
 UPDATE prescription SET status = 'DISPENSED' WHERE prescriptionId = 'PR00000001';
 UPDATE prescription SET status = 'DISPENSED' WHERE prescriptionId = 'PR00000002';
 UPDATE prescription SET status = 'DISPENSED' WHERE prescriptionId = 'PR00000003';
+
+-- Update payment status to paid
+UPDATE consultation SET paymentStatus = 'PAID';
+UPDATE medical_treatment SET paymentStatus = 'PAID';
+UPDATE prescription SET paymentStatus = 'PAID';
 
 -- Display database creation confirmation
 SELECT 'Clinic Management System Database Created Successfully!' as Status;

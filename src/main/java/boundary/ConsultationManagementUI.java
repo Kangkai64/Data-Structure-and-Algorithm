@@ -268,8 +268,9 @@ public class ConsultationManagementUI {
         System.out.println("3. Search by Doctor ID");
         System.out.println("4. Search by Date Range");
         System.out.println("5. Search by Status");
+        System.out.println("6. Search by Payment Status");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
         System.out.println();
 
         switch (choice) {
@@ -287,6 +288,9 @@ public class ConsultationManagementUI {
                 break;
             case 5:
                 searchConsultationsByStatus();
+                break;
+            case 6:
+                searchConsultationsByPaymentStatus();
                 break;
             default:
                 System.out.println("Invalid choice.");
@@ -473,6 +477,60 @@ public class ConsultationManagementUI {
                     String sortOrder = getSortOrder();
                     System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
                             "Status: " + status, sortBy, sortOrder));
+                } else {
+                    for (Consultation consultation : consultations) {
+                        printConsultationDetails(consultation);
+                    }
+                }
+            } else {
+                for (Consultation consultation : consultations) {
+                    printConsultationDetails(consultation);
+                }
+            }
+        }
+    }
+
+    private void searchConsultationsByPaymentStatus() {
+        ConsoleUtils.printHeader("Search by Payment Status");
+        System.out.println("Select payment status:");
+        System.out.println("1. PAID\n2. PENDING\n3. CANCELLED");
+
+        int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+
+        Consultation.PaymentStatus paymentStatus = null;
+        switch (statusChoice) {
+            case 1:
+                paymentStatus = Consultation.PaymentStatus.PAID;
+                break;
+            case 2:
+                paymentStatus = Consultation.PaymentStatus.PENDING;
+                break;
+            case 3:
+                paymentStatus = Consultation.PaymentStatus.CANCELLED;
+                break;
+        }
+
+        ArrayBucketList<String, Consultation> consultations = consultationControl
+                .findConsultationsByPaymentStatus(paymentStatus);
+        System.out.println();
+        ConsoleUtils.printHeader("Search Result");
+
+        if (consultations.isEmpty()) {
+            System.out.println("No consultations found with payment status: " + paymentStatus);
+        } else {
+            System.out.println("Found " + consultations.getSize() + " consultation(s) with payment status: "
+                    + paymentStatus);
+            System.out.println();
+            if (consultations.getSize() > 1) {
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
+                if (choice == 1) {
+                    String sortBy = getConsultationSortField();
+                    System.out.println();
+                    String sortOrder = getSortOrder();
+                    System.out.println(consultationControl.displaySortedConsultationSearchResults(consultations,
+                            "Payment Status: " + paymentStatus, sortBy, sortOrder));
                 } else {
                     for (Consultation consultation : consultations) {
                         printConsultationDetails(consultation);

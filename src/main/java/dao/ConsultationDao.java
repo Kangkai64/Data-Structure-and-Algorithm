@@ -436,8 +436,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     @Override
     public boolean insertAndReturnId(Consultation consultation) throws SQLException {
         String sql = "INSERT INTO consultation (patientId, doctorId, consultationDate, " +
-                "symptoms, diagnosis, treatment, notes, status, cancellationReason, nextVisitDate, consultationFee) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "symptoms, diagnosis, treatment, notes, status, cancellationReason, nextVisitDate, consultationFee, paymentStatus) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql,
@@ -461,6 +461,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             }
 
             preparedStatement.setDouble(11, consultation.getConsultationFee());
+            preparedStatement.setString(12, consultation.getPaymentStatus().name());
 
             int affectedRows = preparedStatement.executeUpdate();
 
@@ -485,7 +486,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
     public boolean update(Consultation consultation) throws SQLException {
         String sql = "UPDATE consultation SET patientId = ?, doctorId = ?, consultationDate = ?, " +
                 "symptoms = ?, diagnosis = ?, treatment = ?, notes = ?, status = ?, " +
-                "cancellationReason = ?, nextVisitDate = ?, consultationFee = ? WHERE consultationId = ?";
+                "cancellationReason = ?, nextVisitDate = ?, consultationFee = ?, paymentStatus = ? WHERE consultationId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -499,7 +500,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
             preparedStatement.setString(9, consultation.getCancellationReason());
-
+            preparedStatement.setString(10, consultation.getPaymentStatus().name());
+            
             // Handle nextVisitDate - convert from LocalDateTime to Date for database
             if (consultation.getNextVisitDate() != null) {
                 preparedStatement.setDate(10, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
@@ -674,7 +676,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
                     doctor,
                     resultSet.getObject("consultationDate", LocalDateTime.class),
                     resultSet.getString("symptoms"),
-                    resultSet.getDouble("consultationFee"));
+                    resultSet.getDouble("consultationFee"),
+                    Consultation.PaymentStatus.valueOf(resultSet.getString("paymentStatus")));
 
             // Set additional fields
             consultation.setDiagnosis(resultSet.getString("diagnosis"));

@@ -16,13 +16,18 @@ public class Consultation {
     private String cancellationReason;
     private LocalDateTime nextVisitDate;
     private double consultationFee;
+    private PaymentStatus paymentStatus;
 
     public enum ConsultationStatus {
         SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
     }
 
+    public enum PaymentStatus {
+        PAID, PENDING, CANCELLED
+    }
+
     public Consultation(String consultationId, Patient patient, Doctor doctor,
-            LocalDateTime consultationDate, String symptoms, double consultationFee) {
+            LocalDateTime consultationDate, String symptoms, double consultationFee, PaymentStatus paymentStatus) {
         this.consultationId = consultationId;
         this.patient = patient;
         this.doctor = doctor;
@@ -30,6 +35,7 @@ public class Consultation {
         this.symptoms = symptoms;
         this.consultationFee = consultationFee;
         this.status = ConsultationStatus.SCHEDULED;
+        this.paymentStatus = paymentStatus;
     }
 
     // Getters and Setters
@@ -129,6 +135,14 @@ public class Consultation {
         this.consultationFee = consultationFee;
     }
 
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
     @Override
     public String toString() {
         return "Consultation{" +
@@ -138,6 +152,7 @@ public class Consultation {
                 ", consultationDate=" + consultationDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) +
                 ", status=" + status +
                 ", consultationFee=" + consultationFee +
+                ", paymentStatus=" + paymentStatus +
                 '}';
     }
 

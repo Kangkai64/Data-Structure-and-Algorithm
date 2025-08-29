@@ -16,9 +16,14 @@ public class MedicalTreatment {
     private LocalDateTime followUpDate;
     private TreatmentStatus status;
     private double treatmentCost;
+    private PaymentStatus paymentStatus;
 
     public enum TreatmentStatus {
         PRESCRIBED, IN_PROGRESS, COMPLETED, CANCELLED
+    }
+
+    public enum PaymentStatus {
+        PAID, PENDING, CANCELLED
     }
 
     public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor,
@@ -34,6 +39,7 @@ public class MedicalTreatment {
         this.treatmentDate = treatmentDate;
         this.followUpDate = null;
         this.status = TreatmentStatus.PRESCRIBED;
+        this.paymentStatus = PaymentStatus.PENDING;
     }
 
     public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor,
@@ -45,6 +51,16 @@ public class MedicalTreatment {
         this.treatmentNotes = treatmentNotes;
         this.followUpDate = null;
         this.status = TreatmentStatus.PRESCRIBED;
+    }
+
+    public MedicalTreatment(String treatmentId, Patient patient, Doctor doctor,
+            Consultation consultation, String diagnosis,
+            String treatmentPlan, String prescribedMedications,
+            String treatmentNotes, LocalDateTime treatmentDate, double treatmentCost,
+            PaymentStatus paymentStatus) {
+        this(treatmentId, patient, doctor, consultation, diagnosis, treatmentPlan, prescribedMedications, treatmentNotes,
+                treatmentDate, treatmentCost);
+        this.paymentStatus = paymentStatus;
     }
 
     // Getters and Setters
@@ -144,6 +160,14 @@ public class MedicalTreatment {
         this.treatmentCost = treatmentCost;
     }
 
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
     @Override
     public String toString() {
         return "MedicalTreatment{" +
@@ -153,6 +177,7 @@ public class MedicalTreatment {
                 ", diagnosis='" + diagnosis + '\'' +
                 ", treatmentDate=" + treatmentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) +
                 ", status=" + status +
+                ", paymentStatus=" + paymentStatus +
                 ", treatmentCost=RM%.2f" + treatmentCost +
                 '}';
     }

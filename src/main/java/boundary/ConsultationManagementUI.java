@@ -143,7 +143,7 @@ public class ConsultationManagementUI {
         System.out.println(
                 "Date & Time: " + consultationDateTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
         System.out.println("Symptoms: " + symptoms);
-        System.out.println("Fee: RM" + consultationFee);
+        System.out.println("Fee: RM%.2f".formatted(consultationFee));
         System.out.println();
 
         boolean confirm = ConsoleUtils.getBooleanInput(scanner,
@@ -637,7 +637,7 @@ public class ConsultationManagementUI {
             consultation.getCancellationReason() != null && !consultation.getCancellationReason().trim().isEmpty()) {
             System.out.println("Cancellation Reason: " + consultation.getCancellationReason());
         }
-        System.out.println("Fee: RM" + consultation.getConsultationFee());
+        System.out.println("Fee: RM%.2f".formatted(consultation.getConsultationFee()));
         System.out.println("----------------------------------------");
     }
 

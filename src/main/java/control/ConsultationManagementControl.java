@@ -396,7 +396,8 @@ public class ConsultationManagementControl {
         };
     }
 
-    public ArrayBucketList<String, Consultation> findConsultationsByPaymentStatus(Consultation.PaymentStatus paymentStatus) {
+    public ArrayBucketList<String, Consultation> findConsultationsByPaymentStatus(
+            Consultation.PaymentStatus paymentStatus) {
         ArrayBucketList<String, Consultation> result = new ArrayBucketList<>();
         Iterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {

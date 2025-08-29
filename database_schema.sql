@@ -405,6 +405,30 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Trigger to update payment status to cancelled when prescription is cancelled
+DELIMITER //
+CREATE TRIGGER tr_prescription_payment_status_update_on_cancel
+BEFORE UPDATE ON prescription
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'CANCELLED' AND OLD.status != 'CANCELLED' THEN
+        SET NEW.paymentStatus = 'CANCELLED';
+    END IF;
+END//
+DELIMITER ;
+
+-- Trigger to update payment status to cancelled when medical treatment is cancelled
+DELIMITER //
+CREATE TRIGGER tr_medical_treatment_payment_status_update_on_cancel
+BEFORE UPDATE ON medical_treatment
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'CANCELLED' AND OLD.status != 'CANCELLED' THEN
+        SET NEW.paymentStatus = 'CANCELLED';
+    END IF;
+END//
+DELIMITER ;
+
 -- Create views for common queries
 
 -- View for active patients with their details
@@ -661,17 +685,17 @@ INSERT INTO medical_treatment (patientId, doctorId, consultationId, diagnosis, t
 ('P000000020', 'D000000002', 'C000000020', 'Stable angina', 'Beta-blockers and nitrates', 'Metoprolol 50mg, Isosorbide mononitrate 20mg', 'Stable angina confirmed. Beta-blocker and nitrate therapy prescribed.', '2022-10-15 15:30:00', '2022-11-15', 50.00, 'COMPLETED', 'PAID');
 
 -- Sample Prescriptions (50 prescriptions)
-INSERT INTO prescription (patientId, doctorId, consultationId, prescriptionDate, instructions, expiryDate, status, paymentStatus) VALUES
-('P000000001', 'D000000001', 'C000000001', '2021-03-20 10:30:00', 'Take 2 tablets every 6 hours for fever', '2021-04-20', 'DISPENSED', 'PAID'),
-('P000000002', 'D000000002', 'C000000002', '2021-04-21 14:30:00', 'Take 1 tablet daily with food', '2021-05-21', 'DISPENSED', 'PAID'),
-('P000000003', 'D000000001', 'C000000003', '2021-05-22 11:30:00', 'Take 1 capsule daily before breakfast', '2021-06-22', 'DISPENSED', 'PAID'),
-('P000000004', 'D000000002', 'C000000004', '2021-06-25 09:30:00', 'Take 1 tablet twice daily', '2021-07-25', 'DISPENSED', 'PAID'),
-('P000000005', 'D000000001', 'C000000005', '2021-07-28 15:30:00', 'Take 1 tablet every 8 hours', '2021-08-28', 'DISPENSED', 'PAID'),
-('P000000006', 'D000000002', 'C000000006', '2021-08-30 13:30:00', 'Take 1 tablet daily', '2021-09-30', 'DISPENSED', 'PAID'),
-('P000000007', 'D000000001', 'C000000007', '2021-09-02 10:30:00', 'Take 1 tablet every 12 hours', '2021-10-02', 'DISPENSED', 'PAID'),
-('P000000008', 'D000000002', 'C000000008', '2021-10-05 16:30:00', 'Take 1 tablet twice daily', '2021-11-05', 'DISPENSED', 'PAID'),
-('P000000009', 'D000000001', 'C000000009', '2021-11-08 11:30:00', 'Apply cream twice daily', '2021-12-08', 'DISPENSED', 'PAID'),
-('P000000010', 'D000000002', 'C000000010', '2021-12-10 14:30:00', 'Take 1 tablet as needed', '2022-01-10', 'DISPENSED', 'PAID'),
+INSERT INTO prescription (patientId, doctorId, consultationId, prescriptionDate, instructions, expiryDate, status) VALUES
+('P000000001', 'D000000001', 'C000000001', '2021-03-20 10:30:00', 'Take 2 tablets every 6 hours for fever', '2021-04-20', 'DISPENSED'),
+('P000000002', 'D000000002', 'C000000002', '2021-04-21 14:30:00', 'Take 1 tablet daily with food', '2021-05-21', 'DISPENSED'),
+('P000000003', 'D000000001', 'C000000003', '2021-05-22 11:30:00', 'Take 1 capsule daily before breakfast', '2021-06-22', 'DISPENSED'),
+('P000000004', 'D000000002', 'C000000004', '2021-06-25 09:30:00', 'Take 1 tablet twice daily', '2021-07-25', 'DISPENSED'),
+('P000000005', 'D000000001', 'C000000005', '2021-07-28 15:30:00', 'Take 1 tablet every 8 hours', '2021-08-28', 'DISPENSED'),
+('P000000006', 'D000000002', 'C000000006', '2021-08-30 13:30:00', 'Take 1 tablet daily', '2021-09-30', 'DISPENSED'),
+('P000000007', 'D000000001', 'C000000007', '2021-09-02 10:30:00', 'Take 1 tablet every 12 hours', '2021-10-02', 'DISPENSED'),
+('P000000008', 'D000000002', 'C000000008', '2021-10-05 16:30:00', 'Take 1 tablet twice daily', '2021-11-05', 'DISPENSED'),
+('P000000009', 'D000000001', 'C000000009', '2021-11-08 11:30:00', 'Apply cream twice daily', '2021-12-08', 'DISPENSED'),
+('P000000010', 'D000000002', 'C000000010', '2021-12-10 14:30:00', 'Take 1 tablet as needed', '2022-01-10', 'DISPENSED'),
 ('P000000011', 'D000000001', 'C000000011', '2022-01-15 09:30:00', 'Take 1 tablet every 6 hours', '2022-02-15', 'DISPENSED'),
 ('P000000012', 'D000000002', 'C000000012', '2022-02-18 15:30:00', 'Take 1 tablet daily', '2022-03-18', 'DISPENSED'),
 ('P000000013', 'D000000001', 'C000000013', '2022-03-22 12:30:00', 'Take 1 tablet every 8 hours', '2022-04-22', 'DISPENSED'),

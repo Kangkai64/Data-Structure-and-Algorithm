@@ -214,10 +214,9 @@ public class DoctorManagementUI {
         System.out.println("\nManagement Options:");
         System.out.println("1. Add New Schedule");
         System.out.println("2. Update Existing Schedule");
-        System.out.println("3. Remove Schedule");
-        System.out.println("4. Back to Main Menu");
+        System.out.println("3. Back to Main Menu");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
 
         switch (choice) {
             case 1:
@@ -227,9 +226,6 @@ public class DoctorManagementUI {
                 updateDoctorSchedule(doctorId, doctor.getFullName(), schedulesArray);
                 break;
             case 3:
-                removeDoctorSchedule(doctorId, doctor.getFullName(), schedulesArray);
-                break;
-            case 4:
                 return;
             default:
                 System.out.println("Invalid choice. Please try again.");
@@ -295,42 +291,7 @@ public class DoctorManagementUI {
         System.out.println(updated ? "Schedule updated successfully." : "Failed to update schedule.");
     }
 
-    private void removeDoctorSchedule(String doctorId, String doctorName, entity.Schedule[] schedules) {
-        System.out.println("\n=== REMOVE DOCTOR SCHEDULE ===");
-        System.out.println("Removing schedule for Doctor: " + doctorName);
-        
-        // Display current schedules
-        System.out.println("\nCurrent Schedules:");
-        System.out.println("-".repeat(80));
-        for (int index = 0; index < schedules.length; index++) {
-            entity.Schedule s = schedules[index];
-            System.out.printf("%d. [%s] %s %s-%s | %s%n", 
-                (index + 1), 
-                s.getScheduleId(), 
-                s.getDayOfWeek(), 
-                s.getFromTime(), 
-                s.getToTime(), 
-                (s.isAvailable() ? "Available" : "Not Available"));
-        }
-        System.out.println("-".repeat(80));
-        
-        // Let user choose by number instead of entering schedule ID
-        int scheduleChoice = ConsoleUtils.getIntInput(scanner, "Enter the number of schedule to remove: ", 1, schedules.length);
-        entity.Schedule selectedSchedule = schedules[scheduleChoice - 1];
-        
-        System.out.println("Removing Schedule: [" + selectedSchedule.getScheduleId() + "] " + 
-                          selectedSchedule.getDayOfWeek() + " " + selectedSchedule.getFromTime() + "-" + selectedSchedule.getToTime());
-        
-        // Confirm removal
-        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "Are you sure you want to remove this schedule? (Y/N): ");
-        if (!confirm) {
-            System.out.println("Schedule removal cancelled.");
-            return;
-        }
-        
-        boolean removed = doctorControl.removeSchedule(doctorId, selectedSchedule.getScheduleId());
-        System.out.println(removed ? "Schedule removed successfully." : "Failed to remove schedule.");
-    }
+    
 
     private void setAvailabilityMenu() {
         System.out.println("\n=== DOCTOR AVAILABILITY MANAGEMENT ===");

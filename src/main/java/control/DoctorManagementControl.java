@@ -1,20 +1,21 @@
 package control;
 
-import adt.ArrayBucketList;
-import entity.Doctor;
-import entity.Schedule;
-import entity.Consultation;
-import entity.DayOfWeek;
-import entity.Address;
-import dao.DoctorDao;
-import dao.AddressDao;
-import dao.ScheduleDao;
-import dao.ConsultationDao;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Iterator;
 import java.util.Comparator;
+import java.util.Iterator;
+
+import adt.ArrayBucketList;
+import dao.AddressDao;
+import dao.ConsultationDao;
+import dao.DoctorDao;
+import dao.ScheduleDao;
+import entity.Address;
+import entity.Consultation;
+import entity.DayOfWeek;
+import entity.Doctor;
+import entity.Schedule;
 import utility.QuickSort;
 
 /**
@@ -194,26 +195,6 @@ public class DoctorManagementControl {
             return false;
         } catch (Exception exception) {
             System.err.println("Error updating schedule: " + exception.getMessage());
-            return false;
-        }
-    }
-
-    public boolean removeSchedule(String doctorId, String scheduleId) {
-        try {
-            Doctor doctor = doctorDao.findById(doctorId);
-            if (doctor != null) {
-                Schedule removed = doctor.removeSchedule(scheduleId);
-                if (removed != null) {
-                    boolean updated = doctorDao.update(doctor);
-                    if (updated) {
-                        updateActiveDoctorsList(doctor);
-                        return true;
-                    }
-                }
-            }
-            return false;
-        } catch (Exception exception) {
-            System.err.println("Error removing schedule: " + exception.getMessage());
             return false;
         }
     }

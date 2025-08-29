@@ -402,7 +402,7 @@ public class DoctorManagementUI {
     private void searchDoctor() {
         System.out.println("\n=== SEARCH DOCTOR ===");
         System.out.println("1. Search by Doctor ID");
-        System.out.println("2. Search by IC Number (Last 4 digits)");
+        System.out.println("2. Search by IC Number");
         System.out.println("3. Search by Full Name");
         System.out.println("4. Search by Email");
         System.out.println("5. Search by License Number");
@@ -448,7 +448,7 @@ public class DoctorManagementUI {
     }
 
     private void searchByIC() {
-        String icNumber = ConsoleUtils.getStringInput(scanner, "Enter doctor IC number: ");
+        String icNumber = ConsoleUtils.getICInput(scanner, "Enter doctor IC number: ");
 
         Doctor doctor = doctorControl.findDoctorByIcNumber(icNumber);
 

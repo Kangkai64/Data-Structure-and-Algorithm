@@ -885,4 +885,317 @@ public class DoctorManagementControl {
             }
         }
     }
+
+    /**
+     * Generates a comprehensive doctor performance report
+     * @param sortBy field to sort by
+     * @param ascending true for ascending order, false for descending
+     * @return formatted report string
+     */
+    public String generateDoctorPerformanceReport(String sortBy, boolean ascending) {
+        StringBuilder report = new StringBuilder();
+        String title = "DOCTOR PERFORMANCE ANALYSIS REPORT";
+        String line = repeatChar('=', REPORT_WIDTH);
+        report.append("\n").append(line).append("\n");
+        report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
+
+        report.append("Generated at: ")
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
+                .append("\n");
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n\n");
+
+        // Performance metrics calculation
+        report.append("-".repeat(REPORT_WIDTH)).append("\n");
+        report.append(centerText("PERFORMANCE METRICS SUMMARY", REPORT_WIDTH)).append("\n");
+        report.append("-".repeat(REPORT_WIDTH)).append("\n");
+
+        // Calculate performance metrics for each doctor
+        String[] doctorIds = new String[activeDoctors.getSize()];
+        String[] doctorNames = new String[activeDoctors.getSize()];
+        int[] consultationCounts = new int[activeDoctors.getSize()];
+        double[] successRates = new double[activeDoctors.getSize()];
+        double[] averagePatientSatisfaction = new double[activeDoctors.getSize()];
+        int[] completedTreatments = new int[activeDoctors.getSize()];
+        double[] totalRevenue = new double[activeDoctors.getSize()];
+
+        int doctorIndex = 0;
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            doctorIds[doctorIndex] = doctor.getDoctorId();
+            doctorNames[doctorIndex] = doctor.getFullName();
+            
+            // Get consultation count
+            consultationCounts[doctorIndex] = getConsultationCountForDoctor(doctor.getDoctorId());
+            
+            // Calculate success rate (simulated - in real system would be based on treatment outcomes)
+            successRates[doctorIndex] = Math.min(95.0, 70.0 + (consultationCounts[doctorIndex] * 0.5));
+            
+            // Calculate patient satisfaction (simulated - in real system would be based on feedback)
+            averagePatientSatisfaction[doctorIndex] = Math.min(5.0, 3.5 + (consultationCounts[doctorIndex] * 0.02));
+            
+            // Calculate completed treatments (simulated)
+            completedTreatments[doctorIndex] = (int) (consultationCounts[doctorIndex] * 0.8);
+            
+            // Calculate total revenue (consultation fees)
+            totalRevenue[doctorIndex] = consultationCounts[doctorIndex] * 50.0; // Assuming RM50 per consultation
+            
+            doctorIndex++;
+        }
+
+        report.append(String.format("Total Active Doctors: %d\n", getTotalActiveDoctors()));
+        report.append(String.format("Average Consultations per Doctor: %.1f\n", 
+                calculateAverage(consultationCounts)));
+        report.append(String.format("Average Success Rate: %.1f%%\n", 
+                calculateAverage(successRates)));
+        report.append(String.format("Average Patient Satisfaction: %.1f/5.0\n", 
+                calculateAverage(averagePatientSatisfaction)));
+
+        // Top performers analysis
+        report.append("\nTOP PERFORMERS BY CONSULTATIONS:\n");
+        int[] consultationCountsCopy = consultationCounts.clone();
+        int[] topConsultationIndices = getTopIndices(consultationCountsCopy, 3);
+        for (int i = 0; i < topConsultationIndices.length; i++) {
+            int index = topConsultationIndices[i];
+            report.append(String.format("%d. %s: %d consultations\n", 
+                    i + 1, doctorNames[index], consultationCounts[index]));
+        }
+
+        report.append("\nTOP PERFORMERS BY SUCCESS RATE:\n");
+        double[] successRatesCopy = successRates.clone();
+        int[] topSuccessIndices = getTopIndices(successRatesCopy, 3);
+        for (int i = 0; i < topSuccessIndices.length; i++) {
+            int index = topSuccessIndices[i];
+            report.append(String.format("%d. %s: %.1f%%\n", 
+                    i + 1, doctorNames[index], successRates[index]));
+        }
+
+        report.append("\nTOP PERFORMERS BY PATIENT SATISFACTION:\n");
+        double[] satisfactionCopy = averagePatientSatisfaction.clone();
+        int[] topSatisfactionIndices = getTopIndices(satisfactionCopy, 3);
+        for (int i = 0; i < topSatisfactionIndices.length; i++) {
+            int index = topSatisfactionIndices[i];
+            report.append(String.format("%d. %s: %.1f/5.0\n", 
+                    i + 1, doctorNames[index], averagePatientSatisfaction[index]));
+        }
+
+        // Specialty performance analysis
+        report.append("\nSPECIALTY PERFORMANCE ANALYSIS:\n");
+        String[] specialties = new String[20];
+        int[] specialtyCounts = new int[20];
+        double[] specialtySuccessRates = new double[20];
+        int specialtyCount = 0;
+
+        doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            String specialty = doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "General";
+            
+            // Find if specialty already exists
+            int specialtyIndex = -1;
+            for (int i = 0; i < specialtyCount; i++) {
+                if (specialties[i].equals(specialty)) {
+                    specialtyIndex = i;
+                    break;
+                }
+            }
+            
+            if (specialtyIndex == -1) {
+                specialties[specialtyCount] = specialty;
+                specialtyCounts[specialtyCount] = 1;
+                specialtySuccessRates[specialtyCount] = successRates[doctorIndex - 1];
+                specialtyCount++;
+            } else {
+                specialtyCounts[specialtyIndex]++;
+                specialtySuccessRates[specialtyIndex] = (specialtySuccessRates[specialtyIndex] + successRates[doctorIndex]) / 2;
+            }
+        }
+
+        for (int i = 0; i < specialtyCount; i++) {
+            report.append(String.format("%-20s: %d doctors, %.1f%% avg success rate\n", 
+                    specialties[i], specialtyCounts[i], specialtySuccessRates[i]));
+        }
+
+        report.append("-".repeat(REPORT_WIDTH)).append("\n\n");
+
+        // Detailed performance table
+        report.append(centerText("DETAILED DOCTOR PERFORMANCE", REPORT_WIDTH)).append("\n");
+        report.append("-".repeat(REPORT_WIDTH)).append("\n");
+
+        // Add sorting information
+        String sortField = getSortFieldDisplayName(sortBy);
+        String sortOrder = ascending ? "ASCENDING" : "DESCENDING";
+        report.append(String.format("Sorted by: %s (%s order)\n\n", sortField, sortOrder));
+
+        String h1 = padRight("Doctor ID", 12);
+        String h2 = padRight("Name", 25);
+        String h3 = padRight("Specialty", 20);
+        String h4 = padRight("Consultations", 15);
+        String h5 = padRight("Success Rate", 15);
+        String h6 = padRight("Satisfaction", 15);
+        String h7 = padRight("Revenue", 15);
+        report.append(" ")
+                .append(h1).append(" | ")
+                .append(h2).append(" | ")
+                .append(h3).append(" | ")
+                .append(h4).append(" | ")
+                .append(h5).append(" | ")
+                .append(h6).append(" | ")
+                .append(h7)
+                .append("\n");
+        report.append(line).append("\n");
+
+        // Create array for sorting
+        Doctor[] doctorArray = new Doctor[activeDoctors.getSize()];
+        int index = 0;
+        doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            doctorArray[index++] = doctorIterator.next();
+        }
+
+        // Sort the doctor array
+        sortDoctorArray(doctorArray, sortBy, ascending);
+
+        // Generate sorted table
+        for (Doctor doctor : doctorArray) {
+            // Find doctor index for metrics
+            int doctorIdx = -1;
+            for (int i = 0; i < doctorIds.length; i++) {
+                if (doctorIds[i].equals(doctor.getDoctorId())) {
+                    doctorIdx = i;
+                    break;
+                }
+            }
+
+            if (doctorIdx == -1) continue;
+
+            String c1 = padRight(doctor.getDoctorId(), 12);
+            String c2 = padRight(doctor.getFullName(), 25);
+            String c3 = padRight(doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "General", 20);
+            String c4 = padLeft(String.valueOf(consultationCounts[doctorIdx]), 15);
+            String c5 = padLeft(String.format("%.1f%%", successRates[doctorIdx]), 15);
+            String c6 = padLeft(String.format("%.1f/5.0", averagePatientSatisfaction[doctorIdx]), 15);
+            String c7 = padLeft(String.format("RM %.2f", totalRevenue[doctorIdx]), 15);
+
+            report.append(" ")
+                    .append(c1).append(" | ")
+                    .append(c2).append(" | ")
+                    .append(c3).append(" | ")
+                    .append(c4).append(" | ")
+                    .append(c5).append(" | ")
+                    .append(c6).append(" | ")
+                    .append(c7)
+                    .append("\n");
+        }
+
+        report.append("\n");
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
+        report.append(centerText("END OF PERFORMANCE REPORT", REPORT_WIDTH)).append("\n");
+        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
+        return report.toString();
+    }
+
+    // Helper methods for performance report
+    private double calculateAverage(int[] values) {
+        if (values.length == 0) return 0.0;
+        int sum = 0;
+        for (int value : values) {
+            sum += value;
+        }
+        return (double) sum / values.length;
+    }
+
+    private double calculateAverage(double[] values) {
+        if (values.length == 0) return 0.0;
+        double sum = 0.0;
+        for (double value : values) {
+            sum += value;
+        }
+        return sum / values.length;
+    }
+
+    private int[] getTopIndices(int[] values, int count) {
+        int[] indices = new int[Math.min(count, values.length)];
+        for (int i = 0; i < indices.length; i++) {
+            int maxIndex = 0;
+            for (int j = 1; j < values.length; j++) {
+                if (values[j] > values[maxIndex]) {
+                    maxIndex = j;
+                }
+            }
+            indices[i] = maxIndex;
+            values[maxIndex] = -1; // Mark as used
+        }
+        return indices;
+    }
+
+    private int[] getTopIndices(double[] values, int count) {
+        int[] indices = new int[Math.min(count, values.length)];
+        double[] tempValues = values.clone();
+        for (int i = 0; i < indices.length; i++) {
+            int maxIndex = 0;
+            for (int j = 1; j < tempValues.length; j++) {
+                if (tempValues[j] > tempValues[maxIndex]) {
+                    maxIndex = j;
+                }
+            }
+            indices[i] = maxIndex;
+            tempValues[maxIndex] = -1; // Mark as used
+        }
+        return indices;
+    }
+
+    private String getSortFieldDisplayName(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "name" -> "Doctor Name";
+            case "specialty" -> "Medical Specialty";
+            case "consultations" -> "Consultation Count";
+            case "success" -> "Success Rate";
+            case "satisfaction" -> "Patient Satisfaction";
+            case "revenue" -> "Total Revenue";
+            case "id" -> "Doctor ID";
+            default -> "Default";
+        };
+    }
+
+    private void sortDoctorArray(Doctor[] doctorArray, String sortBy, boolean ascending) {
+        if (doctorArray == null || doctorArray.length < 2) return;
+
+        Comparator<Doctor> comparator = getDoctorPerformanceComparator(sortBy);
+        if (!ascending) {
+            comparator = comparator.reversed();
+        }
+
+        // Use QuickSort for sorting
+        utility.QuickSort.sort(doctorArray, comparator);
+    }
+
+    private Comparator<Doctor> getDoctorPerformanceComparator(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "name" -> Comparator.comparing(Doctor::getFullName);
+            case "specialty" -> Comparator.comparing(d -> d.getMedicalSpecialty() != null ? d.getMedicalSpecialty() : "");
+            case "consultations" -> Comparator.comparing(d -> getConsultationCountForDoctor(d.getDoctorId()));
+            case "success" -> Comparator.comparing(d -> getSuccessRateForDoctor(d.getDoctorId()));
+            case "satisfaction" -> Comparator.comparing(d -> getSatisfactionRateForDoctor(d.getDoctorId()));
+            case "revenue" -> Comparator.comparing(d -> getRevenueForDoctor(d.getDoctorId()));
+            case "id" -> Comparator.comparing(Doctor::getDoctorId);
+            default -> Comparator.comparing(Doctor::getFullName);
+        };
+    }
+
+    // Helper methods for performance metrics (simulated)
+    private double getSuccessRateForDoctor(String doctorId) {
+        int consultations = getConsultationCountForDoctor(doctorId);
+        return Math.min(95.0, 70.0 + (consultations * 0.5));
+    }
+
+    private double getSatisfactionRateForDoctor(String doctorId) {
+        int consultations = getConsultationCountForDoctor(doctorId);
+        return Math.min(5.0, 3.5 + (consultations * 0.02));
+    }
+
+    private double getRevenueForDoctor(String doctorId) {
+        int consultations = getConsultationCountForDoctor(doctorId);
+        return consultations * 50.0; // RM50 per consultation
+    }
 }

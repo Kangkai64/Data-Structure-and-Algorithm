@@ -256,7 +256,7 @@ public class PharmacyManagementUI {
         ConsoleUtils.printHeader("Create Prescription");
         String patientId = ConsoleUtils.getStringInput(scanner, "Enter patient ID: ");
         String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID: ");
-        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID (optional): ");
+        String consultationId = ConsoleUtils.getStringInput(scanner, "Enter consultation ID (optional): ", null);
         String instructions = ConsoleUtils.getStringInput(scanner, "Enter instructions: ");
         LocalDate expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ",
                 DateType.FUTURE_DATE_ONLY);
@@ -940,10 +940,11 @@ public class PharmacyManagementUI {
         ConsoleUtils.printHeader("Generate Pharmacy Reports");
         System.out.println("1. Medicine Stock Report");
         System.out.println("2. Prescription Report");
-        System.out.println("3. All Reports");
-        System.out.println("4. Back to Pharmacy Menu");
+        System.out.println("3. Medicine Usage Report");
+        System.out.println("4. All Reports");
+        System.out.println("5. Back to Pharmacy Menu");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
         System.out.println();
 
         switch (choice) {
@@ -954,14 +955,45 @@ public class PharmacyManagementUI {
                 generatePrescriptionReport();
                 break;
             case 3:
-                generateMedicineStockReport();
-                generatePrescriptionReport();
+                generateMedicineUsageReport();
                 break;
             case 4:
+                generateMedicineStockReport();
+                generatePrescriptionReport();
+                generateMedicineUsageReport();
+                break;
+            case 5:
                 return;
             default:
                 System.out.println("Invalid choice.");
         }
+    }
+
+    private void generateMedicineUsageReport() {
+        ConsoleUtils.printHeader("Medicine Usage Report");
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Prescription Count");
+        System.out.println("2. Revenue");
+        System.out.println("3. Stock Level");
+        System.out.println("4. Category");
+        System.out.println("5. Medicine Name");
+        System.out.println("6. Generic Name");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        String sortBy = switch (choice) {
+            case 1 -> "prescriptions";
+            case 2 -> "revenue";
+            case 3 -> "stock";
+            case 4 -> "category";
+            case 5 -> "name";
+            case 6 -> "generic";
+            default -> "prescriptions";
+        };
+
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
+        System.out.println(pharmacyControl.generateMedicineUsageReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
     }
 
     private void generateMedicineStockReport() {

@@ -758,12 +758,46 @@ public class DoctorManagementUI {
         System.out.println("\n=== GENERATE REPORTS ===");
         System.out.println("1. Doctor Activity Report");
         System.out.println("2. Doctor Workload Report");
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        System.out.println("3. Doctor Performance Report");
+        System.out.println("4. All Reports");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         if (choice == 1) {
             generateDoctorInformationReportUI();
-        } else {
+        } else if (choice == 2) {
             generateScheduleReportUI();
+        } else if (choice == 3) {
+            generateDoctorPerformanceReportUI();
+        } else {
+            generateDoctorInformationReportUI();
+            generateScheduleReportUI();
+            generateDoctorPerformanceReportUI();
         }
+    }
+
+    private void generateDoctorPerformanceReportUI() {
+        System.out.println("\n=== DOCTOR PERFORMANCE REPORT ===");
+        System.out.println("Select sort field: ");
+        System.out.println("1. Consultations");
+        System.out.println("2. Success Rate");
+        System.out.println("3. Patient Satisfaction");
+        System.out.println("4. Revenue");
+        int fieldChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-4): ", 1, 4);
+        
+        String sortBy = switch (fieldChoice) {
+            case 1 -> "consultations";
+            case 2 -> "success";
+            case 3 -> "satisfaction";
+            case 4 -> "revenue";
+            default -> "consultations";
+        };
+
+        System.out.println("Order: ");
+        System.out.println("1. Ascending");
+        System.out.println("2. Descending");
+        int orderChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-2): ", 1, 2);
+        boolean ascending = (orderChoice == 1);
+
+        System.out.println(doctorControl.generateDoctorPerformanceReport(sortBy, ascending));
     }
 
     

@@ -549,10 +549,11 @@ public class ConsultationManagementUI {
 
         System.out.println("1. Consultation Report");
         System.out.println("2. Consultation History Report");
-        System.out.println("3. Both Reports");
+        System.out.println("3. Consultation Efficiency Report");
+        System.out.println("4. All Reports");
         System.out.print("Enter choice: ");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
 
         switch (choice) {
             case 1:
@@ -562,12 +563,42 @@ public class ConsultationManagementUI {
                 generateConsultationHistoryReport();
                 break;
             case 3:
+                generateConsultationEfficiencyReport();
+                break;
+            case 4:
                 generateConsultationReport();
                 generateConsultationHistoryReport();
+                generateConsultationEfficiencyReport();
                 break;
             default:
                 System.out.println("Invalid choice.");
         }
+    }
+
+    private void generateConsultationEfficiencyReport() {
+        ConsoleUtils.printHeader("Consultation Efficiency Report");
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Efficiency Score");
+        System.out.println("2. Wait Time");
+        System.out.println("3. Duration");
+        System.out.println("4. Consultation Date");
+        System.out.println("5. Patient Name");
+        System.out.println("6. Doctor Name");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        String sortBy = switch (choice) {
+            case 1 -> "efficiency";
+            case 2 -> "wait";
+            case 3 -> "duration";
+            case 4 -> "date";
+            case 5 -> "patient";
+            case 6 -> "doctor";
+            default -> "efficiency";
+        };
+
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println(consultationControl.generateConsultationEfficiencyReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
     }
 
     private void generateConsultationReport() {

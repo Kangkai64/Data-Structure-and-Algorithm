@@ -107,6 +107,43 @@ public abstract class Person {
         this.registrationDate = registrationDate;
     }
 
+    /**
+     * Calculate age based on IC number (Malaysian IC format)
+     * @return age in years
+     */
+    public int getAge() {
+        if (ICNumber == null || ICNumber.length() < 6) {
+            return 0;
+        }
+        
+        try {
+            // Extract date of birth from IC number (first 6 digits: YYMMDD)
+            String dobString = ICNumber.substring(0, 6);
+            int year = Integer.parseInt(dobString.substring(0, 2));
+            int month = Integer.parseInt(dobString.substring(2, 4));
+            int day = Integer.parseInt(dobString.substring(4, 6));
+            
+            // Determine century (assume 20xx for years 00-29, 19xx for years 30-99)
+            int fullYear = year <= 29 ? 2000 + year : 1900 + year;
+            
+            LocalDate dateOfBirth = LocalDate.of(fullYear, month, day);
+            LocalDate currentDate = LocalDate.now();
+            
+            int age = currentDate.getYear() - dateOfBirth.getYear();
+            
+            // Adjust age if birthday hasn't occurred this year
+            if (currentDate.getMonthValue() < dateOfBirth.getMonthValue() || 
+                (currentDate.getMonthValue() == dateOfBirth.getMonthValue() && 
+                 currentDate.getDayOfMonth() < dateOfBirth.getDayOfMonth())) {
+                age--;
+            }
+            
+            return Math.max(0, age); // Ensure non-negative age
+        } catch (Exception e) {
+            return 0; // Return 0 if calculation fails
+        }
+    }
+
     @Override
     public String toString() {
         return "Name = " + fullName + "\n"

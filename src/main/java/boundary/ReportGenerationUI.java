@@ -39,14 +39,19 @@ public class ReportGenerationUI {
         ConsoleUtils.printHeader("Generating All Reports");
 
         System.out.println("\n" + patientControl.generatePatientRecordSummaryReport("id", "desc"));
+        System.out.println("\n" + patientControl.generatePatientDemographicsReport("age", "desc"));
         System.out.println("\n" + doctorControl.generateDoctorInformationReport());
         System.out.println("\n" + doctorControl.generateDoctorWorkloadReport());
+        System.out.println("\n" + doctorControl.generateDoctorPerformanceReport("consultations", false));
         System.out.println("\n" + consultationControl.generateConsultationReport("date", "desc"));
         System.out.println("\n" + consultationControl.generateConsultationHistoryReport("date", "desc"));
+        System.out.println("\n" + consultationControl.generateConsultationEfficiencyReport("efficiency", "desc"));
         System.out.println("\n" + treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
         System.out.println("\n" + treatmentControl.generateTreatmentStatusReport("id", "asc"));
+        System.out.println("\n" + treatmentControl.generateTreatmentOutcomeReport("success", "desc"));
         System.out.println("\n" + pharmacyControl.generateMedicineStockReport("name", "asc"));
         System.out.println("\n" + pharmacyControl.generatePrescriptionReport("date", "desc"));
+        System.out.println("\n" + pharmacyControl.generateMedicineUsageReport("prescriptions", "desc"));
 
         System.out.println("All reports generated successfully!");
     }
@@ -93,8 +98,28 @@ public class ReportGenerationUI {
     }
 
     private void generatePatientReports() {
-        System.out.println();
-        generatePatientRecordSummaryReport();
+        ConsoleUtils.printHeader("Patient Reports");
+        System.out.println("1. Patient Record Summary Report");
+        System.out.println("2. Patient Demographics Report");
+        System.out.println("3. Both Reports");
+        System.out.print("Enter choice: ");
+
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+
+        switch (choice) {
+            case 1:
+                generatePatientRecordSummaryReport();
+                break;
+            case 2:
+                generatePatientDemographicsReport();
+                break;
+            case 3:
+                generatePatientRecordSummaryReport();
+                generatePatientDemographicsReport();
+                break;
+            default:
+                System.out.println("Invalid choice.");
+        }
     }
 
     private void generatePatientRecordSummaryReport() {
@@ -124,6 +149,16 @@ public class ReportGenerationUI {
         System.out.println(patientControl.generatePatientRecordSummaryReport(sortBy, sortOrder));
     }
 
+    private void generatePatientDemographicsReport() {
+        ConsoleUtils.printHeader("Patient Demographics Report");
+        String sortBy = getSortField(1);
+        System.out.println();
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+
+        System.out.println(patientControl.generatePatientDemographicsReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
     private String getSortField(int choice) {
         switch (choice) {
             case 1: return "name";
@@ -142,11 +177,12 @@ public class ReportGenerationUI {
     private void generateDoctorReports() {
         ConsoleUtils.printHeader("Doctor Reports");
         System.out.println("1. Doctor Information Report");
-        System.out.println("2. Schedule Report");
-        System.out.println("3. Both Reports");
+        System.out.println("2. Doctor Workload Report");
+        System.out.println("3. Doctor Performance Report");
+        System.out.println("4. All Reports");
         System.out.print("Enter choice: ");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
 
         switch (choice) {
             case 1:
@@ -156,22 +192,49 @@ public class ReportGenerationUI {
                 System.out.println(doctorControl.generateDoctorWorkloadReport());
                 break;
             case 3:
+                generateDoctorPerformanceReport();
+                break;
+            case 4:
                 System.out.println(doctorControl.generateDoctorInformationReport());
                 System.out.println(doctorControl.generateDoctorWorkloadReport());
+                generateDoctorPerformanceReport();
                 break;
             default:
                 System.out.println("Invalid choice.");
         }
     }
 
+    private void generateDoctorPerformanceReport() {
+        ConsoleUtils.printHeader("Doctor Performance Report");
+        System.out.println("1. Sort by Consultations");
+        System.out.println("2. Sort by Success Rate");
+        System.out.println("3. Sort by Patient Satisfaction");
+        System.out.println("4. Sort by Revenue");
+        System.out.print("Enter choice: ");
+
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+
+        String sortBy = switch (choice) {
+            case 1 -> "consultations";
+            case 2 -> "success";
+            case 3 -> "satisfaction";
+            case 4 -> "revenue";
+            default -> "consultations";
+        };
+
+        System.out.println(doctorControl.generateDoctorPerformanceReport(sortBy, false));
+        ConsoleUtils.waitMessage();
+    }
+
     private void generateConsultationReports() {
         ConsoleUtils.printHeader("Consultation Reports");
         System.out.println("1. Consultation Report");
         System.out.println("2. Consultation History Report");
-        System.out.println("3. Both Reports");
+        System.out.println("3. Consultation Efficiency Report");
+        System.out.println("4. All Reports");
         System.out.print("Enter choice: ");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
 
         switch (choice) {
             case 1:
@@ -181,12 +244,39 @@ public class ReportGenerationUI {
                 generateConsultationHistoryReport();
                 break;
             case 3:
+                generateConsultationEfficiencyReport();
+                break;
+            case 4:
                 generateConsultationReport();
                 generateConsultationHistoryReport();
+                generateConsultationEfficiencyReport();
                 break;
             default:
                 System.out.println("Invalid choice.");
         }
+    }
+
+    private void generateConsultationEfficiencyReport() {
+        ConsoleUtils.printHeader("Consultation Efficiency Report");
+        System.out.println("1. Sort by Efficiency Score");
+        System.out.println("2. Sort by Wait Time");
+        System.out.println("3. Sort by Duration");
+        System.out.println("4. Sort by Date");
+        System.out.print("Enter choice: ");
+
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+
+        String sortBy = switch (choice) {
+            case 1 -> "efficiency";
+            case 2 -> "wait";
+            case 3 -> "duration";
+            case 4 -> "date";
+            default -> "efficiency";
+        };
+
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println(consultationControl.generateConsultationEfficiencyReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
     }
 
     private void generateConsultationReport() {
@@ -231,12 +321,13 @@ public class ReportGenerationUI {
 
     private void generateTreatmentReports() {
         ConsoleUtils.printHeader("Treatment Reports");
-        System.out.println("1. Treatment Report");
-        System.out.println("2. Treatment History Report");
-        System.out.println("3. Both Reports");
+        System.out.println("1. Treatment Analysis Report");
+        System.out.println("2. Treatment Status Report");
+        System.out.println("3. Treatment Outcome Report");
+        System.out.println("4. All Reports");
         System.out.print("Enter choice: ");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
 
         switch (choice) {
             case 1:
@@ -246,21 +337,49 @@ public class ReportGenerationUI {
                 System.out.println(treatmentControl.generateTreatmentStatusReport("id", "asc"));
                 break;
             case 3:
+                generateTreatmentOutcomeReport();
+                break;
+            case 4:
                 System.out.println(treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
                 System.out.println(treatmentControl.generateTreatmentStatusReport("id", "asc"));
+                generateTreatmentOutcomeReport();
                 break;
             default:
                 System.out.println("Invalid choice.");
         }
     }
 
+    private void generateTreatmentOutcomeReport() {
+        ConsoleUtils.printHeader("Treatment Outcome Report");
+        System.out.println("1. Sort by Success Rate");
+        System.out.println("2. Sort by Recovery Time");
+        System.out.println("3. Sort by Treatment Type");
+        System.out.println("4. Sort by Date");
+        System.out.print("Enter choice: ");
+
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+
+        String sortBy = switch (choice) {
+            case 1 -> "success";
+            case 2 -> "recovery";
+            case 3 -> "type";
+            case 4 -> "date";
+            default -> "success";
+        };
+
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println(treatmentControl.generateTreatmentOutcomeReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
     private void generatePharmacyReports() {
         ConsoleUtils.printHeader("Pharmacy Reports");
         System.out.println("1. Medicine Stock Report");
         System.out.println("2. Prescription Report");
-        System.out.println("3. Both Reports");
+        System.out.println("3. Medicine Usage Report");
+        System.out.println("4. All Reports");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
 
         switch (choice) {
             case 1:
@@ -270,12 +389,39 @@ public class ReportGenerationUI {
                 generatePrescriptionReportFromReportUI();
                 break;
             case 3:
+                generateMedicineUsageReportFromReportUI();
+                break;
+            case 4:
                 generateMedicineStockReportFromReportUI();
                 generatePrescriptionReportFromReportUI();
+                generateMedicineUsageReportFromReportUI();
                 break;
             default:
                 System.out.println("Invalid choice.");
         }
+    }
+
+    private void generateMedicineUsageReportFromReportUI() {
+        ConsoleUtils.printHeader("Medicine Usage Report");
+        System.out.println("1. Sort by Prescription Count");
+        System.out.println("2. Sort by Revenue");
+        System.out.println("3. Sort by Stock Level");
+        System.out.println("4. Sort by Category");
+        System.out.print("Enter choice: ");
+
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+
+        String sortBy = switch (choice) {
+            case 1 -> "prescriptions";
+            case 2 -> "revenue";
+            case 3 -> "stock";
+            case 4 -> "category";
+            default -> "prescriptions";
+        };
+
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println(pharmacyControl.generateMedicineUsageReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
     }
 
     private void generateMedicineStockReportFromReportUI() {

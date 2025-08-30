@@ -2,6 +2,8 @@ package control;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 
 import adt.ArrayBucketList;
@@ -10,6 +12,8 @@ import dao.PatientDao;
 import entity.Address;
 import entity.BloodType;
 import entity.Patient;
+import utility.ConsoleUtils;
+import utility.QuickSort;
 
 /**
  * @author: Lai Yoke Hong
@@ -442,6 +446,237 @@ public class PatientManagementControl {
         report.append(">>> End of Report <<<\n");
 
         return report.toString();
+    }
+
+    // Generates patient demographics report
+    public String generatePatientDemographicsReport(String sortBy, String sortOrder) {
+        ensureDataLoaded();
+        StringBuilder report = new StringBuilder();
+
+        // Header with decorative lines (centered)
+        report.append("=".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("PATIENT MANAGEMENT SYSTEM - PATIENT DEMOGRAPHICS REPORT", 120))
+                .append("\n");
+        report.append("=".repeat(120)).append("\n\n");
+
+        // Generation info with weekday
+        report.append("Generated at: ")
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append("\n");
+        report.append("*".repeat(120)).append("\n\n");
+
+        // Summary statistics
+        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DEMOGRAPHICS SUMMARY", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+        report.append(String.format("Total Active Patients: %d\n", getTotalActivePatients()));
+        report.append(String.format("Patients in Queue: %d\n", getQueueSize()));
+
+        // Age distribution analysis using arrays
+        int[] ageGroups = { 0, 18, 25, 35, 50, 65, 100 }; // Age group boundaries
+        String[] ageGroupLabels = { "Under 18", "18-24", "25-34", "35-49", "50-64", "65+" };
+        int[] ageGroupCounts = new int[6];
+        int[] genderCounts = { 0, 0 }; // 0 = Male, 1 = Female
+        String[] bloodTypeCounts = new String[10];
+        int[] bloodTypeCountsNum = new int[10];
+        int bloodTypeCount = 0;
+
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            if (patient != null) {
+                // Age analysis
+                int age = patient.getAge();
+                for (int i = 0; i < ageGroups.length - 1; i++) {
+                    if (age >= ageGroups[i] && age < ageGroups[i + 1]) {
+                        ageGroupCounts[i]++;
+                        break;
+                    }
+                }
+
+                // Gender analysis (based on IC number last digit)
+                String icNumber = patient.getICNumber();
+                if (icNumber != null && icNumber.length() >= 12) {
+                    char lastDigit = icNumber.charAt(11);
+                    if (Character.isDigit(lastDigit)) {
+                        int digit = Character.getNumericValue(lastDigit);
+                        if (digit % 2 == 1) { // Odd = Male
+                            genderCounts[0]++;
+                        } else { // Even = Female
+                            genderCounts[1]++;
+                        }
+                    }
+                }
+
+                // Blood type analysis
+                if (patient.getBloodType() != null) {
+                    String bloodType = patient.getBloodType().toString();
+                    boolean found = false;
+                    for (int i = 0; i < bloodTypeCount; i++) {
+                        if (bloodTypeCounts[i].equals(bloodType)) {
+                            bloodTypeCountsNum[i]++;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        bloodTypeCounts[bloodTypeCount] = bloodType;
+                        bloodTypeCountsNum[bloodTypeCount] = 1;
+                        bloodTypeCount++;
+                    }
+                }
+            }
+        }
+
+        report.append("\nAGE DISTRIBUTION:\n");
+        for (int i = 0; i < ageGroupLabels.length; i++) {
+            double percentage = getTotalActivePatients() > 0 ? (double) ageGroupCounts[i] / getTotalActivePatients() * 100 : 0;
+            report.append(String.format("%-8s: %3d patients (%.1f%%)\n", ageGroupLabels[i], ageGroupCounts[i], percentage));
+        }
+
+        report.append("\nGENDER DISTRIBUTION:\n");
+        double malePercentage = getTotalActivePatients() > 0 ? (double) genderCounts[0] / getTotalActivePatients() * 100 : 0;
+        double femalePercentage = getTotalActivePatients() > 0 ? (double) genderCounts[1] / getTotalActivePatients() * 100 : 0;
+        report.append(String.format("Male  : %3d patients (%.1f%%)\n", genderCounts[0], malePercentage));
+        report.append(String.format("Female: %3d patients (%.1f%%)\n", genderCounts[1], femalePercentage));
+
+        report.append("\nBLOOD TYPE DISTRIBUTION:\n");
+        for (int i = 0; i < bloodTypeCount; i++) {
+            double percentage = getTotalActivePatients() > 0 ? (double) bloodTypeCountsNum[i] / getTotalActivePatients() * 100 : 0;
+            report.append(String.format("%-4s: %3d patients (%.1f%%)\n", bloodTypeCounts[i], bloodTypeCountsNum[i], percentage));
+        }
+
+        // Registration trend analysis
+        int currentYear = LocalDate.now().getYear();
+        int[] monthlyRegistrations = new int[13]; // Index 0 unused, 1-12 for months
+
+        patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            if (patient != null && patient.getRegistrationDate() != null &&
+                    patient.getRegistrationDate().getYear() == currentYear) {
+                int month = patient.getRegistrationDate().getMonthValue();
+                monthlyRegistrations[month]++;
+            }
+        }
+
+        report.append(String.format("\nREGISTRATION TREND FOR %d:\n", currentYear));
+        String[] months = { "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        for (int i = 1; i <= 12; i++) {
+            if (monthlyRegistrations[i] > 0) {
+                report.append(String.format("%-3s: %d registrations\n", months[i], monthlyRegistrations[i]));
+            }
+        }
+
+        report.append("-".repeat(120)).append("\n\n");
+
+        // Detailed patient demographics table with sorting
+        report.append(ConsoleUtils.centerText("DETAILED PATIENT DEMOGRAPHICS", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
+        report.append(String.format("%-10s | %-25s | %-8s | %-6s | %-8s | %-15s | %-12s\n",
+                "ID", "Name", "Age", "Gender", "Blood Type", "Allergies", "Registration"));
+        report.append("-".repeat(120)).append("\n");
+
+        // Convert to array for sorting
+        Patient[] patientArray = new Patient[activePatients.getSize()];
+        int index = 0;
+        patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            patientArray[index++] = patientIterator.next();
+        }
+
+        // Sort the patient array
+        sortPatientArray(patientArray, sortBy, sortOrder);
+
+        // Generate sorted table
+        for (Patient patient : patientArray) {
+            if (patient == null)
+                continue;
+            String id = patient.getPatientId() == null ? "-" : patient.getPatientId();
+            String name = patient.getFullName() == null ? "-" : patient.getFullName();
+            String age = String.valueOf(patient.getAge());
+            String gender = getGenderFromIC(patient.getICNumber());
+            String bloodType = patient.getBloodType() == null ? "-" : patient.getBloodType().toString();
+            String allergies = patient.getAllergies() == null ? "-" : patient.getAllergies();
+            String regDate = patient.getRegistrationDate() == null ? "-"
+                    : patient.getRegistrationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+
+            if (name.length() > 25)
+                name = name.substring(0, 24) + "…";
+            if (allergies.length() > 15)
+                allergies = allergies.substring(0, 14) + "…";
+
+            report.append(String.format("%-10s | %-25s | %-8s | %-6s | %-8s | %-15s | %-12s\n",
+                    id, name, age, gender, bloodType, allergies, regDate));
+        }
+
+        report.append("-".repeat(120)).append("\n");
+        report.append("*".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF PATIENT DEMOGRAPHICS REPORT", 120)).append("\n");
+        report.append("=".repeat(120)).append("\n");
+
+        return report.toString();
+    }
+
+    // Helper methods for demographics report
+    private String getGenderFromIC(String icNumber) {
+        if (icNumber == null || icNumber.length() < 12) {
+            return "-";
+        }
+        char lastDigit = icNumber.charAt(11);
+        if (Character.isDigit(lastDigit)) {
+            int digit = Character.getNumericValue(lastDigit);
+            return digit % 2 == 1 ? "Male" : "Female";
+        }
+        return "-";
+    }
+
+    private String getSortFieldDisplayName(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "name" -> "Patient Name";
+            case "age" -> "Age";
+            case "gender" -> "Gender";
+            case "blood" -> "Blood Type";
+            case "allergies" -> "Allergies";
+            case "regdate" -> "Registration Date";
+            case "status" -> "Status";
+            case "id" -> "ID";
+            default -> "Default";
+        };
+    }
+
+    private void sortPatientArray(Patient[] patientArray, String sortBy, String sortOrder) {
+        if (patientArray == null || patientArray.length < 2)
+            return;
+
+        java.util.Comparator<Patient> comparator = getPatientComparator(sortBy);
+
+        // Apply sort order
+        if (sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+
+        QuickSort.sort(patientArray, comparator);
+    }
+
+    private java.util.Comparator<Patient> getPatientComparator(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "name" -> java.util.Comparator.comparing(p -> p.getFullName() != null ? p.getFullName() : "");
+            case "age" -> java.util.Comparator.comparing(Patient::getAge);
+            case "gender" -> java.util.Comparator.comparing(p -> getGenderFromIC(p.getICNumber()));
+            case "blood" -> java.util.Comparator.comparing(p -> p.getBloodType() != null ? p.getBloodType().toString() : "");
+            case "allergies" -> java.util.Comparator.comparing(p -> p.getAllergies() != null ? p.getAllergies() : "");
+            case "regdate" -> java.util.Comparator.comparing(p -> p.getRegistrationDate() != null ? p.getRegistrationDate() : LocalDate.MAX);
+            case "status" -> java.util.Comparator.comparing(Patient::isActive);
+            case "id" -> java.util.Comparator.comparing(p -> p.getPatientId() != null ? p.getPatientId() : "");
+            default -> java.util.Comparator.comparing(p -> p.getFullName() != null ? p.getFullName() : "");
+        };
     }
 
     private String safeStr(String s) {

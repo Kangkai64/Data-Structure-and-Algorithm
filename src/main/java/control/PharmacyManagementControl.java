@@ -1004,6 +1004,273 @@ public class PharmacyManagementControl {
         return report.toString();
     }
 
+    /**
+     * Generates a medicine usage report analyzing prescription patterns, most prescribed medicines, and usage trends
+     * @param sortBy field to sort by
+     * @param sortOrder sort order (asc/desc)
+     * @return formatted report string
+     */
+    public String generateMedicineUsageReport(String sortBy, String sortOrder) {
+        StringBuilder report = new StringBuilder();
+
+        // Header with decorative lines (centered)
+        report.append("=".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("PHARMACY MANAGEMENT SYSTEM - MEDICINE USAGE REPORT", 120))
+                .append("\n");
+        report.append("=".repeat(120)).append("\n\n");
+
+        // Generation info with weekday
+        report.append("Generated at: ")
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append("\n");
+        report.append("*".repeat(120)).append("\n\n");
+
+        // Summary statistics
+        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("USAGE METRICS SUMMARY", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+        report.append(String.format("Total Prescriptions: %d\n", getTotalPrescriptions()));
+        report.append(String.format("Dispensed Prescriptions: %d\n", dispensedPrescriptions.getSize()));
+        report.append(String.format("Total Medicines in Inventory: %d\n", getTotalMedicines()));
+        report.append(String.format("Average Medicines per Prescription: %.1f\n", calculateAverageMedicinesPerPrescription()));
+        report.append(String.format("Total Revenue from Dispensing: RM %.2f\n", calculateTotalDispensingRevenue()));
+
+        // Most prescribed medicines analysis using arrays
+        String[] medicineNames = new String[100];
+        String[] medicineIds = new String[100];
+        int[] prescriptionCounts = new int[100];
+        int[] totalQuantities = new int[100];
+        double[] totalRevenue = new double[100];
+        int medicineCount = 0;
+
+        Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
+            if (prescription != null && prescription.getPrescribedMedicines() != null) {
+                Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescription.getPrescribedMedicines().iterator();
+                while (prescribedMedicineIterator.hasNext()) {
+                    Prescription.PrescribedMedicine prescribedMedicine = prescribedMedicineIterator.next();
+                    if (prescribedMedicine != null && prescribedMedicine.getMedicine() != null) {
+                        String medicineName = prescribedMedicine.getMedicine().getMedicineName();
+                        String medicineId = prescribedMedicine.getMedicine().getMedicineId();
+                        
+                        // Find if medicine already exists
+                        int medicineIndex = -1;
+                        for (int i = 0; i < medicineCount; i++) {
+                            if (medicineIds[i].equals(medicineId)) {
+                                medicineIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (medicineIndex == -1) {
+                            medicineNames[medicineCount] = medicineName;
+                            medicineIds[medicineCount] = medicineId;
+                            prescriptionCounts[medicineCount] = 1;
+                            totalQuantities[medicineCount] = prescribedMedicine.getQuantity();
+                            totalRevenue[medicineCount] = prescribedMedicine.getQuantity() * prescribedMedicine.getMedicine().getUnitPrice();
+                            medicineCount++;
+                        } else {
+                            prescriptionCounts[medicineIndex]++;
+                            totalQuantities[medicineIndex] += prescribedMedicine.getQuantity();
+                            totalRevenue[medicineIndex] += prescribedMedicine.getQuantity() * prescribedMedicine.getMedicine().getUnitPrice();
+                        }
+                    }
+                }
+            }
+        }
+
+        report.append("\nMOST PRESCRIBED MEDICINES:\n");
+        int[] topPrescribedIndices = getTopIndices(prescriptionCounts, Math.min(10, medicineCount));
+        for (int i = 0; i < topPrescribedIndices.length; i++) {
+            int index = topPrescribedIndices[i];
+            report.append(String.format("%d. %-30s: %3d prescriptions, %6d units, RM %8.2f revenue\n",
+                    i + 1, medicineNames[index], prescriptionCounts[index], totalQuantities[index], totalRevenue[index]));
+        }
+
+        // Medicine category analysis
+        report.append("\nMEDICINE CATEGORY ANALYSIS:\n");
+        String[] categories = new String[20];
+        int[] categoryCounts = new int[20];
+        double[] categoryRevenue = new double[20];
+        int categoryCount = 0;
+
+        Iterator<Medicine> medicineIterator = medicines.iterator();
+        while (medicineIterator.hasNext()) {
+            Medicine medicine = medicineIterator.next();
+            if (medicine != null && medicine.getGenericName() != null) {
+                String category = getMedicineCategory(medicine.getGenericName());
+                
+                // Find if category already exists
+                int categoryIndex = -1;
+                for (int i = 0; i < categoryCount; i++) {
+                    if (categories[i].equals(category)) {
+                        categoryIndex = i;
+                        break;
+                    }
+                }
+                
+                if (categoryIndex == -1) {
+                    categories[categoryCount] = category;
+                    categoryCounts[categoryCount] = 1;
+                    categoryRevenue[categoryCount] = medicine.getQuantityInStock() * medicine.getUnitPrice();
+                    categoryCount++;
+                } else {
+                    categoryCounts[categoryIndex]++;
+                    categoryRevenue[categoryIndex] += medicine.getQuantityInStock() * medicine.getUnitPrice();
+                }
+            }
+        }
+
+        for (int i = 0; i < categoryCount; i++) {
+            report.append(String.format("%-20s: %3d medicines, RM %10.2f inventory value\n",
+                    categories[i], categoryCounts[i], categoryRevenue[i]));
+        }
+
+        // Monthly prescription trends
+        report.append("\nMONTHLY PRESCRIPTION TRENDS:\n");
+        int currentYear = LocalDate.now().getYear();
+        int[] monthlyPrescriptions = new int[13]; // Index 0 unused, 1-12 for months
+        double[] monthlyRevenue = new double[13];
+
+        prescriptionIterator = prescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
+            if (prescription != null && prescription.getPrescriptionDate() != null &&
+                    prescription.getPrescriptionDate().getYear() == currentYear) {
+                int month = prescription.getPrescriptionDate().getMonthValue();
+                monthlyPrescriptions[month]++;
+                monthlyRevenue[month] += prescription.getTotalCost();
+            }
+        }
+
+        String[] months = { "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        for (int i = 1; i <= 12; i++) {
+            if (monthlyPrescriptions[i] > 0) {
+                report.append(String.format("%-3s: %3d prescriptions, RM %8.2f revenue\n",
+                        months[i], monthlyPrescriptions[i], monthlyRevenue[i]));
+            }
+        }
+
+        // Doctor prescription patterns
+        report.append("\nDOCTOR PRESCRIPTION PATTERNS:\n");
+        String[] doctorIds = new String[50];
+        String[] doctorNames = new String[50];
+        int[] doctorPrescriptionCounts = new int[50];
+        double[] doctorTotalRevenue = new double[50];
+        int doctorCount = 0;
+
+        prescriptionIterator = prescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
+            if (prescription != null && prescription.getDoctor() != null) {
+                String doctorId = prescription.getDoctor().getDoctorId();
+                String doctorName = prescription.getDoctor().getFullName();
+                
+                // Find if doctor already exists
+                int doctorIndex = -1;
+                for (int i = 0; i < doctorCount; i++) {
+                    if (doctorIds[i].equals(doctorId)) {
+                        doctorIndex = i;
+                        break;
+                    }
+                }
+                
+                if (doctorIndex == -1) {
+                    doctorIds[doctorCount] = doctorId;
+                    doctorNames[doctorCount] = doctorName;
+                    doctorPrescriptionCounts[doctorCount] = 1;
+                    doctorTotalRevenue[doctorCount] = prescription.getTotalCost();
+                    doctorCount++;
+                } else {
+                    doctorPrescriptionCounts[doctorIndex]++;
+                    doctorTotalRevenue[doctorIndex] += prescription.getTotalCost();
+                }
+            }
+        }
+
+        // Top prescribing doctors
+        report.append("\nTOP PRESCRIBING DOCTORS:\n");
+        int[] topDoctorIndices = getTopIndices(doctorPrescriptionCounts, Math.min(5, doctorCount));
+        for (int i = 0; i < topDoctorIndices.length; i++) {
+            int index = topDoctorIndices[i];
+            report.append(String.format("%d. %-30s: %3d prescriptions, RM %8.2f total revenue\n",
+                    i + 1, doctorNames[index], doctorPrescriptionCounts[index], doctorTotalRevenue[index]));
+        }
+
+        // Stock turnover analysis
+        report.append("\nSTOCK TURNOVER ANALYSIS:\n");
+        Iterator<Medicine> stockIterator = medicines.iterator();
+        while (stockIterator.hasNext()) {
+            Medicine medicine = stockIterator.next();
+            if (medicine != null) {
+                double turnoverRate = calculateStockTurnoverRate(medicine);
+                if (turnoverRate > 0) {
+                    report.append(String.format("%-25s: %.1f%% turnover rate (stock: %d, min: %d)\n",
+                            medicine.getMedicineName(), turnoverRate, medicine.getQuantityInStock(), medicine.getMinimumStockLevel()));
+                }
+            }
+        }
+
+        report.append("-".repeat(120)).append("\n\n");
+
+        // Detailed usage table with sorting
+        report.append(ConsoleUtils.centerText("DETAILED MEDICINE USAGE", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getUsageSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
+        report.append(String.format("%-10s | %-25s | %-20s | %-15s | %-12s | %-12s | %-12s\n",
+                "ID", "Medicine Name", "Generic Name", "Category", "Stock", "Prescriptions", "Revenue"));
+        report.append("-".repeat(120)).append("\n");
+
+        // Convert to array for sorting
+        Medicine[] medicineArray = new Medicine[medicines.getSize()];
+        int index = 0;
+        medicineIterator = medicines.iterator();
+        while (medicineIterator.hasNext()) {
+            medicineArray[index++] = medicineIterator.next();
+        }
+
+        // Sort the medicine array
+        sortMedicineUsageArray(medicineArray, sortBy, sortOrder);
+
+        // Generate sorted table
+        for (Medicine medicine : medicineArray) {
+            if (medicine == null)
+                continue;
+            String id = medicine.getMedicineId() == null ? "-" : medicine.getMedicineId();
+            String name = medicine.getMedicineName() == null ? "-" : medicine.getMedicineName();
+            String generic = medicine.getGenericName() == null ? "-" : medicine.getGenericName();
+            String category = getMedicineCategory(medicine.getGenericName());
+            String stock = String.valueOf(medicine.getQuantityInStock());
+            
+            // Calculate prescription count and revenue for this medicine
+            int prescriptionCount = getPrescriptionCountForMedicine(medicine.getMedicineId());
+            double revenue = prescriptionCount * medicine.getUnitPrice();
+
+            // Truncate long names
+            if (name.length() > 25)
+                name = name.substring(0, 24) + "…";
+            if (generic.length() > 20)
+                generic = generic.substring(0, 19) + "…";
+
+            report.append(String.format("%-10s | %-25s | %-20s | %-15s | %-12s | %-12s | %-12s\n",
+                    id, name, generic, category, stock, String.valueOf(prescriptionCount), 
+                    String.format("RM %.2f", revenue)));
+        }
+
+        report.append("-".repeat(120)).append("\n");
+        report.append("*".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF MEDICINE USAGE REPORT", 120)).append("\n");
+        report.append("=".repeat(120)).append("\n");
+
+        return report.toString();
+    }
+
     // Helper methods for sorting
     private String getSortFieldDisplayName(String sortBy) {
         return switch (sortBy.toLowerCase()) {
@@ -1078,6 +1345,147 @@ public class PharmacyManagementControl {
             case "id" -> Comparator.comparing(p -> p.getPrescriptionId() != null ? p.getPrescriptionId() : "");
             default -> Comparator
                     .comparing(p -> p.getPrescriptionDate() != null ? p.getPrescriptionDate() : LocalDate.MAX);
+        };
+    }
+
+    // Helper methods for usage report
+    private double calculateAverageMedicinesPerPrescription() {
+        int totalMedicines = 0;
+        int prescriptionCount = 0;
+        
+        Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
+            if (prescription != null && prescription.getPrescribedMedicines() != null) {
+                totalMedicines += prescription.getPrescribedMedicines().getSize();
+                prescriptionCount++;
+            }
+        }
+        
+        return prescriptionCount > 0 ? (double) totalMedicines / prescriptionCount : 0.0;
+    }
+
+    private double calculateTotalDispensingRevenue() {
+        double totalRevenue = 0.0;
+        
+        Iterator<Prescription> prescriptionIterator = dispensedPrescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
+            if (prescription != null) {
+                totalRevenue += prescription.getTotalCost();
+            }
+        }
+        
+        return totalRevenue;
+    }
+
+    private String getMedicineCategory(String genericName) {
+        if (genericName == null) return "Unknown";
+        
+        String generic = genericName.toLowerCase();
+        if (generic.contains("antibiotic") || generic.contains("penicillin") || generic.contains("amoxicillin")) {
+            return "Antibiotics";
+        } else if (generic.contains("pain") || generic.contains("paracetamol") || generic.contains("ibuprofen")) {
+            return "Pain Relief";
+        } else if (generic.contains("vitamin") || generic.contains("supplement")) {
+            return "Vitamins/Supplements";
+        } else if (generic.contains("cough") || generic.contains("cold")) {
+            return "Cold/Cough";
+        } else if (generic.contains("fever") || generic.contains("temperature")) {
+            return "Fever Management";
+        } else if (generic.contains("allergy") || generic.contains("antihistamine")) {
+            return "Allergy";
+        } else {
+            return "Other";
+        }
+    }
+
+    private double calculateStockTurnoverRate(Medicine medicine) {
+        // Simulate stock turnover rate based on prescription frequency
+        int prescriptionCount = getPrescriptionCountForMedicine(medicine.getMedicineId());
+        int stockLevel = medicine.getQuantityInStock();
+        
+        if (stockLevel == 0) return 0.0;
+        
+        // Calculate turnover as (prescriptions * avg quantity) / stock level * 100
+        double avgQuantity = 2.0; // Assume average 2 units per prescription
+        return Math.min(100.0, (prescriptionCount * avgQuantity / stockLevel) * 100);
+    }
+
+    private int getPrescriptionCountForMedicine(String medicineId) {
+        int count = 0;
+        
+        Iterator<Prescription> prescriptionIterator = prescriptions.iterator();
+        while (prescriptionIterator.hasNext()) {
+            Prescription prescription = prescriptionIterator.next();
+            if (prescription != null && prescription.getPrescribedMedicines() != null) {
+                Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescription.getPrescribedMedicines().iterator();
+                while (prescribedMedicineIterator.hasNext()) {
+                    Prescription.PrescribedMedicine prescribedMedicine = prescribedMedicineIterator.next();
+                    if (prescribedMedicine != null && prescribedMedicine.getMedicine() != null &&
+                            prescribedMedicine.getMedicine().getMedicineId().equals(medicineId)) {
+                        count++;
+                    }
+                }
+            }
+        }
+        
+        return count;
+    }
+
+    private int[] getTopIndices(int[] values, int count) {
+        int[] indices = new int[Math.min(count, values.length)];
+        int[] tempValues = values.clone();
+        for (int i = 0; i < indices.length; i++) {
+            int maxIndex = 0;
+            for (int j = 1; j < tempValues.length; j++) {
+                if (tempValues[j] > tempValues[maxIndex]) {
+                    maxIndex = j;
+                }
+            }
+            indices[i] = maxIndex;
+            tempValues[maxIndex] = -1; // Mark as used
+        }
+        return indices;
+    }
+
+    private String getUsageSortFieldDisplayName(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "name" -> "Medicine Name";
+            case "generic" -> "Generic Name";
+            case "category" -> "Category";
+            case "stock" -> "Stock Level";
+            case "prescriptions" -> "Prescription Count";
+            case "revenue" -> "Revenue";
+            case "id" -> "ID";
+            default -> "Default";
+        };
+    }
+
+    private void sortMedicineUsageArray(Medicine[] medicineArray, String sortBy, String sortOrder) {
+        if (medicineArray == null || medicineArray.length < 2)
+            return;
+
+        Comparator<Medicine> comparator = getMedicineUsageComparator(sortBy);
+
+        // Apply sort order
+        if (sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+
+        utility.QuickSort.sort(medicineArray, comparator);
+    }
+
+    private Comparator<Medicine> getMedicineUsageComparator(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "name" -> Comparator.comparing(m -> m.getMedicineName() != null ? m.getMedicineName() : "");
+            case "generic" -> Comparator.comparing(m -> m.getGenericName() != null ? m.getGenericName() : "");
+            case "category" -> Comparator.comparing(m -> getMedicineCategory(m.getGenericName()));
+            case "stock" -> Comparator.comparing(Medicine::getQuantityInStock);
+            case "prescriptions" -> Comparator.comparing(m -> getPrescriptionCountForMedicine(m.getMedicineId()));
+            case "revenue" -> Comparator.comparing(m -> getPrescriptionCountForMedicine(m.getMedicineId()) * m.getUnitPrice());
+            case "id" -> Comparator.comparing(m -> m.getMedicineId() != null ? m.getMedicineId() : "");
+            default -> Comparator.comparing(m -> m.getMedicineName() != null ? m.getMedicineName() : "");
         };
     }
 }

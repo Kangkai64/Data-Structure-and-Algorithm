@@ -820,10 +820,11 @@ public class MedicalTreatmentUI {
         ConsoleUtils.printHeader("Generate Treatment Reports");
         System.out.println("1. Treatment Analysis Report");
         System.out.println("2. Treatment Status Report");
-        System.out.println("3. Both Reports");
-        System.out.println("4. Back to Medical Treatment");
+        System.out.println("3. Treatment Outcome Report");
+        System.out.println("4. All Reports");
+        System.out.println("5. Back to Medical Treatment");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
 
         switch (choice) {
             case 1:
@@ -835,16 +836,47 @@ public class MedicalTreatmentUI {
                 break;
 
             case 3:
-                generateTreatmentAnalysisReport();
-                generateTreatmentStatusReport();
+                generateTreatmentOutcomeReport();
                 break;
 
             case 4:
+                generateTreatmentAnalysisReport();
+                generateTreatmentStatusReport();
+                generateTreatmentOutcomeReport();
+                break;
+
+            case 5:
                 return;
 
             default:
                 System.out.println("Invalid choice.");
         }
+    }
+
+    private void generateTreatmentOutcomeReport() {
+        ConsoleUtils.printHeader("Treatment Outcome Report");
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Success Rate");
+        System.out.println("2. Recovery Time");
+        System.out.println("3. Treatment Type");
+        System.out.println("4. Treatment Date");
+        System.out.println("5. Patient Name");
+        System.out.println("6. Doctor Name");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        String sortBy = switch (choice) {
+            case 1 -> "success";
+            case 2 -> "recovery";
+            case 3 -> "type";
+            case 4 -> "date";
+            case 5 -> "patient";
+            case 6 -> "doctor";
+            default -> "success";
+        };
+
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println(treatmentControl.generateTreatmentOutcomeReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
     }
 
     private void generateTreatmentAnalysisReport() {

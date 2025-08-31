@@ -222,11 +222,11 @@ public class DoctorManagementControl {
             // Sort the array to ensure proper day-of-week ordering
             java.util.Comparator<Schedule> byDay = new java.util.Comparator<Schedule>() {
                 @Override
-                public int compare(Schedule a, Schedule b) {
-                    if (a == null && b == null) return 0;
-                    if (a == null) return -1;
-                    if (b == null) return 1;
-                    return Integer.compare(a.getDayOfWeek().ordinal(), b.getDayOfWeek().ordinal());
+                public int compare(Schedule firstSchedule, Schedule secondSchedule) {
+                    if (firstSchedule == null && secondSchedule == null) return 0;
+                    if (firstSchedule == null) return -1;
+                    if (secondSchedule == null) return 1;
+                    return Integer.compare(firstSchedule.getDayOfWeek().ordinal(), secondSchedule.getDayOfWeek().ordinal());
                 }
             };
 
@@ -253,19 +253,19 @@ public class DoctorManagementControl {
 
             // Cascade schedules to match doctor availability
             ArrayBucketList<String, Schedule> schedules = getDoctorSchedules(doctorId);
-            Iterator<Schedule> it = schedules.iterator();
-            while (it.hasNext()) {
-                Schedule s = it.next();
+            Iterator<Schedule> scheduleIterator = schedules.iterator();
+            while (scheduleIterator.hasNext()) {
+                Schedule schedule = scheduleIterator.next();
                 try {
-                    scheduleDao.updateAvailability(s.getScheduleId(), isAvailable);
+                    scheduleDao.updateAvailability(schedule.getScheduleId(), isAvailable);
                     // Update in-memory schedule availability if doctor holds schedules
-                    Schedule inMem = doctor.getSchedule(s.getScheduleId());
+                    Schedule inMem = doctor.getSchedule(schedule.getScheduleId());
                     if (inMem != null) {
                         inMem.setAvailable(isAvailable);
                         doctor.updateSchedule(inMem);
                     }
                 } catch (Exception e) {
-                    System.err.println("Failed to update schedule availability for schedule " + s.getScheduleId() + ": "
+                    System.err.println("Failed to update schedule availability for schedule " + schedule.getScheduleId() + ": "
                             + e.getMessage());
                 }
             }
@@ -362,37 +362,37 @@ public class DoctorManagementControl {
         final boolean ascending = sortOrder == null || !sortOrder.equalsIgnoreCase("desc");
         java.util.Comparator<Doctor> comparator = new java.util.Comparator<Doctor>() {
             @Override
-            public int compare(Doctor a, Doctor b) {
-                if (a == null && b == null) return 0;
-                if (a == null) return ascending ? -1 : 1;
-                if (b == null) return ascending ? 1 : -1;
+            public int compare(Doctor firstDoctor, Doctor secondDoctor) {
+                if (firstDoctor == null && secondDoctor == null) return 0;
+                if (firstDoctor == null) return ascending ? -1 : 1;
+                if (secondDoctor == null) return ascending ? 1 : -1;
 
                 int result = 0;
                 String key = sortBy == null ? "name" : sortBy.toLowerCase();
                 switch (key) {
                     case "id":
-                        result = safeStr(a.getDoctorId()).compareToIgnoreCase(safeStr(b.getDoctorId()));
+                        result = safeStr(firstDoctor.getDoctorId()).compareToIgnoreCase(safeStr(secondDoctor.getDoctorId()));
                         break;
                     case "license":
-                        result = safeStr(a.getLicenseNumber()).compareToIgnoreCase(safeStr(b.getLicenseNumber()));
+                        result = safeStr(firstDoctor.getLicenseNumber()).compareToIgnoreCase(safeStr(secondDoctor.getLicenseNumber()));
                         break;
                     case "specialty":
-                        result = safeStr(a.getMedicalSpecialty()).compareToIgnoreCase(safeStr(b.getMedicalSpecialty()));
+                        result = safeStr(firstDoctor.getMedicalSpecialty()).compareToIgnoreCase(safeStr(secondDoctor.getMedicalSpecialty()));
                         break;
                     case "experience":
-                        int expA = a.getExpYears();
-                        int expB = b.getExpYears();
-                        result = Integer.compare(expA, expB);
+                        int firstExperience = firstDoctor.getExpYears();
+                        int secondExperience = secondDoctor.getExpYears();
+                        result = Integer.compare(firstExperience, secondExperience);
                         break;
                     case "email":
-                        result = safeStr(a.getEmail()).compareToIgnoreCase(safeStr(b.getEmail()));
+                        result = safeStr(firstDoctor.getEmail()).compareToIgnoreCase(safeStr(secondDoctor.getEmail()));
                         break;
                     case "phone":
-                        result = safeStr(a.getPhoneNumber()).compareToIgnoreCase(safeStr(b.getPhoneNumber()));
+                        result = safeStr(firstDoctor.getPhoneNumber()).compareToIgnoreCase(safeStr(secondDoctor.getPhoneNumber()));
                         break;
                     case "name":
                     default:
-                        result = safeStr(a.getFullName()).compareToIgnoreCase(safeStr(b.getFullName()));
+                        result = safeStr(firstDoctor.getFullName()).compareToIgnoreCase(safeStr(secondDoctor.getFullName()));
                         break;
                 }
                 return ascending ? result : -result;
@@ -456,7 +456,7 @@ public class DoctorManagementControl {
 
     private String repeatChar(char ch, int count) {
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < count; i++)
+        for (int charIndex = 0; charIndex < count; charIndex++)
             builder.append(ch);
         return builder.toString();
     }
@@ -468,7 +468,7 @@ public class DoctorManagementControl {
             return text;
         int padding = (width - text.length()) / 2;
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < padding; i++)
+        for (int paddingIndex = 0; paddingIndex < padding; paddingIndex++)
             builder.append(' ');
         builder.append(text);
         while (builder.length() < width)
@@ -511,35 +511,35 @@ public class DoctorManagementControl {
                 .append("\n");
         report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
 
-        String h1 = padRight("Doctor ID", 12);
-        String h2 = padRight("Name", 28);
-        String h3 = padRight("Specialty", 22);
-        String h4 = padRight("License", 22);
-        String h5 = padRight("Consultations", 16);
+        String doctorIdHeader = padRight("Doctor ID", 12);
+        String nameHeader = padRight("Name", 28);
+        String specialtyHeader = padRight("Specialty", 22);
+        String licenseHeader = padRight("License", 22);
+        String consultationHeader = padRight("Consultations", 16);
         report.append(" ")
-                .append(h1).append(" | ")
-                .append(h2).append(" | ")
-                .append(h3).append(" | ")
-                .append(h4).append(" | ")
-                .append(h5)
+                .append(doctorIdHeader).append(" | ")
+                .append(nameHeader).append(" | ")
+                .append(specialtyHeader).append(" | ")
+                .append(licenseHeader).append(" | ")
+                .append(consultationHeader)
                 .append("\n");
         report.append(line).append("\n");
 
         Iterator<Doctor> doctorIterator = activeDoctors.iterator();
         while (doctorIterator.hasNext()) {
             Doctor doctor = doctorIterator.next();
-            String c1 = padRight(doctor.getDoctorId(), 12);
-            String c2 = padRight(doctor.getFullName(), 28);
-            String c3 = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
-            String c4 = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
+            String doctorIdColumn = padRight(doctor.getDoctorId(), 12);
+            String nameColumn = padRight(doctor.getFullName(), 28);
+            String specialtyColumn = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
+            String licenseColumn = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
             int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
-            String c5 = padLeft(String.valueOf(consultCount), 16);
+            String consultationColumn = padLeft(String.valueOf(consultCount), 16);
             report.append(" ")
-                    .append(c1).append(" | ")
-                    .append(c2).append(" | ")
-                    .append(c3).append(" | ")
-                    .append(c4).append(" | ")
-                    .append(c5)
+                    .append(doctorIdColumn).append(" | ")
+                    .append(nameColumn).append(" | ")
+                    .append(specialtyColumn).append(" | ")
+                    .append(licenseColumn).append(" | ")
+                    .append(consultationColumn)
                     .append("\n");
         }
 
@@ -598,43 +598,43 @@ public class DoctorManagementControl {
             }
             Comparator<Doctor> comparator = new Comparator<Doctor>() {
                 @Override
-                public int compare(Doctor a, Doctor b) {
-                    return compareDoctors(a, b, field, ascending);
+                public int compare(Doctor firstDoctor, Doctor secondDoctor) {
+                    return compareDoctors(firstDoctor, secondDoctor, field, ascending);
                 }
             };
             QuickSort.sort(doctors, comparator);
-            for (int i = 0; i < size; i++) {
-                Doctor doctor = doctors[i];
-                String c1 = padRight(doctor.getDoctorId(), 12);
-                String c2 = padRight(doctor.getFullName(), 28);
-                String c3 = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
-                String c4 = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
+            for (int doctorIndex = 0; doctorIndex < size; doctorIndex++) {
+                Doctor doctor = doctors[doctorIndex];
+                String doctorIdColumn = padRight(doctor.getDoctorId(), 12);
+                String nameColumn = padRight(doctor.getFullName(), 28);
+                String specialtyColumn = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
+                String licenseColumn = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
                 int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
-                String c5 = padLeft(String.valueOf(consultCount), 16);
+                String consultationColumn = padLeft(String.valueOf(consultCount), 16);
                 report.append(" ")
-                        .append(c1).append(" | ")
-                        .append(c2).append(" | ")
-                        .append(c3).append(" | ")
-                        .append(c4).append(" | ")
-                        .append(c5)
+                        .append(doctorIdColumn).append(" | ")
+                        .append(nameColumn).append(" | ")
+                        .append(specialtyColumn).append(" | ")
+                        .append(licenseColumn).append(" | ")
+                        .append(consultationColumn)
                         .append("\n");
             }
         } else {
-            Iterator<Doctor> it = activeDoctors.iterator();
-            while (it.hasNext()) {
-                Doctor doctor = it.next();
-                String c1 = padRight(doctor.getDoctorId(), 12);
-                String c2 = padRight(doctor.getFullName(), 28);
-                String c3 = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
-                String c4 = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
+            Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+            while (doctorIterator.hasNext()) {
+                Doctor doctor = doctorIterator.next();
+                String doctorIdColumn = padRight(doctor.getDoctorId(), 12);
+                String nameColumn = padRight(doctor.getFullName(), 28);
+                String specialtyColumn = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
+                String licenseColumn = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
                 int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
-                String c5 = padLeft(String.valueOf(consultCount), 16);
+                String consultationColumn = padLeft(String.valueOf(consultCount), 16);
                 report.append(" ")
-                        .append(c1).append(" | ")
-                        .append(c2).append(" | ")
-                        .append(c3).append(" | ")
-                        .append(c4).append(" | ")
-                        .append(c5)
+                        .append(doctorIdColumn).append(" | ")
+                        .append(nameColumn).append(" | ")
+                        .append(specialtyColumn).append(" | ")
+                        .append(licenseColumn).append(" | ")
+                        .append(consultationColumn)
                         .append("\n");
             }
         }
@@ -649,29 +649,29 @@ public class DoctorManagementControl {
         return report.toString();
     }
 
-    private int compareDoctors(Doctor a, Doctor b, String sortBy, boolean ascending) {
+    private int compareDoctors(Doctor firstDoctor, Doctor secondDoctor, String sortBy, boolean ascending) {
         int result;
         if ("name".equals(sortBy)) {
-            String an = a.getFullName() == null ? "" : a.getFullName();
-            String bn = b.getFullName() == null ? "" : b.getFullName();
-            result = an.compareToIgnoreCase(bn);
+            String firstName = firstDoctor.getFullName() == null ? "" : firstDoctor.getFullName();
+            String secondName = secondDoctor.getFullName() == null ? "" : secondDoctor.getFullName();
+            result = firstName.compareToIgnoreCase(secondName);
         } else if ("specialty".equals(sortBy)) {
-            String as = a.getMedicalSpecialty() == null ? "" : a.getMedicalSpecialty();
-            String bs = b.getMedicalSpecialty() == null ? "" : b.getMedicalSpecialty();
-            result = as.compareToIgnoreCase(bs);
+            String firstSpecialty = firstDoctor.getMedicalSpecialty() == null ? "" : firstDoctor.getMedicalSpecialty();
+            String secondSpecialty = secondDoctor.getMedicalSpecialty() == null ? "" : secondDoctor.getMedicalSpecialty();
+            result = firstSpecialty.compareToIgnoreCase(secondSpecialty);
         } else {
-            int ae = getConsultationCountForDoctor(a.getDoctorId());
-            int be = getConsultationCountForDoctor(b.getDoctorId());
-            result = Integer.compare(ae, be);
+            int firstConsultationCount = getConsultationCountForDoctor(firstDoctor.getDoctorId());
+            int secondConsultationCount = getConsultationCountForDoctor(secondDoctor.getDoctorId());
+            result = Integer.compare(firstConsultationCount, secondConsultationCount);
         }
         if (!ascending) {
             result = -result;
         }
 
         if (result == 0) {
-            String aid = a.getDoctorId() == null ? "" : a.getDoctorId();
-            String bid = b.getDoctorId() == null ? "" : b.getDoctorId();
-            result = aid.compareTo(bid);
+            String firstId = firstDoctor.getDoctorId() == null ? "" : firstDoctor.getDoctorId();
+            String secondId = secondDoctor.getDoctorId() == null ? "" : secondDoctor.getDoctorId();
+            result = firstId.compareTo(secondId);
         }
         return result;
     }
@@ -682,8 +682,8 @@ public class DoctorManagementControl {
             int count = 0;
             Iterator<Consultation> iterator = allConsultations.iterator();
             while (iterator.hasNext()) {
-                Consultation c = iterator.next();
-                if (c != null && c.getDoctor() != null && doctorId.equals(c.getDoctor().getDoctorId())) {
+                Consultation consultation = iterator.next();
+                if (consultation != null && consultation.getDoctor() != null && doctorId.equals(consultation.getDoctor().getDoctorId())) {
                     count++;
                 }
             }
@@ -720,20 +720,20 @@ public class DoctorManagementControl {
 
         // Totals per doctorId (weekly hours)
         adt.ArrayBucketList<String, Double> weeklyTotals = new adt.ArrayBucketList<String, Double>();
-        Iterator<Schedule> it = allSchedules.iterator();
-        while (it.hasNext()) {
-            Schedule s = it.next();
+        Iterator<Schedule> scheduleIterator = allSchedules.iterator();
+        while (scheduleIterator.hasNext()) {
+            Schedule schedule = scheduleIterator.next();
             try {
-                java.time.LocalTime from = java.time.LocalTime.parse(s.getFromTime());
-                java.time.LocalTime to = java.time.LocalTime.parse(s.getToTime());
+                java.time.LocalTime from = java.time.LocalTime.parse(schedule.getFromTime());
+                java.time.LocalTime to = java.time.LocalTime.parse(schedule.getToTime());
                 long minutes = java.time.Duration.between(from, to).toMinutes();
                 if (minutes < 0) {
                     // guard if times are inverted; skip
                     continue;
                 }
                 double hours = minutes / 60.0;
-                Double current = weeklyTotals.getValue(s.getDoctorId());
-                weeklyTotals.add(s.getDoctorId(), (current == null ? 0.0 : current) + hours);
+                Double current = weeklyTotals.getValue(schedule.getDoctorId());
+                weeklyTotals.add(schedule.getDoctorId(), (current == null ? 0.0 : current) + hours);
             } catch (Exception ignore) {
                 // skip error time format rows
             }
@@ -749,18 +749,18 @@ public class DoctorManagementControl {
         }
         int docCount = activeDoctors.getSize();
         Row[] rows = new Row[docCount];
-        int pos = 0;
-        Iterator<Doctor> docIt = activeDoctors.iterator();
-        while (docIt.hasNext()) {
-            Doctor d = docIt.next();
-            Row r = new Row();
-            r.doctorId = d.getDoctorId();
-            r.name = d.getFullName();
-            r.specialty = d.getMedicalSpecialty();
-            Double w = weeklyTotals.getValue(d.getDoctorId());
-            r.weekly = w == null ? 0.0 : w.doubleValue();
-            r.annual = r.weekly * 52.0;
-            rows[pos++] = r;
+        int position = 0;
+        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            Row row = new Row();
+            row.doctorId = doctor.getDoctorId();
+            row.name = doctor.getFullName();
+            row.specialty = doctor.getMedicalSpecialty();
+            Double weeklyHours = weeklyTotals.getValue(doctor.getDoctorId());
+            row.weekly = weeklyHours == null ? 0.0 : weeklyHours.doubleValue();
+            row.annual = row.weekly * 52.0;
+            rows[position++] = row;
         }
 
         // Sorting
@@ -769,59 +769,59 @@ public class DoctorManagementControl {
                 || field.equals("annual");
         java.util.Comparator<Row> comparator = new java.util.Comparator<Row>() {
             @Override
-            public int compare(Row a, Row b) {
+            public int compare(Row firstRow, Row secondRow) {
                 int result;
                 if (field.equals("name")) {
-                    String an = a.name == null ? "" : a.name;
-                    String bn = b.name == null ? "" : b.name;
-                    result = an.compareToIgnoreCase(bn);
+                    String firstName = firstRow.name == null ? "" : firstRow.name;
+                    String secondName = secondRow.name == null ? "" : secondRow.name;
+                    result = firstName.compareToIgnoreCase(secondName);
                 } else if (field.equals("specialty")) {
-                    String as = a.specialty == null ? "" : a.specialty;
-                    String bs = b.specialty == null ? "" : b.specialty;
-                    result = as.compareToIgnoreCase(bs);
+                    String firstSpecialty = firstRow.specialty == null ? "" : firstRow.specialty;
+                    String secondSpecialty = secondRow.specialty == null ? "" : secondRow.specialty;
+                    result = firstSpecialty.compareToIgnoreCase(secondSpecialty);
                 } else if (field.equals("weekly")) {
-                    result = Double.compare(a.weekly, b.weekly);
+                    result = Double.compare(firstRow.weekly, secondRow.weekly);
                 } else if (field.equals("annual")) {
-                    result = Double.compare(a.annual, b.annual);
+                    result = Double.compare(firstRow.annual, secondRow.annual);
                 } else {
                     // default: annual desc
-                    result = -Double.compare(a.annual, b.annual);
+                    result = -Double.compare(firstRow.annual, secondRow.annual);
                 }
                 if (!ascending)
                     result = -result;
                 // Tie-breaker by doctorId
                 if (result == 0) {
-                    String aid = a.doctorId == null ? "" : a.doctorId;
-                    String bid = b.doctorId == null ? "" : b.doctorId;
-                    result = aid.compareTo(bid);
+                    String firstId = firstRow.doctorId == null ? "" : firstRow.doctorId;
+                    String secondId = secondRow.doctorId == null ? "" : secondRow.doctorId;
+                    result = firstId.compareTo(secondId);
                 }
                 return result;
             }
         };
         if (doSort || true) { // always sort (default annual desc if
-            quickSortRows(rows, 0, pos - 1, comparator);
+            quickSortRows(rows, 0, position - 1, comparator);
         }
 
-        String h1 = padRight("Doctor ID", 12);
-        String h2 = padRight("Name", 28);
-        String h3 = padRight("Specialty", 22);
-        String h4 = padRight("Weekly Hours", 14);
-        String h5 = padRight("Annual Hours", 14);
-        report.append(" ").append(h1).append(" | ").append(h2).append(" | ")
-                .append(h3).append(" | ").append(h4).append(" | ").append(h5).append("\n");
+        String doctorIdHeader = padRight("Doctor ID", 12);
+        String nameHeader = padRight("Name", 28);
+        String specialtyHeader = padRight("Specialty", 22);
+        String weeklyHeader = padRight("Weekly Hours", 14);
+        String annualHeader = padRight("Annual Hours", 14);
+        report.append(" ").append(doctorIdHeader).append(" | ").append(nameHeader).append(" | ")
+                .append(specialtyHeader).append(" | ").append(weeklyHeader).append(" | ").append(annualHeader).append("\n");
         report.append(line).append("\n");
 
         double totalAnnual = 0.0;
-        for (int i = 0; i < pos; i++) {
-            Row r = rows[i];
-            String c1 = padRight(r.doctorId, 12);
-            String c2 = padRight(r.name == null ? "" : r.name, 28);
-            String c3 = padRight(r.specialty == null ? "" : r.specialty, 22);
-            String c4 = padLeft(String.format(java.util.Locale.US, "%.2f", r.weekly), 14);
-            String c5 = padLeft(String.format(java.util.Locale.US, "%.2f", r.annual), 14);
-            report.append(" ").append(c1).append(" | ").append(c2).append(" | ")
-                    .append(c3).append(" | ").append(c4).append(" | ").append(c5).append("\n");
-            totalAnnual += r.annual;
+        for (int doctorIndex = 0; doctorIndex < position; doctorIndex++) {
+            Row row = rows[doctorIndex];
+            String doctorIdColumn = padRight(row.doctorId, 12);
+            String nameColumn = padRight(row.name == null ? "" : row.name, 28);
+            String specialtyColumn = padRight(row.specialty == null ? "" : row.specialty, 22);
+            String weeklyColumn = padLeft(String.format(java.util.Locale.US, "%.2f", row.weekly), 14);
+            String annualColumn = padLeft(String.format(java.util.Locale.US, "%.2f", row.annual), 14);
+            report.append(" ").append(doctorIdColumn).append(" | ").append(nameColumn).append(" | ")
+                    .append(specialtyColumn).append(" | ").append(weeklyColumn).append(" | ").append(annualColumn).append("\n");
+            totalAnnual += row.annual;
         }
 
         report.append("\nTotal doctors : ").append(docCount).append("\n");
@@ -837,25 +837,25 @@ public class DoctorManagementControl {
     private void quickSortRows(Object[] arr, int low, int high, java.util.Comparator comparator) {
         if (low >= high)
             return;
-        int i = low, j = high;
+        int leftIndex = low, rightIndex = high;
         Object pivot = arr[low + (high - low) / 2];
-        while (i <= j) {
-            while (comparator.compare(arr[i], pivot) < 0)
-                i++;
-            while (comparator.compare(arr[j], pivot) > 0)
-                j--;
-            if (i <= j) {
-                Object tmp = arr[i];
-                arr[i] = arr[j];
-                arr[j] = tmp;
-                i++;
-                j--;
+        while (leftIndex <= rightIndex) {
+            while (comparator.compare(arr[leftIndex], pivot) < 0)
+                leftIndex++;
+            while (comparator.compare(arr[rightIndex], pivot) > 0)
+                rightIndex--;
+            if (leftIndex <= rightIndex) {
+                Object tmp = arr[leftIndex];
+                arr[leftIndex] = arr[rightIndex];
+                arr[rightIndex] = tmp;
+                leftIndex++;
+                rightIndex--;
             }
         }
-        if (low < j)
-            quickSortRows(arr, low, j, comparator);
-        if (i < high)
-            quickSortRows(arr, i, high, comparator);
+        if (low < rightIndex)
+            quickSortRows(arr, low, rightIndex, comparator);
+        if (leftIndex < high)
+            quickSortRows(arr, leftIndex, high, comparator);
     }
 
     private void updateActiveDoctorsList(Doctor updatedDoctor) {
@@ -955,28 +955,28 @@ public class DoctorManagementControl {
         report.append("\nTOP PERFORMERS BY CONSULTATIONS:\n");
         int[] consultationCountsCopy = consultationCounts.clone();
         int[] topConsultationIndices = getTopIndices(consultationCountsCopy, 3);
-        for (int i = 0; i < topConsultationIndices.length; i++) {
-            int index = topConsultationIndices[i];
+        for (int rankIndex = 0; rankIndex < topConsultationIndices.length; rankIndex++) {
+            int index = topConsultationIndices[rankIndex];
             report.append(String.format("%d. %s: %d consultations\n", 
-                    i + 1, doctorNames[index], consultationCounts[index]));
+                    rankIndex + 1, doctorNames[index], consultationCounts[index]));
         }
 
         report.append("\nTOP PERFORMERS BY SUCCESS RATE:\n");
         double[] successRatesCopy = successRates.clone();
         int[] topSuccessIndices = getTopIndices(successRatesCopy, 3);
-        for (int i = 0; i < topSuccessIndices.length; i++) {
-            int index = topSuccessIndices[i];
+        for (int rankIndex = 0; rankIndex < topSuccessIndices.length; rankIndex++) {
+            int index = topSuccessIndices[rankIndex];
             report.append(String.format("%d. %s: %.1f%%\n", 
-                    i + 1, doctorNames[index], successRates[index]));
+                    rankIndex + 1, doctorNames[index], successRates[index]));
         }
 
         report.append("\nTOP PERFORMERS BY PATIENT SATISFACTION:\n");
         double[] satisfactionCopy = averagePatientSatisfaction.clone();
         int[] topSatisfactionIndices = getTopIndices(satisfactionCopy, 3);
-        for (int i = 0; i < topSatisfactionIndices.length; i++) {
-            int index = topSatisfactionIndices[i];
+        for (int rankIndex = 0; rankIndex < topSatisfactionIndices.length; rankIndex++) {
+            int index = topSatisfactionIndices[rankIndex];
             report.append(String.format("%d. %s: %.1f/5.0\n", 
-                    i + 1, doctorNames[index], averagePatientSatisfaction[index]));
+                    rankIndex + 1, doctorNames[index], averagePatientSatisfaction[index]));
         }
 
         // Specialty performance analysis
@@ -993,9 +993,9 @@ public class DoctorManagementControl {
             
             // Find if specialty already exists
             int specialtyIndex = -1;
-            for (int i = 0; i < specialtyCount; i++) {
-                if (specialties[i].equals(specialty)) {
-                    specialtyIndex = i;
+            for (int specialtyCounter = 0; specialtyCounter < specialtyCount; specialtyCounter++) {
+                if (specialties[specialtyCounter].equals(specialty)) {
+                    specialtyIndex = specialtyCounter;
                     break;
                 }
             }
@@ -1011,9 +1011,9 @@ public class DoctorManagementControl {
             }
         }
 
-        for (int i = 0; i < specialtyCount; i++) {
+        for (int specialtyCounter = 0; specialtyCounter < specialtyCount; specialtyCounter++) {
             report.append(String.format("%-20s: %d doctors, %.1f%% avg success rate\n", 
-                    specialties[i], specialtyCounts[i], specialtySuccessRates[i]));
+                    specialties[specialtyCounter], specialtyCounts[specialtyCounter], specialtySuccessRates[specialtyCounter]));
         }
 
         report.append("-".repeat(REPORT_WIDTH)).append("\n\n");
@@ -1027,21 +1027,21 @@ public class DoctorManagementControl {
         String sortOrder = ascending ? "ASCENDING" : "DESCENDING";
         report.append(String.format("Sorted by: %s (%s order)\n\n", sortField, sortOrder));
 
-        String h1 = padRight("Doctor ID", 12);
-        String h2 = padRight("Name", 25);
-        String h3 = padRight("Specialty", 20);
-        String h4 = padRight("Consultations", 15);
-        String h5 = padRight("Success Rate", 15);
-        String h6 = padRight("Satisfaction", 15);
-        String h7 = padRight("Revenue", 15);
+        String doctorIdHeader = padRight("Doctor ID", 12);
+        String nameHeader = padRight("Name", 25);
+        String specialtyHeader = padRight("Specialty", 20);
+        String consultationHeader = padRight("Consultations", 15);
+        String successRateHeader = padRight("Success Rate", 15);
+        String satisfactionHeader = padRight("Satisfaction", 15);
+        String revenueHeader = padRight("Revenue", 15);
         report.append(" ")
-                .append(h1).append(" | ")
-                .append(h2).append(" | ")
-                .append(h3).append(" | ")
-                .append(h4).append(" | ")
-                .append(h5).append(" | ")
-                .append(h6).append(" | ")
-                .append(h7)
+                .append(doctorIdHeader).append(" | ")
+                .append(nameHeader).append(" | ")
+                .append(specialtyHeader).append(" | ")
+                .append(consultationHeader).append(" | ")
+                .append(successRateHeader).append(" | ")
+                .append(satisfactionHeader).append(" | ")
+                .append(revenueHeader)
                 .append("\n");
         report.append(line).append("\n");
 
@@ -1060,31 +1060,31 @@ public class DoctorManagementControl {
         for (Doctor doctor : doctorArray) {
             // Find doctor index for metrics
             int doctorIdx = -1;
-            for (int i = 0; i < doctorIds.length; i++) {
-                if (doctorIds[i].equals(doctor.getDoctorId())) {
-                    doctorIdx = i;
+            for (int doctorCounter = 0; doctorCounter < doctorIds.length; doctorCounter++) {
+                if (doctorIds[doctorCounter].equals(doctor.getDoctorId())) {
+                    doctorIdx = doctorCounter;
                     break;
                 }
             }
 
             if (doctorIdx == -1) continue;
 
-            String c1 = padRight(doctor.getDoctorId(), 12);
-            String c2 = padRight(doctor.getFullName(), 25);
-            String c3 = padRight(doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "General", 20);
-            String c4 = padLeft(String.valueOf(consultationCounts[doctorIdx]), 15);
-            String c5 = padLeft(String.format("%.1f%%", successRates[doctorIdx]), 15);
-            String c6 = padLeft(String.format("%.1f/5.0", averagePatientSatisfaction[doctorIdx]), 15);
-            String c7 = padLeft(String.format("RM %.2f", totalRevenue[doctorIdx]), 15);
+            String doctorIdColumn = padRight(doctor.getDoctorId(), 12);
+            String nameColumn = padRight(doctor.getFullName(), 25);
+            String specialtyColumn = padRight(doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "General", 20);
+            String consultationColumn = padLeft(String.valueOf(consultationCounts[doctorIdx]), 15);
+            String successRateColumn = padLeft(String.format("%.1f%%", successRates[doctorIdx]), 15);
+            String satisfactionColumn = padLeft(String.format("%.1f/5.0", averagePatientSatisfaction[doctorIdx]), 15);
+            String revenueColumn = padLeft(String.format("RM %.2f", totalRevenue[doctorIdx]), 15);
 
             report.append(" ")
-                    .append(c1).append(" | ")
-                    .append(c2).append(" | ")
-                    .append(c3).append(" | ")
-                    .append(c4).append(" | ")
-                    .append(c5).append(" | ")
-                    .append(c6).append(" | ")
-                    .append(c7)
+                    .append(doctorIdColumn).append(" | ")
+                    .append(nameColumn).append(" | ")
+                    .append(specialtyColumn).append(" | ")
+                    .append(consultationColumn).append(" | ")
+                    .append(successRateColumn).append(" | ")
+                    .append(satisfactionColumn).append(" | ")
+                    .append(revenueColumn)
                     .append("\n");
         }
 
@@ -1116,14 +1116,14 @@ public class DoctorManagementControl {
 
     private int[] getTopIndices(int[] values, int count) {
         int[] indices = new int[Math.min(count, values.length)];
-        for (int i = 0; i < indices.length; i++) {
+        for (int rankIndex = 0; rankIndex < indices.length; rankIndex++) {
             int maxIndex = 0;
-            for (int j = 1; j < values.length; j++) {
-                if (values[j] > values[maxIndex]) {
-                    maxIndex = j;
+            for (int searchIndex = 1; searchIndex < values.length; searchIndex++) {
+                if (values[searchIndex] > values[maxIndex]) {
+                    maxIndex = searchIndex;
                 }
             }
-            indices[i] = maxIndex;
+            indices[rankIndex] = maxIndex;
             values[maxIndex] = -1; // Mark as used
         }
         return indices;
@@ -1132,14 +1132,14 @@ public class DoctorManagementControl {
     private int[] getTopIndices(double[] values, int count) {
         int[] indices = new int[Math.min(count, values.length)];
         double[] tempValues = values.clone();
-        for (int i = 0; i < indices.length; i++) {
+        for (int rankIndex = 0; rankIndex < indices.length; rankIndex++) {
             int maxIndex = 0;
-            for (int j = 1; j < tempValues.length; j++) {
-                if (tempValues[j] > tempValues[maxIndex]) {
-                    maxIndex = j;
+            for (int searchIndex = 1; searchIndex < tempValues.length; searchIndex++) {
+                if (tempValues[searchIndex] > tempValues[maxIndex]) {
+                    maxIndex = searchIndex;
                 }
             }
-            indices[i] = maxIndex;
+            indices[rankIndex] = maxIndex;
             tempValues[maxIndex] = -1; // Mark as used
         }
         return indices;

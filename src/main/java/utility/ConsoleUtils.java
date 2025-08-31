@@ -332,4 +332,28 @@ public class ConsoleUtils {
             e.printStackTrace();
         }
     }
+
+    public static void clearScreen() {
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+
+            ProcessBuilder processBuilder;
+            if (os.contains("win")) {
+                // Windows
+                processBuilder = new ProcessBuilder("cmd", "/c", "cls");
+            } else {
+                // Unix/Linux/Mac
+                processBuilder = new ProcessBuilder("clear");
+            }
+
+            processBuilder.inheritIO();
+            Process process = processBuilder.start();
+            process.waitFor();
+
+        } catch (IOException | InterruptedException e) {
+            // Fallback to ANSI escape codes if system commands fail
+            System.out.print("\033[H\033[2J");
+            System.out.flush();
+        }
+    }
 }

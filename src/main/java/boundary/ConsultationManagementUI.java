@@ -29,6 +29,7 @@ public class ConsultationManagementUI {
 
     public void displayConsultationManagementMenu() {
         while (true) {
+            ConsoleUtils.clearScreen();
             consultationControl.loadConsultationData();
             ConsoleUtils.printHeader("Consultation Management Module");
             System.out.println("1. Schedule Consultation");

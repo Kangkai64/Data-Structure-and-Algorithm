@@ -32,6 +32,7 @@ public class MedicalTreatmentUI {
 
     public void displayTreatmentManagementMenu() {
         while (true) {
+            ConsoleUtils.clearScreen();
             consultationControl.loadConsultationData();
             treatmentControl.loadTreatmentData();
             ConsoleUtils.printHeader("MEDICAL TREATMENT MANAGEMENT MODULE");

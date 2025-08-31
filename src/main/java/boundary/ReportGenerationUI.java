@@ -58,6 +58,7 @@ public class ReportGenerationUI {
 
     public void displayReportMenu() {
         while (true) {
+            ConsoleUtils.clearScreen();
             ConsoleUtils.printHeader("Report Generation Menu");
             System.out.println("1. Patient Reports");
             System.out.println("2. Doctor Reports");
@@ -69,6 +70,7 @@ public class ReportGenerationUI {
             System.out.print("Enter your choice: ");
 
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+            System.out.println();
 
             switch (choice) {
                 case 1:
@@ -105,6 +107,7 @@ public class ReportGenerationUI {
         System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        System.out.println();
 
         switch (choice) {
             case 1:
@@ -136,12 +139,14 @@ public class ReportGenerationUI {
         System.out.println("9. Status");
 
         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter sort field choice: ", 1, 9);
+        System.out.println();
         
         System.out.println("Sort order:");
         System.out.println("1. Ascending (A-Z, 0-9)");
         System.out.println("2. Descending (Z-A, 9-0)");
         
         int orderChoice = ConsoleUtils.getIntInput(scanner, "Enter sort order choice: ", 1, 2);
+        System.out.println();
 
         String sortBy = getSortField(sortChoice);
         String sortOrder = orderChoice == 1 ? "asc" : "desc";
@@ -154,6 +159,7 @@ public class ReportGenerationUI {
         String sortBy = getSortField(1);
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
 
         System.out.println(patientControl.generatePatientDemographicsReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
@@ -183,6 +189,7 @@ public class ReportGenerationUI {
         System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         switch (choice) {
             case 1:
@@ -213,6 +220,7 @@ public class ReportGenerationUI {
         System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         String sortBy = switch (choice) {
             case 1 -> "consultations";
@@ -235,6 +243,7 @@ public class ReportGenerationUI {
         System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         switch (choice) {
             case 1:
@@ -265,6 +274,7 @@ public class ReportGenerationUI {
         System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         String sortBy = switch (choice) {
             case 1 -> "efficiency";
@@ -275,6 +285,7 @@ public class ReportGenerationUI {
         };
 
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
         System.out.println(consultationControl.generateConsultationEfficiencyReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
@@ -285,6 +296,7 @@ public class ReportGenerationUI {
         String sortBy = getConsultationSortField();
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
 
         System.out.println(consultationControl.generateConsultationReport(sortBy, sortOrder));
     }
@@ -295,6 +307,7 @@ public class ReportGenerationUI {
         String sortBy = getConsultationSortField();
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
 
         System.out.println(consultationControl.generateConsultationHistoryReport(sortBy, sortOrder));
     }
@@ -308,6 +321,7 @@ public class ReportGenerationUI {
         System.out.println("5. Status");
         System.out.println("6. Consultation Fee");
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+
         switch (choice) {
             case 1: return "id";
             case 2: return "patient";
@@ -328,6 +342,7 @@ public class ReportGenerationUI {
         System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         switch (choice) {
             case 1:
@@ -358,6 +373,7 @@ public class ReportGenerationUI {
         System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         String sortBy = switch (choice) {
             case 1 -> "success";
@@ -368,6 +384,7 @@ public class ReportGenerationUI {
         };
 
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
         System.out.println(treatmentControl.generateTreatmentOutcomeReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
@@ -380,6 +397,7 @@ public class ReportGenerationUI {
         System.out.println("4. All Reports");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         switch (choice) {
             case 1:
@@ -403,23 +421,11 @@ public class ReportGenerationUI {
 
     private void generateMedicineUsageReportFromReportUI() {
         ConsoleUtils.printHeader("Medicine Usage Report");
-        System.out.println("1. Sort by Prescription Count");
-        System.out.println("2. Sort by Revenue");
-        System.out.println("3. Sort by Stock Level");
-        System.out.println("4. Sort by Category");
-        System.out.print("Enter choice: ");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
-
-        String sortBy = switch (choice) {
-            case 1 -> "prescriptions";
-            case 2 -> "revenue";
-            case 3 -> "stock";
-            case 4 -> "category";
-            default -> "prescriptions";
-        };
-
+        String sortBy = getMedicineUsageSortField();
+        System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
         System.out.println(pharmacyControl.generateMedicineUsageReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
@@ -430,6 +436,7 @@ public class ReportGenerationUI {
         String sortBy = getMedicineSortField();
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
 
         System.out.println(pharmacyControl.generateMedicineStockReport(sortBy, sortOrder));
     }
@@ -440,6 +447,7 @@ public class ReportGenerationUI {
         String sortBy = getPrescriptionSortField();
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
 
         System.out.println(pharmacyControl.generatePrescriptionReport(sortBy, sortOrder));
     }
@@ -454,6 +462,7 @@ public class ReportGenerationUI {
         System.out.println("6. Expiry Date");
         System.out.println("7. Status");
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+
         switch (choice) {
             case 1: return "id";
             case 2: return "name";
@@ -475,6 +484,7 @@ public class ReportGenerationUI {
         System.out.println("5. Status");
         System.out.println("6. Total Cost");
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+
         switch (choice) {
             case 1: return "id";
             case 2: return "patient";
@@ -486,5 +496,20 @@ public class ReportGenerationUI {
         }
     }
 
-    
+    private String getMedicineUsageSortField() {
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Prescription Count");
+        System.out.println("2. Revenue");
+        System.out.println("3. Stock Level");
+        System.out.println("4. Category");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+
+        return switch (choice) {
+            case 1 -> "prescriptions";
+            case 2 -> "revenue";
+            case 3 -> "stock";
+            case 4 -> "category";
+            default -> "prescriptions";
+        };
+    }
 }

@@ -26,6 +26,7 @@ public class PharmacyManagementUI {
 
     public void displayPharmacyManagementMenu() {
         while (true) {
+            ConsoleUtils.clearScreen();
             pharmacyControl.loadPharmacyData();
             ConsoleUtils.printHeader("Pharmacy Management Module");
             System.out.println("1. Add Medicine");
@@ -971,27 +972,12 @@ public class PharmacyManagementUI {
 
     private void generateMedicineUsageReport() {
         ConsoleUtils.printHeader("Medicine Usage Report");
-        System.out.println("Select field to sort by:");
-        System.out.println("1. Prescription Count");
-        System.out.println("2. Revenue");
-        System.out.println("3. Stock Level");
-        System.out.println("4. Category");
-        System.out.println("5. Medicine Name");
-        System.out.println("6. Generic Name");
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
-        
-        String sortBy = switch (choice) {
-            case 1 -> "prescriptions";
-            case 2 -> "revenue";
-            case 3 -> "stock";
-            case 4 -> "category";
-            case 5 -> "name";
-            case 6 -> "generic";
-            default -> "prescriptions";
-        };
 
+        String sortBy = getMedicineUsageSortField();
+        System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
         System.out.println();
+
         System.out.println(pharmacyControl.generateMedicineUsageReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
@@ -1002,6 +988,7 @@ public class PharmacyManagementUI {
         String sortBy = getMedicineSortField();
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
 
         System.out.println(pharmacyControl.generateMedicineStockReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
@@ -1013,6 +1000,7 @@ public class PharmacyManagementUI {
         String sortBy = getPrescriptionSortField();
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
 
         System.out.println(pharmacyControl.generatePrescriptionReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
@@ -1028,6 +1016,7 @@ public class PharmacyManagementUI {
         System.out.println("6. Expiry Date");
         System.out.println("7. Status");
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+
         return switch (choice) {
             case 1 -> "id";
             case 2 -> "name";
@@ -1050,6 +1039,7 @@ public class PharmacyManagementUI {
         System.out.println("6. Payment Status");
         System.out.println("7. Total Cost");
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+
         return switch (choice) {
             case 1 -> "id";
             case 2 -> "patient";
@@ -1059,6 +1049,27 @@ public class PharmacyManagementUI {
             case 6 -> "payment";
             case 7 -> "cost";
             default -> "date";
+        };
+    }
+
+    private String getMedicineUsageSortField() {
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Prescription Count");
+        System.out.println("2. Revenue");
+        System.out.println("3. Stock Level");
+        System.out.println("4. Category");
+        System.out.println("5. Medicine Name");
+        System.out.println("6. Generic Name");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+
+        return switch (choice) {
+            case 1 -> "prescriptions";
+            case 2 -> "revenue";
+            case 3 -> "stock";
+            case 4 -> "category";
+            case 5 -> "name";
+            case 6 -> "generic";
+            default -> "prescriptions";
         };
     }
 }

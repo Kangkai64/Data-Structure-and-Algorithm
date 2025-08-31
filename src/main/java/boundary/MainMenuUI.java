@@ -28,6 +28,7 @@ public class MainMenuUI {
 
     public void displayMainMenu() {
         while (true) {
+            ConsoleUtils.clearScreen();
             System.out.println("\n=== MAIN MENU ===");
             System.out.println("1. Patient Management Module");
             System.out.println("2. Doctor Management Module");

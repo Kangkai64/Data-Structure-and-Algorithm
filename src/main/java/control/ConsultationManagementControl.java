@@ -808,21 +808,21 @@ public class ConsultationManagementControl {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION EFFICIENCY REPORT", 120))
+        report.append("=".repeat(135)).append("\n");
+        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION EFFICIENCY REPORT", 135))
                 .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
+        report.append("=".repeat(135)).append("\n\n");
 
         // Generation info with weekday
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
                 .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
+        report.append("*".repeat(135)).append("\n\n");
 
         // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("EFFICIENCY METRICS SUMMARY", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(135)).append("\n");
+        report.append(ConsoleUtils.centerText("EFFICIENCY METRICS SUMMARY", 135)).append("\n");
+        report.append("-".repeat(135)).append("\n");
         report.append(String.format("Total Consultations: %d\n", getTotalConsultations()));
         report.append(String.format("Completed Consultations: %d\n", getCompletedConsultations().getSize()));
         report.append(String.format("Average Consultation Duration: %.1f minutes\n", calculateAverageDuration()));
@@ -964,11 +964,11 @@ public class ConsultationManagementControl {
             report.append(String.format("%-10s: %3d patients (%.1f%%)\n", waitTimeLabels[i], waitTimeCounts[i], percentage));
         }
 
-        report.append("-".repeat(120)).append("\n\n");
+        report.append("-".repeat(135)).append("\n\n");
 
         // Detailed efficiency table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED CONSULTATION EFFICIENCY", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DETAILED CONSULTATION EFFICIENCY", 135)).append("\n");
+        report.append("-".repeat(135)).append("\n");
 
         // Add sorting information
         report.append(String.format("Sorted by: %s (%s order)\n\n",
@@ -976,7 +976,7 @@ public class ConsultationManagementControl {
 
         report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | %-12s | %-12s | %-12s\n",
                 "ID", "Patient", "Doctor", "Date", "Status", "Wait Time", "Duration", "Efficiency"));
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(135)).append("\n");
 
         // Convert to array for sorting
         Consultation[] consultationArray = new Consultation[consultations.getSize()];
@@ -1019,10 +1019,10 @@ public class ConsultationManagementControl {
                     String.format("%.1f%%", efficiency)));
         }
 
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF CONSULTATION EFFICIENCY REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
+        report.append("-".repeat(135)).append("\n");
+        report.append("*".repeat(135)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF CONSULTATION EFFICIENCY REPORT", 135)).append("\n");
+        report.append("=".repeat(135)).append("\n");
 
         return report.toString();
     }

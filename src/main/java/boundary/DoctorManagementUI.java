@@ -416,7 +416,6 @@ public class DoctorManagementUI {
         System.out.println("4. Search by Email");
         System.out.println("5. Search by License Number");
         System.out.println("6. Search by Specialty");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
 
@@ -707,7 +706,6 @@ public class DoctorManagementUI {
         System.out.println("1. Sort by Name");
         System.out.println("2. Sort by Specialty");
         System.out.println("3. Sort by Experience");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
         System.out.println();
@@ -732,7 +730,6 @@ public class DoctorManagementUI {
         System.out.println("2. Sort by Specialty");
         System.out.println("3. Sort by Weekly Hours");
         System.out.println("4. Sort by Annual Hours");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
@@ -758,7 +755,6 @@ public class DoctorManagementUI {
         System.out.println("2. Doctor Workload Report");
         System.out.println("3. Doctor Performance Report");
         System.out.println("4. All Reports");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
@@ -791,7 +787,6 @@ public class DoctorManagementUI {
         System.out.println("2. Sort by Success Rate");
         System.out.println("3. Sort by Patient Satisfaction");
         System.out.println("4. Sort by Revenue");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();

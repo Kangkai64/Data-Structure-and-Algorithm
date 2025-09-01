@@ -552,9 +552,9 @@ public class ConsultationManagementUI {
         System.out.println("2. Consultation History Report");
         System.out.println("3. Consultation Efficiency Report");
         System.out.println("4. All Reports");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         switch (choice) {
             case 1:
@@ -586,6 +586,7 @@ public class ConsultationManagementUI {
         System.out.println("5. Patient Name");
         System.out.println("6. Doctor Name");
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        System.out.println();
         
         String sortBy = switch (choice) {
             case 1 -> "efficiency";

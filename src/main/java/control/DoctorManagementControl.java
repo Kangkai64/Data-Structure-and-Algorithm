@@ -893,21 +893,22 @@ public class DoctorManagementControl {
      * @return formatted report string
      */
     public String generateDoctorPerformanceReport(String sortBy, boolean ascending) {
+        final int TABLEWIDTH = 138;
         StringBuilder report = new StringBuilder();
         String title = "DOCTOR PERFORMANCE ANALYSIS REPORT";
-        String line = repeatChar('=', REPORT_WIDTH);
+        String line = repeatChar('=', TABLEWIDTH);
         report.append("\n").append(line).append("\n");
-        report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
+        report.append(centerText(title, TABLEWIDTH)).append("\n\n");
 
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
                 .append("\n");
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n\n");
+        report.append(repeatChar('=', TABLEWIDTH)).append("\n\n");
 
         // Performance metrics calculation
-        report.append("-".repeat(REPORT_WIDTH)).append("\n");
-        report.append(centerText("PERFORMANCE METRICS SUMMARY", REPORT_WIDTH)).append("\n");
-        report.append("-".repeat(REPORT_WIDTH)).append("\n");
+        report.append("-".repeat(TABLEWIDTH)).append("\n");
+        report.append(centerText("PERFORMANCE METRICS SUMMARY", TABLEWIDTH)).append("\n");
+        report.append("-".repeat(TABLEWIDTH)).append("\n");
 
         // Calculate performance metrics for each doctor
         String[] doctorIds = new String[activeDoctors.getSize()];
@@ -1016,11 +1017,11 @@ public class DoctorManagementControl {
                     specialties[specialtyCounter], specialtyCounts[specialtyCounter], specialtySuccessRates[specialtyCounter]));
         }
 
-        report.append("-".repeat(REPORT_WIDTH)).append("\n\n");
+        report.append("-".repeat(TABLEWIDTH)).append("\n\n");
 
         // Detailed performance table
-        report.append(centerText("DETAILED DOCTOR PERFORMANCE", REPORT_WIDTH)).append("\n");
-        report.append("-".repeat(REPORT_WIDTH)).append("\n");
+        report.append(centerText("DETAILED DOCTOR PERFORMANCE", TABLEWIDTH)).append("\n");
+        report.append("-".repeat(TABLEWIDTH)).append("\n");
 
         // Add sorting information
         String sortField = getSortFieldDisplayName(sortBy);
@@ -1043,7 +1044,9 @@ public class DoctorManagementControl {
                 .append(satisfactionHeader).append(" | ")
                 .append(revenueHeader)
                 .append("\n");
-        report.append(line).append("\n");
+
+        
+        report.append(repeatChar('=', TABLEWIDTH)).append("\n");
 
         // Create array for sorting
         Doctor[] doctorArray = new Doctor[activeDoctors.getSize()];
@@ -1089,9 +1092,9 @@ public class DoctorManagementControl {
         }
 
         report.append("\n");
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
-        report.append(centerText("END OF PERFORMANCE REPORT", REPORT_WIDTH)).append("\n");
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
+        report.append(repeatChar('=', TABLEWIDTH)).append("\n");
+        report.append(centerText("END OF PERFORMANCE REPORT", TABLEWIDTH)).append("\n");
+        report.append(repeatChar('=', TABLEWIDTH)).append("\n");
         return report.toString();
     }
 

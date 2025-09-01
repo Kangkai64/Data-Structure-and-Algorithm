@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Iterator;
-
 import adt.ArrayBucketList;
 import dao.AddressDao;
 import dao.ConsultationDao;

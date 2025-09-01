@@ -2,7 +2,6 @@ package boundary;
 
 import java.util.Scanner;
 import java.util.Iterator;
-
 import adt.ArrayBucketList;
 import control.DoctorManagementControl;
 import entity.Address;
@@ -93,6 +92,7 @@ public class DoctorManagementUI {
         } else {
             System.out.println("Failed to register doctor.");
         }
+        ConsoleUtils.waitMessage();
     }
 
     private void updateDoctorInfo() {
@@ -103,6 +103,7 @@ public class DoctorManagementUI {
         Doctor currentDoctor = doctorControl.findDoctorById(doctorId);
         if (currentDoctor == null) {
             System.out.println("Doctor not found with ID: " + doctorId);
+            ConsoleUtils.waitMessage();
             return;
         }
 
@@ -165,6 +166,7 @@ public class DoctorManagementUI {
         } else {
             System.out.println("Failed to update doctor information.");
         }
+        ConsoleUtils.waitMessage();
     }
 
     private void manageDoctorSchedule() {
@@ -175,6 +177,7 @@ public class DoctorManagementUI {
         Doctor doctor = doctorControl.findDoctorById(doctorId);
         if (doctor == null) {
             System.out.println("Doctor not found with ID: " + doctorId);
+            ConsoleUtils.waitMessage();
             return;
         }
         
@@ -249,6 +252,7 @@ public class DoctorManagementUI {
         String endTime = ConsoleUtils.getTimeInput(scanner, "Enter end time (HH:mm:ss): ");
         boolean added = doctorControl.addSchedule(doctorId, dayOfWeek, startTime, endTime);
         System.out.println(added ? "Schedule added successfully." : "Failed to add schedule.");
+        ConsoleUtils.waitMessage();
     }
 
     private void updateDoctorSchedule(String doctorId, String doctorName, entity.Schedule[] schedules) {
@@ -290,6 +294,7 @@ public class DoctorManagementUI {
         
         boolean updated = doctorControl.updateSchedule(selectedSchedule.getScheduleId(), dayOfWeek, startTime, endTime);
         System.out.println(updated ? "Schedule updated successfully." : "Failed to update schedule.");
+        ConsoleUtils.waitMessage();
     }
 
     
@@ -300,6 +305,7 @@ public class DoctorManagementUI {
         Doctor doctor = doctorControl.findDoctorById(doctorId);
         if (doctor == null) {
             System.out.println("Doctor not found.");
+            ConsoleUtils.waitMessage();
             return;
         }
 
@@ -364,6 +370,7 @@ public class DoctorManagementUI {
         } else {
             System.out.println("Failed to update doctor availability.");
         }
+        ConsoleUtils.waitMessage();
     }
 
     private void handleScheduleAvailability(String doctorId, entity.Schedule[] schedules) {
@@ -398,6 +405,7 @@ public class DoctorManagementUI {
         boolean isAvailable = ConsoleUtils.getBooleanInput(scanner, "Set schedule availability (Y/N): ");
         boolean ok = doctorControl.setScheduleAvailability(selectedSchedule.getScheduleId(), isAvailable);
         System.out.println(ok ? "Schedule availability updated successfully." : "Failed to update schedule availability.");
+        ConsoleUtils.waitMessage();
     }
 
     private void searchDoctor() {
@@ -446,6 +454,7 @@ public class DoctorManagementUI {
         } else {
             System.out.println("Doctor not found with ID: " + doctorId);
         }
+        ConsoleUtils.waitMessage();
     }
 
     private void searchByIC() {
@@ -460,6 +469,7 @@ public class DoctorManagementUI {
             System.out.println("No doctors found with IC number: " + icNumber);
         }
         System.out.println();
+        ConsoleUtils.waitMessage();
     }
     
     private void searchByFullName() {
@@ -491,6 +501,7 @@ public class DoctorManagementUI {
         } else {
             System.out.println("No doctors found with name containing: " + fullName);
         }
+        ConsoleUtils.waitMessage();
     }
 
     private void searchByEmail() {
@@ -531,6 +542,7 @@ public class DoctorManagementUI {
         } else {
             System.out.println("No doctors found with email containing: " + email);
         }
+        ConsoleUtils.waitMessage();
     }
 
     private void searchByLicenseNumber() {
@@ -572,6 +584,7 @@ public class DoctorManagementUI {
         } else {
             System.out.println("No doctors found with license number containing: " + licenseNumber);
         }
+        ConsoleUtils.waitMessage();
     }
 
     private void searchBySpecialty() {
@@ -603,6 +616,7 @@ public class DoctorManagementUI {
         } else {
             System.out.println("No doctors found with specialty containing: " + specialty);
         }
+        ConsoleUtils.waitMessage();
     }
 
     /**
@@ -763,6 +777,8 @@ public class DoctorManagementUI {
                 generateDoctorInformationReportUI();
                 generateScheduleReportUI();
                 generateDoctorPerformanceReportUI();
+                System.out.println("\nAll doctor reports have been generated successfully!");
+                ConsoleUtils.waitMessage();
                 break;
             default:
                 System.out.println("Invalid choice.");

@@ -205,30 +205,6 @@ public class PatientManagementControl {
         return patient;
     }
 
-    // Finds a patient by exact IC number
-    public Patient findPatientByIcNumber(String icNumber) {
-        try {
-            ensureDataLoaded();
-
-            if (icNumber == null) {
-                return null;
-            }
-
-            Iterator<Patient> patientIterator = activePatients.iterator();
-            while (patientIterator.hasNext()) {
-                Patient patient = patientIterator.next();
-                if (patient.getICNumber() != null && patient.getICNumber().equals(icNumber)) {
-                    return patient;
-                }
-            }
-
-            return null;
-        } catch (Exception exception) {
-            System.err.println("Error finding patient by IC number: " + exception.getMessage());
-            return null;
-        }
-    }
-
     // Finds a patient by name
     public ArrayBucketList<String, Patient> findPatientsByName(String name) {
         ensureDataLoaded();
@@ -241,24 +217,6 @@ public class PatientManagementControl {
             }
         }
         return results;
-    }
-
-    // Finds a patient by email
-    public Patient findPatientByEmail(String email) {
-        try {
-            ensureDataLoaded();
-            Iterator<Patient> patientIterator = activePatients.iterator();
-            while (patientIterator.hasNext()) {
-                Patient patient = patientIterator.next();
-                if (patient.getEmail().equalsIgnoreCase(email)) {
-                    return patient;
-                }
-            }
-            return null;
-        } catch (Exception exception) {
-            System.err.println("Error finding patient by email: " + exception.getMessage());
-            return null;
-        }
     }
 
     // Finds a patient by email
@@ -289,39 +247,6 @@ public class PatientManagementControl {
     public int getTotalActivePatients() {
         ensureDataLoaded();
         return activePatients.getSize();
-    }
-
-    // Reporting Methods
-    public String generatePatientRegistrationReport() {
-        ensureDataLoaded();
-        StringBuilder report = new StringBuilder();
-        report.append("=== PATIENT REGISTRATION REPORT ===\n");
-        report.append("Total Active Patients: ").append(getTotalActivePatients()).append("\n");
-        report.append("Patients in Queue: ").append(getQueueSize()).append("\n");
-        report.append("Report Generated: ").append(LocalDate.now()).append("\n\n");
-
-        int patientCount = 0;
-        int maxPatients = 1000;
-
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext() && patientCount < maxPatients) {
-            Patient patient = patientIterator.next();
-            if (patient != null) {
-                report.append("Patient ID: ").append(patient.getPatientId()).append("\n");
-                report.append("Name: ").append(patient.getFullName()).append("\n");
-                report.append("IC Number: ").append(patient.getICNumber()).append("\n");
-                report.append("Registration Date: ").append(patient.getRegistrationDate()).append("\n");
-                report.append("Status: ").append(patient.isActive() ? "Active" : "Inactive").append("\n");
-                report.append("----------------------------------------\n");
-                patientCount++;
-            }
-        }
-
-        if (patientCount >= maxPatients) {
-            report.append("WARNING: Report truncated due to safety limit.\n");
-        }
-
-        return report.toString();
     }
 
     // Generates patient record summary that can be sorted
@@ -402,7 +327,9 @@ public class PatientManagementControl {
         utility.QuickSort.sort(items, comparator);
 
         StringBuilder report = new StringBuilder();
-        report.append("\n=== Patient Record Summary ===\n");
+        report.append("=".repeat(182)).append("\n");
+        report.append(ConsoleUtils.centerText("PATIENT RECORD SUMMARY", 182) ).append("\n");
+        report.append("=".repeat(182)).append("\n");
         report.append("Total Patients: ").append(items.length).append("\n");
         report.append("Sorted By: ").append(sortBy).append(" | Order: ").append(ascending ? "Ascending" : "Descending")
                 .append("\n");
@@ -441,8 +368,9 @@ public class PatientManagementControl {
                     id, name, ic, email, phone, reg, status, blood, allergiesOut));
         }
 
-        report.append("-".repeat(182)).append("\n");
-        report.append(">>> End of Report <<<\n");
+        report.append("=".repeat(182)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF PATIENT RECORD SUMMARY REPORT", 182)).append("\n");
+        report.append("=".repeat(182)).append("\n");
 
         return report.toString();
     }
@@ -955,7 +883,9 @@ public class PatientManagementControl {
         utility.QuickSort.sort(items, comparator);
 
         StringBuilder report = new StringBuilder();
-        report.append("\n=== Patient Visit History Report ===\n");
+        report.append("=".repeat(207)).append("\n");
+        report.append(ConsoleUtils.centerText("PATIENT VISIT HISTORY", 207) ).append("\n");
+        report.append("=".repeat(207)).append("\n");
         report.append("Total Patients: ").append(items.length).append("\n");
         report.append("Sorted By: ").append(sortBy).append(" | Order: ").append(ascending ? "Ascending" : "Descending")
                 .append("\n");
@@ -1022,7 +952,7 @@ public class PatientManagementControl {
 
         report.append("-".repeat(207)).append("\n");
         report.append("=".repeat(207)).append("\n");
-        report.append(">>> End of Report <<<\n");
+        report.append(ConsoleUtils.centerText("END OF PATIENT VISIT HISTORY REPORT", 207)).append("\n");
         report.append("=".repeat(207)).append("\n");
 
         return report.toString();

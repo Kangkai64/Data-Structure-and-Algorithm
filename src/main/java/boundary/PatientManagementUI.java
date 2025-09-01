@@ -40,6 +40,7 @@ public class PatientManagementUI {
             System.out.println("8. Back to Main Menu");
 
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
+            System.out.println();
 
             switch (choice) {
                 case 1:
@@ -512,9 +513,9 @@ public class PatientManagementUI {
         System.out.println("2. Patient Demographics Report");
         System.out.println("3. Patient Visit History Report");
         System.out.println("4. All Reports");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
         switch (choice) {
             case 1:

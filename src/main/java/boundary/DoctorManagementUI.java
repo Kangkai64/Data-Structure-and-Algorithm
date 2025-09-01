@@ -689,102 +689,98 @@ public class DoctorManagementUI {
     }
 
     private void generateDoctorInformationReportUI() {
-        System.out.println("\n=== DOCTOR ACTIVITY REPORT ===");
-        boolean wantSort = ConsoleUtils.getBooleanInput(scanner, "Sort report? (Y/N): ");
+        ConsoleUtils.printHeader("Doctor Information Report");
+        System.out.println("1. Sort by Name");
+        System.out.println("2. Sort by Specialty");
+        System.out.println("3. Sort by Experience");
+        System.out.print("Enter choice: ");
 
-        String sortBy = "";
-        boolean ascending = true;
-        if (wantSort) {
-            System.out.println("Select sort field: ");
-            System.out.println("1. Name");
-            System.out.println("2. Specialty");
-            System.out.println("3. Experience");
-            int fieldChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-3): ", 1, 3);
-            if (fieldChoice == 1) {
-                sortBy = "name";
-            } else if (fieldChoice == 2) {
-                sortBy = "specialty";
-            } else {
-                sortBy = "experience";
-            }
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        System.out.println();
 
-            System.out.println("Order: ");
-            System.out.println("1. Ascending");
-            System.out.println("2. Descending");
-            int orderChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-2): ", 1, 2);
-            ascending = (orderChoice == 1);
+        String sortBy = switch (choice) {
+            case 1 -> "name";
+            case 2 -> "specialty";
+            case 3 -> "experience";
+            default -> "name";
+        };
 
-            System.out.println(doctorControl.generateDoctorInformationReport(sortBy, ascending));
-        } else {
-            System.out.println(doctorControl.generateDoctorInformationReport());
-        }
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
+        boolean ascending = sortOrder.equals("asc");
+        System.out.println(doctorControl.generateDoctorInformationReport(sortBy, ascending));
+        ConsoleUtils.waitMessage();
     }
 
     private void generateScheduleReportUI() {
-        System.out.println("\n=== DOCTOR WORKLOAD REPORT ===");
-        boolean wantSort = ConsoleUtils.getBooleanInput(scanner, "Sort report? (Y/N): ");
+        ConsoleUtils.printHeader("Doctor Workload Report");
+        System.out.println("1. Sort by Name");
+        System.out.println("2. Sort by Specialty");
+        System.out.println("3. Sort by Weekly Hours");
+        System.out.println("4. Sort by Annual Hours");
+        System.out.print("Enter choice: ");
 
-        String sortBy = "";
-        boolean ascending = true;
-        if (wantSort) {
-            System.out.println("Select sort field: ");
-            System.out.println("1. Name");
-            System.out.println("2. Specialty");
-            System.out.println("3. Weekly Hours");
-            System.out.println("4. Annual Hours");
-            int fieldChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-4): ", 1, 4);
-            if (fieldChoice == 1) {
-                sortBy = "name";
-            } else if (fieldChoice == 2) {
-                sortBy = "specialty";
-            } else if (fieldChoice == 3) {
-                sortBy = "weekly";
-            } else {
-                sortBy = "annual";
-            }
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
 
-            System.out.println("Order: ");
-            System.out.println("1. Ascending");
-            System.out.println("2. Descending");
-            int orderChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-2): ", 1, 2);
-            ascending = (orderChoice == 1);
+        String sortBy = switch (choice) {
+            case 1 -> "name";
+            case 2 -> "specialty";
+            case 3 -> "weekly";
+            case 4 -> "annual";
+            default -> "name";
+        };
 
-            System.out.println(doctorControl.generateDoctorWorkloadReport(sortBy, ascending));
-        } else {
-            System.out.println(doctorControl.generateDoctorWorkloadReport());
-        }
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
+        boolean ascending = sortOrder.equals("asc");
+        System.out.println(doctorControl.generateDoctorWorkloadReport(sortBy, ascending));
+        ConsoleUtils.waitMessage();
     }
 
     private void generateReportsMenu() {
-        System.out.println("\n=== GENERATE REPORTS ===");
-        System.out.println("1. Doctor Activity Report");
+        ConsoleUtils.printHeader("Doctor Reports");
+        System.out.println("1. Doctor Information Report");
         System.out.println("2. Doctor Workload Report");
         System.out.println("3. Doctor Performance Report");
         System.out.println("4. All Reports");
+        System.out.print("Enter choice: ");
+
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
-        if (choice == 1) {
-            generateDoctorInformationReportUI();
-        } else if (choice == 2) {
-            generateScheduleReportUI();
-        } else if (choice == 3) {
-            generateDoctorPerformanceReportUI();
-        } else {
-            generateDoctorInformationReportUI();
-            generateScheduleReportUI();
-            generateDoctorPerformanceReportUI();
+        System.out.println();
+
+        switch (choice) {
+            case 1:
+                generateDoctorInformationReportUI();
+                break;
+            case 2:
+                generateScheduleReportUI();
+                break;
+            case 3:
+                generateDoctorPerformanceReportUI();
+                break;
+            case 4:
+                generateDoctorInformationReportUI();
+                generateScheduleReportUI();
+                generateDoctorPerformanceReportUI();
+                break;
+            default:
+                System.out.println("Invalid choice.");
         }
     }
 
     private void generateDoctorPerformanceReportUI() {
-        System.out.println("\n=== DOCTOR PERFORMANCE REPORT ===");
-        System.out.println("Select sort field: ");
-        System.out.println("1. Consultations");
-        System.out.println("2. Success Rate");
-        System.out.println("3. Patient Satisfaction");
-        System.out.println("4. Revenue");
-        int fieldChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-4): ", 1, 4);
-        
-        String sortBy = switch (fieldChoice) {
+        ConsoleUtils.printHeader("Doctor Performance Report");
+        System.out.println("1. Sort by Consultations");
+        System.out.println("2. Sort by Success Rate");
+        System.out.println("3. Sort by Patient Satisfaction");
+        System.out.println("4. Sort by Revenue");
+        System.out.print("Enter choice: ");
+
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        System.out.println();
+
+        String sortBy = switch (choice) {
             case 1 -> "consultations";
             case 2 -> "success";
             case 3 -> "satisfaction";
@@ -792,13 +788,12 @@ public class DoctorManagementUI {
             default -> "consultations";
         };
 
-        System.out.println("Order: ");
-        System.out.println("1. Ascending");
-        System.out.println("2. Descending");
-        int orderChoice = ConsoleUtils.getIntInput(scanner, "Enter choice (1-2): ", 1, 2);
-        boolean ascending = (orderChoice == 1);
+        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
+        boolean ascending = sortOrder.equals("asc");
 
         System.out.println(doctorControl.generateDoctorPerformanceReport(sortBy, ascending));
+        ConsoleUtils.waitMessage();
     }
 
     

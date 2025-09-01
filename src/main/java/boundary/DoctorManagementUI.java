@@ -703,7 +703,7 @@ public class DoctorManagementUI {
     }
 
     private void generateDoctorInformationReportUI() {
-        ConsoleUtils.printHeader("Doctor Information Report");
+        ConsoleUtils.printHeader("Doctor Activity Report");
         System.out.println("1. Sort by Name");
         System.out.println("2. Sort by Specialty");
         System.out.println("3. Sort by Experience");

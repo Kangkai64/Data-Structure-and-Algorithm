@@ -500,7 +500,7 @@ public class DoctorManagementControl {
 
     public String generateDoctorInformationReport() {
         StringBuilder report = new StringBuilder();
-        String title = "DOCTOR ACTIVITY REPORT";
+        String title = "DOCTOR INFORMATION REPORT";
         String line = repeatChar('=', REPORT_WIDTH);
         report.append("\n").append(line).append("\n");
         report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
@@ -563,7 +563,7 @@ public class DoctorManagementControl {
         boolean doSort = field.equals("name") || field.equals("specialty") || field.equals("experience");
 
         StringBuilder report = new StringBuilder();
-        String title = "DOCTOR ACTIVITY REPORT";
+        String title = "DOCTOR INFORMATION REPORT";
         String line = repeatChar('=', REPORT_WIDTH);
         report.append("\n").append(line).append("\n");
         report.append(centerText(title, REPORT_WIDTH)).append("\n\n");

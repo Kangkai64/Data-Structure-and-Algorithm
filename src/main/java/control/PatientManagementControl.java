@@ -453,30 +453,26 @@ public class PatientManagementControl {
         ensureDataLoaded();
         StringBuilder report = new StringBuilder();
 
-        // Header with decorative lines (centered)
         report.append("=".repeat(120)).append("\n");
         report.append(ConsoleUtils.centerText("PATIENT MANAGEMENT SYSTEM - PATIENT DEMOGRAPHICS REPORT", 120))
                 .append("\n");
         report.append("=".repeat(120)).append("\n");
 
-        // Generation info with weekday
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
                 .append("\n");
         report.append("*".repeat(120)).append("\n\n");
 
-        // Summary statistics
         report.append("=".repeat(120)).append("\n");
         report.append(ConsoleUtils.centerText("DEMOGRAPHICS SUMMARY", 120) ).append("\n");
         report.append("=".repeat(120)).append("\n");
         report.append(String.format("Total Active Patients: %d\n", getTotalActivePatients()));
         report.append(String.format("Patients in Queue: %d\n", getQueueSize()));
 
-        // Age distribution analysis using arrays
-        int[] ageGroups = { 0, 18, 25, 35, 50, 65, 100 }; // Age group boundaries
+        int[] ageGroups = { 0, 18, 25, 35, 50, 65, 100 }; 
         String[] ageGroupLabels = { "Under 18", "18-24", "25-34", "35-49", "50-64", "65+" };
         int[] ageGroupCounts = new int[6];
-        int[] genderCounts = { 0, 0 }; // 0 = Male, 1 = Female
+        int[] genderCounts = { 0, 0 }; 
         String[] bloodTypeCounts = new String[10];
         int[] bloodTypeCountsNum = new int[10];
         int bloodTypeCount = 0;
@@ -485,7 +481,6 @@ public class PatientManagementControl {
         while (patientIterator.hasNext()) {
             Patient patient = patientIterator.next();
             if (patient != null) {
-                // Age analysis
                 int age = patient.getAge();
                 for (int i = 0; i < ageGroups.length - 1; i++) {
                     if (age >= ageGroups[i] && age < ageGroups[i + 1]) {
@@ -494,7 +489,6 @@ public class PatientManagementControl {
                     }
                 }
 
-                // Gender analysis (based on IC number last digit)
                 String icNumber = patient.getICNumber();
                 if (icNumber != null && icNumber.length() >= 12) {
                     char lastDigit = icNumber.charAt(11);
@@ -508,7 +502,6 @@ public class PatientManagementControl {
                     }
                 }
 
-                // Blood type analysis
                 if (patient.getBloodType() != null) {
                     String bloodType = patient.getBloodType().toString();
                     boolean found = false;
@@ -546,9 +539,8 @@ public class PatientManagementControl {
             report.append(String.format("%-4s: %3d patients (%.1f%%)\n", bloodTypeCounts[i], bloodTypeCountsNum[i], percentage));
         }
 
-        // Registration trend analysis
         int currentYear = LocalDate.now().getYear();
-        int[] monthlyRegistrations = new int[13]; // Index 0 unused, 1-12 for months
+        int[] monthlyRegistrations = new int[13]; 
 
         patientIterator = activePatients.iterator();
         while (patientIterator.hasNext()) {
@@ -968,7 +960,8 @@ public class PatientManagementControl {
         report.append("Total Patients: ").append(items.length).append("\n");
         report.append("Sorted By: ").append(sortBy).append(" | Order: ").append(ascending ? "Ascending" : "Descending")
                 .append("\n");
-        report.append("Generated: ").append(java.time.LocalDate.now()).append("\n\n");
+        report.append("Generated: ").append(java.time.LocalDate.now()).append("\n");
+        report.append("Note: Last Visit shows time since patient registration date\n\n");
 
         report.append("-".repeat(207)).append("\n");
         report.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-12s | %-8s | %-12s | %-33s | %-22s |\n",
@@ -999,8 +992,6 @@ public class PatientManagementControl {
             if (allergiesOut.length() > 20)
                 allergiesOut = allergiesOut.substring(0, 17) + "...";
 
-            // Calculate months since last visit (for now using registration date as last visit)
-            // In a real system, this would be tracked from consultation/appointment records
             String lastVisit;
             if (p.getRegistrationDate() != null) {
                 java.time.Period period = java.time.Period.between(p.getRegistrationDate(), java.time.LocalDate.now());

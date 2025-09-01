@@ -67,7 +67,6 @@ public class ReportGenerationUI {
             System.out.println("5. Pharmacy Reports");
             System.out.println("6. Generate All Reports");
             System.out.println("7. Back to Main Menu");
-            System.out.print("Enter your choice: ");
 
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
             System.out.println();
@@ -105,7 +104,6 @@ public class ReportGenerationUI {
         System.out.println("2. Patient Demographics Report");
         System.out.println("3. Patient Visit History Report");
         System.out.println("4. All Reports");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
@@ -252,7 +250,6 @@ public class ReportGenerationUI {
         System.out.println("2. Doctor Workload Report");
         System.out.println("3. Doctor Performance Report");
         System.out.println("4. All Reports");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
@@ -283,7 +280,6 @@ public class ReportGenerationUI {
         System.out.println("2. Sort by Success Rate");
         System.out.println("3. Sort by Patient Satisfaction");
         System.out.println("4. Sort by Revenue");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
@@ -306,7 +302,6 @@ public class ReportGenerationUI {
         System.out.println("2. Consultation History Report");
         System.out.println("3. Consultation Efficiency Report");
         System.out.println("4. All Reports");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
@@ -337,7 +332,6 @@ public class ReportGenerationUI {
         System.out.println("2. Sort by Wait Time");
         System.out.println("3. Sort by Duration");
         System.out.println("4. Sort by Date");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
@@ -405,7 +399,6 @@ public class ReportGenerationUI {
         System.out.println("2. Treatment Status Report");
         System.out.println("3. Treatment Outcome Report");
         System.out.println("4. All Reports");
-        System.out.print("Enter choice: ");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
@@ -418,41 +411,16 @@ public class ReportGenerationUI {
                 System.out.println(treatmentControl.generateTreatmentStatusReport("id", "asc"));
                 break;
             case 3:
-                generateTreatmentOutcomeReport();
+                System.out.println(treatmentControl.generateTreatmentOutcomeReport("success", "desc"));
                 break;
             case 4:
                 System.out.println(treatmentControl.generateTreatmentAnalysisReport("id", "asc"));
                 System.out.println(treatmentControl.generateTreatmentStatusReport("id", "asc"));
-                generateTreatmentOutcomeReport();
+                System.out.println(treatmentControl.generateTreatmentOutcomeReport("success", "desc"));
                 break;
             default:
                 System.out.println("Invalid choice.");
         }
-    }
-
-    private void generateTreatmentOutcomeReport() {
-        ConsoleUtils.printHeader("Treatment Outcome Report");
-        System.out.println("1. Sort by Success Rate");
-        System.out.println("2. Sort by Recovery Time");
-        System.out.println("3. Sort by Treatment Type");
-        System.out.println("4. Sort by Date");
-        System.out.print("Enter choice: ");
-
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
-        System.out.println();
-
-        String sortBy = switch (choice) {
-            case 1 -> "success";
-            case 2 -> "recovery";
-            case 3 -> "type";
-            case 4 -> "date";
-            default -> "success";
-        };
-
-        String sortOrder = ConsoleUtils.getSortOrder(scanner);
-        System.out.println();
-        System.out.println(treatmentControl.generateTreatmentOutcomeReport(sortBy, sortOrder));
-        ConsoleUtils.waitMessage();
     }
 
     private void generatePharmacyReports() {
@@ -461,7 +429,7 @@ public class ReportGenerationUI {
         System.out.println("2. Prescription Report");
         System.out.println("3. Medicine Usage Report");
         System.out.println("4. All Reports");
-
+        
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
 

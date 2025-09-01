@@ -46,6 +46,7 @@ public class MedicalTreatmentUI {
             System.out.println("8. Back to Main Menu");
 
             int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
+            System.out.println();
 
             switch (choice) {
                 case 1:
@@ -242,6 +243,7 @@ public class MedicalTreatmentUI {
                 System.out.println("4. Cancel Update");
 
                 int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+                System.out.println();
 
                 switch (choice) {
                     case 1:
@@ -288,6 +290,7 @@ public class MedicalTreatmentUI {
                 System.out.println("8. Cancel Update");
 
                 int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
+                System.out.println();
 
                 switch (choice) {
                     case 1:
@@ -594,6 +597,7 @@ public class MedicalTreatmentUI {
         System.out.println("7. Search by Date Range");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+        System.out.println();
 
         switch (choice) {
             case 1:
@@ -698,6 +702,7 @@ public class MedicalTreatmentUI {
                 System.out.println("1. PRESCRIBED  2. IN_PROGRESS  3. COMPLETED  4. CANCELLED");
                 int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
                 MedicalTreatment.TreatmentStatus status = MedicalTreatment.TreatmentStatus.values()[statusChoice - 1];
+                System.out.println();
 
                 var statusTreatments = new ArrayBucketList<String, MedicalTreatment>();
                 Iterator<MedicalTreatment> allTreatments = treatmentControl.getAllTreatments().iterator();
@@ -737,6 +742,8 @@ public class MedicalTreatmentUI {
                 System.out.println("Select payment status:");
                 System.out.println("1. PAID  2. PENDING  3. CANCELLED");
                 int payChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+                System.out.println();
+                
                 MedicalTreatment.PaymentStatus payStatus = MedicalTreatment.PaymentStatus.values()[payChoice - 1];
                 ArrayBucketList<String, MedicalTreatment> payTreatments = treatmentControl
                         .findTreatmentsByPaymentStatus(payStatus);
@@ -826,6 +833,7 @@ public class MedicalTreatmentUI {
         System.out.println("5. Back to Medical Treatment");
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
+        System.out.println();
 
         switch (choice) {
             case 1:
@@ -856,26 +864,12 @@ public class MedicalTreatmentUI {
 
     private void generateTreatmentOutcomeReport() {
         ConsoleUtils.printHeader("Treatment Outcome Report");
-        System.out.println("Select field to sort by:");
-        System.out.println("1. Success Rate");
-        System.out.println("2. Recovery Time");
-        System.out.println("3. Treatment Type");
-        System.out.println("4. Treatment Date");
-        System.out.println("5. Patient Name");
-        System.out.println("6. Doctor Name");
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
         
-        String sortBy = switch (choice) {
-            case 1 -> "success";
-            case 2 -> "recovery";
-            case 3 -> "type";
-            case 4 -> "date";
-            case 5 -> "patient";
-            case 6 -> "doctor";
-            default -> "success";
-        };
-
+        String sortBy = getTreatmentOutcomeSortField();
+        System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
+
         System.out.println(treatmentControl.generateTreatmentOutcomeReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
@@ -886,6 +880,7 @@ public class MedicalTreatmentUI {
         String sortBy = getTreatmentSortField();
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
+        System.out.println();
 
         System.out.println(treatmentControl.generateTreatmentAnalysisReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
@@ -897,7 +892,8 @@ public class MedicalTreatmentUI {
         String sortBy = getTreatmentSortField();
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
-
+        System.out.println();
+        
         System.out.println(treatmentControl.generateTreatmentStatusReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
@@ -924,6 +920,27 @@ public class MedicalTreatmentUI {
             case 8: return "date";
             default: return "date";
         }
+    }
+
+    private String getTreatmentOutcomeSortField() {
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Success Rate");
+        System.out.println("2. Recovery Time");
+        System.out.println("3. Treatment Type");
+        System.out.println("4. Treatment Date");
+        System.out.println("5. Patient Name");
+        System.out.println("6. Doctor Name");
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        
+        return switch (choice) {
+            case 1 -> "success";
+            case 2 -> "recovery";
+            case 3 -> "type";
+            case 4 -> "date";
+            case 5 -> "patient";
+            case 6 -> "doctor";
+            default -> "success";
+        };
     }
 
     private void displayTreatmentDetails(MedicalTreatment treatment) {

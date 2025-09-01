@@ -1,6 +1,5 @@
 package control;
 
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -415,8 +414,8 @@ public class PatientManagementControl {
                 "Allergies"));
         report.append("-".repeat(182)).append("\n");
 
-        for (int i = 0; i < items.length; i++) {
-            Patient p = items[i];
+        for (int itemIndex = 0; itemIndex < items.length; itemIndex++) {
+            Patient p = items[itemIndex];
             if (p == null)
                 continue;
             String id = valueOrNA(p.getPatientId());
@@ -482,9 +481,9 @@ public class PatientManagementControl {
             Patient patient = patientIterator.next();
             if (patient != null) {
                 int age = patient.getAge();
-                for (int i = 0; i < ageGroups.length - 1; i++) {
-                    if (age >= ageGroups[i] && age < ageGroups[i + 1]) {
-                        ageGroupCounts[i]++;
+                for (int ageIndex = 0; ageIndex < ageGroups.length - 1; ageIndex++) {
+                    if (age >= ageGroups[ageIndex] && age < ageGroups[ageIndex + 1]) {
+                        ageGroupCounts[ageIndex]++;
                         break;
                     }
                 }
@@ -505,9 +504,9 @@ public class PatientManagementControl {
                 if (patient.getBloodType() != null) {
                     String bloodType = patient.getBloodType().toString();
                     boolean found = false;
-                    for (int i = 0; i < bloodTypeCount; i++) {
-                        if (bloodTypeCounts[i].equals(bloodType)) {
-                            bloodTypeCountsNum[i]++;
+                    for (int bloodIndex = 0; bloodIndex < bloodTypeCount; bloodIndex++) {
+                        if (bloodTypeCounts[bloodIndex].equals(bloodType)) {
+                            bloodTypeCountsNum[bloodIndex]++;
                             found = true;
                             break;
                         }
@@ -522,9 +521,9 @@ public class PatientManagementControl {
         }
 
         report.append("\nAGE DISTRIBUTION:\n");
-        for (int i = 0; i < ageGroupLabels.length; i++) {
-            double percentage = getTotalActivePatients() > 0 ? (double) ageGroupCounts[i] / getTotalActivePatients() * 100 : 0;
-            report.append(String.format("%-8s: %3d patients (%.1f%%)\n", ageGroupLabels[i], ageGroupCounts[i], percentage));
+        for (int ageLabelIndex = 0; ageLabelIndex < ageGroupLabels.length; ageLabelIndex++) {
+            double percentage = getTotalActivePatients() > 0 ? (double) ageGroupCounts[ageLabelIndex] / getTotalActivePatients() * 100 : 0;
+            report.append(String.format("%-8s: %3d patients (%.1f%%)\n", ageGroupLabels[ageLabelIndex], ageGroupCounts[ageLabelIndex], percentage));
         }
 
         report.append("\nGENDER DISTRIBUTION:\n");
@@ -534,9 +533,9 @@ public class PatientManagementControl {
         report.append(String.format("Female: %3d patients (%.1f%%)\n", genderCounts[1], femalePercentage));
 
         report.append("\nBLOOD TYPE DISTRIBUTION:\n");
-        for (int i = 0; i < bloodTypeCount; i++) {
-            double percentage = getTotalActivePatients() > 0 ? (double) bloodTypeCountsNum[i] / getTotalActivePatients() * 100 : 0;
-            report.append(String.format("%-4s: %3d patients (%.1f%%)\n", bloodTypeCounts[i], bloodTypeCountsNum[i], percentage));
+        for (int bloodTypeIndex = 0; bloodTypeIndex < bloodTypeCount; bloodTypeIndex++) {
+            double percentage = getTotalActivePatients() > 0 ? (double) bloodTypeCountsNum[bloodTypeIndex] / getTotalActivePatients() * 100 : 0;
+            report.append(String.format("%-4s: %3d patients (%.1f%%)\n", bloodTypeCounts[bloodTypeIndex], bloodTypeCountsNum[bloodTypeIndex], percentage));
         }
 
         int currentYear = LocalDate.now().getYear();
@@ -969,8 +968,8 @@ public class PatientManagementControl {
                 "Allergies", "Last Visit"));
         report.append("-".repeat(207)).append("\n");
 
-        for (int i = 0; i < items.length; i++) {
-            Patient p = items[i];
+        for (int itemIndex = 0; itemIndex < items.length; itemIndex++) {
+            Patient p = items[itemIndex];
             if (p == null)
                 continue;
             String id = valueOrNA(p.getPatientId());

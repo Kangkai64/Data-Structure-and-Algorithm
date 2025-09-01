@@ -201,14 +201,15 @@ public class MedicalTreatmentDao extends DaoTemplate<MedicalTreatment> {
         }
     }
 
-    public boolean updateStatus(String treatmentId, MedicalTreatment.TreatmentStatus status) throws SQLException {
-        String sql = "UPDATE medical_treatment SET status = ? WHERE treatmentId = ?";
+    public boolean updateStatus(String treatmentId, MedicalTreatment.TreatmentStatus status, MedicalTreatment.PaymentStatus paymentStatus) throws SQLException {
+        String sql = "UPDATE medical_treatment SET status = ?, paymentStatus = ? WHERE treatmentId = ?";
 
         try (Connection connection = HikariConnectionPool.getInstance().getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, status.name());
-            preparedStatement.setString(2, treatmentId);
+            preparedStatement.setString(2, paymentStatus.name());
+            preparedStatement.setString(3, treatmentId);
 
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;

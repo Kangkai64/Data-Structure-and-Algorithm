@@ -134,6 +134,8 @@ public class MedicalTreatmentControl {
                     treatment.setFollowUpDate(followUpDate);
                     treatment.setTreatmentCost(treatmentCost);
 
+                    treatments.add(treatment.getTreatmentId(), treatment);
+
                     // Persist changes to database
                     return treatmentDao.update(treatment);
                 } else if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.COMPLETED) {
@@ -151,6 +153,8 @@ public class MedicalTreatmentControl {
 
                     treatment.setTreatmentNotes(treatmentNotes);
                     treatment.setFollowUpDate(followUpDate);
+
+                    treatments.add(treatment.getTreatmentId(), treatment);
 
                     // Persist changes to database
                     return treatmentDao.updateNotesAndFollowUpDate(treatmentId, treatmentNotes, followUpDate);
@@ -172,11 +176,12 @@ public class MedicalTreatmentControl {
             MedicalTreatment treatment = findTreatmentById(treatmentId);
             if (treatment != null && treatment.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
                 // Persist status change
-                boolean persisted = treatmentDao.updateStatus(treatmentId, MedicalTreatment.TreatmentStatus.COMPLETED);
+                boolean persisted = treatmentDao.updateStatus(treatmentId, MedicalTreatment.TreatmentStatus.COMPLETED, MedicalTreatment.PaymentStatus.PAID);
                 if (!persisted) {
                     return false;
                 }
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.COMPLETED);
+                treatment.setPaymentStatus(MedicalTreatment.PaymentStatus.PAID);
                 // Optionally persist follow-up date if provided (can also clear when null)
                 if (followUpDate != null || treatment.getFollowUpDate() != null) {
                     boolean followUpPersisted = treatmentDao.updateFollowUpDate(treatmentId, followUpDate);
@@ -187,6 +192,7 @@ public class MedicalTreatmentControl {
                 }
                 // Remove from active treatments
                 removeFromActiveTreatments(treatment);
+                treatments.add(treatment.getTreatmentId(), treatment);
                 return true;
             }
             return false;
@@ -202,11 +208,12 @@ public class MedicalTreatmentControl {
             if (treatment != null && treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED) {
                 // Persist status change
                 boolean persisted = treatmentDao.updateStatus(treatmentId,
-                        MedicalTreatment.TreatmentStatus.IN_PROGRESS);
+                        MedicalTreatment.TreatmentStatus.IN_PROGRESS, MedicalTreatment.PaymentStatus.PENDING);
                 if (!persisted) {
                     return false;
                 }
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.IN_PROGRESS);
+
                 // Track as active
                 activeTreatments.add(treatment.getTreatmentId(), treatment);
                 return true;
@@ -223,7 +230,7 @@ public class MedicalTreatmentControl {
             MedicalTreatment treatment = findTreatmentById(treatmentId);
             if (treatment != null && treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED) {
                 // Persist status change to database
-                boolean persisted = treatmentDao.updateStatus(treatmentId, MedicalTreatment.TreatmentStatus.CANCELLED);
+                boolean persisted = treatmentDao.updateStatus(treatmentId, MedicalTreatment.TreatmentStatus.CANCELLED, MedicalTreatment.PaymentStatus.CANCELLED);
                 if (!persisted) {
                     return false;
                 }
@@ -231,6 +238,7 @@ public class MedicalTreatmentControl {
 
                 // Remove from active treatments
                 removeFromActiveTreatments(treatment);
+                treatments.add(treatment.getTreatmentId(), treatment);
 
                 return true;
             }
@@ -468,9 +476,9 @@ public class MedicalTreatmentControl {
             // Rebuild arrays in sorted order
             for (int index = 0; index < yearCount; index++) {
                 int originalIndex = -1;
-                for (int i = 0; i < yearCount; i++) {
-                    if (treatmentYears[i] == yearArray[index]) {
-                        originalIndex = i;
+                for (int yearIndex = 0; yearIndex < yearCount; yearIndex++) {
+                    if (treatmentYears[yearIndex] == yearArray[index]) {
+                        originalIndex = yearIndex;
                         break;
                     }
                 }
@@ -743,68 +751,28 @@ public class MedicalTreatmentControl {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("MEDICAL TREATMENT SYSTEM - TREATMENT OUTCOME REPORT", 120))
+        report.append("=".repeat(145)).append("\n");
+        report.append(ConsoleUtils.centerText("MEDICAL TREATMENT SYSTEM - TREATMENT OUTCOME REPORT", 145))
                 .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
+        report.append("=".repeat(145)).append("\n\n");
 
         // Generation info with weekday
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
                 .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
+        report.append("*".repeat(145)).append("\n\n");
 
         // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("OUTCOME METRICS SUMMARY", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(145)).append("\n");
+        report.append(ConsoleUtils.centerText("OUTCOME METRICS SUMMARY", 145)).append("\n");
+        report.append("-".repeat(145)).append("\n");
         report.append(String.format("Total Treatments: %d\n", getTotalTreatments()));
         report.append(String.format("Completed Treatments: %d\n", getCompletedTreatments().getSize()));
         report.append(String.format("Overall Success Rate: %.1f%%\n", calculateOverallSuccessRate()));
         report.append(String.format("Average Recovery Time: %.1f days\n", calculateAverageRecoveryTime()));
         report.append(String.format("Treatment Effectiveness: %.1f%%\n", calculateTreatmentEffectiveness()));
 
-        // Treatment outcome analysis using arrays
-        String[] treatmentTypes = new String[20];
-        int[] treatmentTypeCounts = new int[20];
-        double[] treatmentTypeSuccessRates = new double[20];
-        double[] treatmentTypeRecoveryTimes = new double[20];
-        int treatmentTypeCount = 0;
 
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            if (treatment != null && treatment.getTreatmentPlan() != null) {
-                String treatmentType = treatment.getTreatmentPlan();
-                
-                // Find if treatment type already exists
-                int typeIndex = -1;
-                for (int i = 0; i < treatmentTypeCount; i++) {
-                    if (treatmentTypes[i].equals(treatmentType)) {
-                        typeIndex = i;
-                        break;
-                    }
-                }
-                
-                if (typeIndex == -1) {
-                    treatmentTypes[treatmentTypeCount] = treatmentType;
-                    treatmentTypeCounts[treatmentTypeCount] = 1;
-                    treatmentTypeSuccessRates[treatmentTypeCount] = calculateTreatmentSuccessRate(treatment);
-                    treatmentTypeRecoveryTimes[treatmentTypeCount] = calculateTreatmentRecoveryTime(treatment);
-                    treatmentTypeCount++;
-                } else {
-                    treatmentTypeCounts[typeIndex]++;
-                    treatmentTypeSuccessRates[typeIndex] = (treatmentTypeSuccessRates[typeIndex] + calculateTreatmentSuccessRate(treatment)) / 2;
-                    treatmentTypeRecoveryTimes[typeIndex] = (treatmentTypeRecoveryTimes[typeIndex] + calculateTreatmentRecoveryTime(treatment)) / 2;
-                }
-            }
-        }
-
-        report.append("\nTREATMENT TYPE OUTCOME ANALYSIS:\n");
-        for (int i = 0; i < treatmentTypeCount; i++) {
-            report.append(String.format("%-25s: %3d treatments, %.1f%% success rate, %.1f days avg recovery\n",
-                    treatmentTypes[i], treatmentTypeCounts[i], treatmentTypeSuccessRates[i], treatmentTypeRecoveryTimes[i]));
-        }
 
         // Doctor outcome analysis
         report.append("\nDOCTOR OUTCOME ANALYSIS:\n");
@@ -818,7 +786,7 @@ public class MedicalTreatmentControl {
 
         // Get unique doctors
         ArrayBucketList<String, Doctor> uniqueDoctors = new ArrayBucketList<>();
-        treatmentIterator = treatments.iterator();
+        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             if (treatment.getDoctor() != null) {
@@ -861,10 +829,10 @@ public class MedicalTreatmentControl {
         // Top performing doctors
         report.append("\nTOP PERFORMING DOCTORS BY OUTCOME:\n");
         int[] topOutcomeIndices = getTopIndices(doctorEffectivenessScores, Math.min(3, doctorCount));
-        for (int i = 0; i < topOutcomeIndices.length; i++) {
-            int index = topOutcomeIndices[i];
+        for (int topIndex = 0; topIndex < topOutcomeIndices.length; topIndex++) {
+            int index = topOutcomeIndices[topIndex];
             report.append(String.format("%d. %s: %.1f effectiveness score (%.1f%% success, %.1f days avg recovery)\n",
-                    i + 1, doctorNames[index], doctorEffectivenessScores[index], 
+                    topIndex + 1, doctorNames[index], doctorEffectivenessScores[index], 
                     doctorSuccessRates[index], doctorAverageRecoveryTimes[index]));
         }
 
@@ -879,17 +847,17 @@ public class MedicalTreatmentControl {
             MedicalTreatment treatment = treatmentIterator.next();
             double recoveryTime = calculateTreatmentRecoveryTime(treatment);
             
-            for (int i = 0; i < recoveryTimeRanges.length - 1; i++) {
-                if (recoveryTime >= recoveryTimeRanges[i] && recoveryTime < recoveryTimeRanges[i + 1]) {
-                    recoveryTimeCounts[i]++;
+            for (int rangeIndex = 0; rangeIndex < recoveryTimeRanges.length - 1; rangeIndex++) {
+                if (recoveryTime >= recoveryTimeRanges[rangeIndex] && recoveryTime < recoveryTimeRanges[rangeIndex + 1]) {
+                    recoveryTimeCounts[rangeIndex]++;
                     break;
                 }
             }
         }
 
-        for (int i = 0; i < recoveryTimeLabels.length; i++) {
-            double percentage = getTotalTreatments() > 0 ? (double) recoveryTimeCounts[i] / getTotalTreatments() * 100 : 0;
-            report.append(String.format("%-12s: %3d treatments (%.1f%%)\n", recoveryTimeLabels[i], recoveryTimeCounts[i], percentage));
+        for (int labelIndex = 0; labelIndex < recoveryTimeLabels.length; labelIndex++) {
+            double percentage = getTotalTreatments() > 0 ? (double) recoveryTimeCounts[labelIndex] / getTotalTreatments() * 100 : 0;
+            report.append(String.format("%-12s: %3d treatments (%.1f%%)\n", recoveryTimeLabels[labelIndex], recoveryTimeCounts[labelIndex], percentage));
         }
 
         // Success rate by treatment status
@@ -912,19 +880,19 @@ public class MedicalTreatmentControl {
             report.append(String.format("%-15s: %3d treatments, %.1f%% avg success rate\n", status, statusCount, avgSuccessRate));
         }
 
-        report.append("-".repeat(120)).append("\n\n");
+        report.append("-".repeat(145)).append("\n\n");
 
         // Detailed outcome table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED TREATMENT OUTCOMES", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DETAILED TREATMENT OUTCOMES", 145)).append("\n");
+        report.append("-".repeat(145)).append("\n");
 
         // Add sorting information
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getOutcomeSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
         report.append(String.format("%-10s | %-22s | %-22s | %-20s | %-12s | %-10s | %-12s | %-12s\n",
-                "ID", "Patient", "Doctor", "Treatment Type", "Date", "Status", "Success Rate", "Recovery Time"));
-        report.append("-".repeat(120)).append("\n");
+                "ID", "Patient", "Doctor", "Treatment Plan", "Date", "Status", "Success Rate", "Recovery Time"));
+        report.append("-".repeat(145)).append("\n");
 
         // Convert to array for sorting
         MedicalTreatment[] treatmentArray = new MedicalTreatment[treatments.getSize()];
@@ -944,7 +912,7 @@ public class MedicalTreatmentControl {
             String id = treatment.getTreatmentId() == null ? "-" : treatment.getTreatmentId();
             String patientName = treatment.getPatient() == null ? "-" : treatment.getPatient().getFullName();
             String doctorName = treatment.getDoctor() == null ? "-" : treatment.getDoctor().getFullName();
-            String treatmentType = treatment.getTreatmentPlan() == null ? "-" : treatment.getTreatmentPlan();
+            String treatmentPlan = treatment.getTreatmentPlan() == null ? "-" : treatment.getTreatmentPlan();
             String date = treatment.getTreatmentDate() == null
                     ? "-"
                     : treatment.getTreatmentDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
@@ -959,19 +927,19 @@ public class MedicalTreatmentControl {
                 patientName = patientName.substring(0, 21) + "…";
             if (doctorName.length() > 22)
                 doctorName = doctorName.substring(0, 21) + "…";
-            if (treatmentType.length() > 20)
-                treatmentType = treatmentType.substring(0, 19) + "…";
+            if (treatmentPlan.length() > 20)
+                treatmentPlan = treatmentPlan.substring(0, 19) + "…";
 
             report.append(String.format("%-10s | %-22s | %-22s | %-20s | %-12s | %-10s | %-12s | %-12s\n",
-                    id, patientName, doctorName, treatmentType, date, status,
+                    id, patientName, doctorName, treatmentPlan, date, status,
                     String.format("%.1f%%", successRate),
                     String.format("%.1f days", recoveryTime)));
         }
 
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF TREATMENT OUTCOME REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
+        report.append("-".repeat(145)).append("\n");
+        report.append("*".repeat(145)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF TREATMENT OUTCOME REPORT", 145)).append("\n");
+        report.append("=".repeat(145)).append("\n");
 
         return report.toString();
     }
@@ -1030,14 +998,14 @@ public class MedicalTreatmentControl {
     private int[] getTopIndices(double[] values, int count) {
         int[] indices = new int[Math.min(count, values.length)];
         double[] tempValues = values.clone();
-        for (int i = 0; i < indices.length; i++) {
+        for (int index = 0; index < indices.length; index++) {
             int maxIndex = 0;
-            for (int j = 1; j < tempValues.length; j++) {
-                if (tempValues[j] > tempValues[maxIndex]) {
-                    maxIndex = j;
+            for (int valueIndex = 1; valueIndex < tempValues.length; valueIndex++) {
+                if (tempValues[valueIndex] > tempValues[maxIndex]) {
+                    maxIndex = valueIndex;
                 }
             }
-            indices[i] = maxIndex;
+            indices[index] = maxIndex;
             tempValues[maxIndex] = -1; // Mark as used
         }
         return indices;

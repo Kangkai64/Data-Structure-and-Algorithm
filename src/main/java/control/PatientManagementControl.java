@@ -457,7 +457,7 @@ public class PatientManagementControl {
         report.append("=".repeat(120)).append("\n");
         report.append(ConsoleUtils.centerText("PATIENT MANAGEMENT SYSTEM - PATIENT DEMOGRAPHICS REPORT", 120))
                 .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
+        report.append("=".repeat(120)).append("\n");
 
         // Generation info with weekday
         report.append("Generated at: ")
@@ -466,9 +466,9 @@ public class PatientManagementControl {
         report.append("*".repeat(120)).append("\n\n");
 
         // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("DEMOGRAPHICS SUMMARY", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append("=".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DEMOGRAPHICS SUMMARY", 120) ).append("\n");
+        report.append("=".repeat(120)).append("\n");
         report.append(String.format("Total Active Patients: %d\n", getTotalActivePatients()));
         report.append(String.format("Patients in Queue: %d\n", getQueueSize()));
 
@@ -568,20 +568,19 @@ public class PatientManagementControl {
                 report.append(String.format("%-3s: %d registrations\n", months[i], monthlyRegistrations[i]));
             }
         }
-
-        report.append("-".repeat(120)).append("\n\n");
-
-        // Detailed patient demographics table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED PATIENT DEMOGRAPHICS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append("\n");
+        report.append("=".repeat(111)).append("\n");
+        report.append(ConsoleUtils.centerText("DETAILED PATIENT DEMOGRAPHICS", 111)).append("\n");
+        report.append("=".repeat(111)).append("\n");
 
         // Add sorting information
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-10s | %-25s | %-8s | %-6s | %-8s | %-15s | %-12s\n",
+        report.append("-".repeat(111)).append("\n");
+        report.append(String.format("| %-10s | %-25s | %-8s | %-6s | %-13s | %-15s | %-12s |\n",
                 "ID", "Name", "Age", "Gender", "Blood Type", "Allergies", "Registration"));
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(111)).append("\n");
 
         // Convert to array for sorting
         Patient[] patientArray = new Patient[activePatients.getSize()];
@@ -612,14 +611,14 @@ public class PatientManagementControl {
             if (allergies.length() > 15)
                 allergies = allergies.substring(0, 14) + "…";
 
-            report.append(String.format("%-10s | %-25s | %-8s | %-6s | %-8s | %-15s | %-12s\n",
+            report.append(String.format("| %-10s | %-25s | %-8s | %-6s | %-13s | %-15s | %-12s |\n",
                     id, name, age, gender, bloodType, allergies, regDate));
         }
 
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF PATIENT DEMOGRAPHICS REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
+        report.append("-".repeat(111)).append("\n");
+        report.append("*".repeat(111)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF PATIENT DEMOGRAPHICS REPORT", 111)).append("\n");
+        report.append("=".repeat(111)).append("\n");
 
         return report.toString();
     }
@@ -885,5 +884,157 @@ public class PatientManagementControl {
         result.append(">>> End of Search <<<\n");
 
         return result.toString();
+    }
+
+    // Generates patient visit history report with last visit tracking
+    public String generatePatientVisitHistoryReport(String sortBy, String sortOrder) {
+        ensureDataLoaded();
+
+        int size = activePatients.getSize();
+        Patient[] items = new Patient[size];
+        int index = 0;
+        Iterator<Patient> it = activePatients.iterator();
+        while (it.hasNext() && index < size) {
+            items[index++] = it.next();
+        }
+
+        final boolean ascending = sortOrder == null || !sortOrder.equalsIgnoreCase("desc");
+
+        java.util.Comparator<Patient> comparator = new java.util.Comparator<Patient>() {
+            @Override
+            public int compare(Patient a, Patient b) {
+                if (a == null && b == null)
+                    return 0;
+                if (a == null)
+                    return ascending ? -1 : 1;
+                if (b == null)
+                    return ascending ? 1 : -1;
+
+                int result = 0;
+                String key = sortBy == null ? "name" : sortBy.toLowerCase();
+                switch (key) {
+                    case "id":
+                        result = safeStr(a.getPatientId()).compareToIgnoreCase(safeStr(b.getPatientId()));
+                        break;
+                    case "ic":
+                        result = safeStr(a.getICNumber()).compareToIgnoreCase(safeStr(b.getICNumber()));
+                        break;
+                    case "email":
+                        result = safeStr(a.getEmail()).compareToIgnoreCase(safeStr(b.getEmail()));
+                        break;
+                    case "phone":
+                        result = safeStr(a.getPhoneNumber()).compareToIgnoreCase(safeStr(b.getPhoneNumber()));
+                        break;
+                    case "blood":
+                        String ba = a.getBloodType() == null ? "" : a.getBloodType().toString();
+                        String bb = b.getBloodType() == null ? "" : b.getBloodType().toString();
+                        result = ba.compareToIgnoreCase(bb);
+                        break;
+                    case "allergies":
+                        result = safeStr(a.getAllergies()).compareToIgnoreCase(safeStr(b.getAllergies()));
+                        break;
+                    case "regdate":
+                        java.time.LocalDate da = a.getRegistrationDate();
+                        java.time.LocalDate db = b.getRegistrationDate();
+                        if (da == null && db == null)
+                            result = 0;
+                        else if (da == null)
+                            result = -1;
+                        else if (db == null)
+                            result = 1;
+                        else
+                            result = da.compareTo(db);
+                        break;
+                    case "status":
+                        String sa = a.isActive() ? "Active" : "Inactive";
+                        String sb = b.isActive() ? "Active" : "Inactive";
+                        result = sa.compareToIgnoreCase(sb);
+                        break;
+                    case "name":
+                        result = safeStr(a.getFullName()).compareToIgnoreCase(safeStr(b.getFullName()));
+                        break;
+                    default:
+                        result = safeStr(a.getFullName()).compareToIgnoreCase(safeStr(b.getFullName()));
+                        break;
+                }
+                return ascending ? result : -result;
+            }
+        };
+
+        utility.QuickSort.sort(items, comparator);
+
+        StringBuilder report = new StringBuilder();
+        report.append("\n=== Patient Visit History Report ===\n");
+        report.append("Total Patients: ").append(items.length).append("\n");
+        report.append("Sorted By: ").append(sortBy).append(" | Order: ").append(ascending ? "Ascending" : "Descending")
+                .append("\n");
+        report.append("Generated: ").append(java.time.LocalDate.now()).append("\n\n");
+
+        report.append("-".repeat(207)).append("\n");
+        report.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-12s | %-8s | %-12s | %-33s | %-22s |\n",
+                "Patient ID", "Full Name", "IC Number", "Email", "Phone", "Reg Date", "Status", "Blood Type",
+                "Allergies", "Last Visit"));
+        report.append("-".repeat(207)).append("\n");
+
+        for (int i = 0; i < items.length; i++) {
+            Patient p = items[i];
+            if (p == null)
+                continue;
+            String id = valueOrNA(p.getPatientId());
+            String name = valueOrNA(p.getFullName());
+            String ic = valueOrNA(p.getICNumber());
+            String email = valueOrNA(p.getEmail());
+            String phone = valueOrNA(p.getPhoneNumber());
+            String reg = p.getRegistrationDate() == null ? "N/A"
+                    : p.getRegistrationDate().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+            String status = p.isActive() ? "Active" : "Inactive";
+
+            if (name.length() > 25)
+                name = name.substring(0, 22) + "...";
+            if (email.length() > 25)
+                email = email.substring(0, 22) + "...";
+
+            String blood = p.getBloodType() == null ? "N/A" : p.getBloodType().toString();
+            String allergiesOut = valueOrNA(p.getAllergies());
+            if (allergiesOut.length() > 20)
+                allergiesOut = allergiesOut.substring(0, 17) + "...";
+
+            // Calculate months since last visit (for now using registration date as last visit)
+            // In a real system, this would be tracked from consultation/appointment records
+            String lastVisit;
+            if (p.getRegistrationDate() != null) {
+                java.time.Period period = java.time.Period.between(p.getRegistrationDate(), java.time.LocalDate.now());
+                int years = period.getYears();
+                int months = period.getMonths();
+                
+                if (years == 0 && months == 0) {
+                    lastVisit = "This month";
+                } else if (years == 0 && months == 1) {
+                    lastVisit = "1 month ago";
+                } else if (years == 0 && months > 1) {
+                    lastVisit = months + " months ago";
+                } else if (years == 1 && months == 0) {
+                    lastVisit = "1 year ago";
+                } else if (years == 1 && months > 0) {
+                    lastVisit = "1 year, " + months + " month" + (months == 1 ? "" : "s") + " ago";
+                } else if (years > 1 && months == 0) {
+                    lastVisit = years + " years ago";
+                } else {
+                    lastVisit = years + " years, " + months + " month" + (months == 1 ? "" : "s") + " ago";
+                }
+            } else {
+                lastVisit = "N/A";
+            }
+
+            report.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-12s | %-8s | %-12s | %-33s | %-22s |\n",
+                    id, name, ic, email, phone, reg, status, blood, allergiesOut, lastVisit));
+        }
+
+        report.append("-".repeat(207)).append("\n");
+        report.append("=".repeat(207)).append("\n");
+        report.append(">>> End of Report <<<\n");
+        report.append("=".repeat(207)).append("\n");
+
+        return report.toString();
     }
 }

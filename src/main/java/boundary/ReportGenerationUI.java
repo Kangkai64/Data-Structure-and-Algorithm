@@ -103,10 +103,11 @@ public class ReportGenerationUI {
         ConsoleUtils.printHeader("Patient Reports");
         System.out.println("1. Patient Record Summary Report");
         System.out.println("2. Patient Demographics Report");
-        System.out.println("3. Both Reports");
+        System.out.println("3. Patient Visit History Report");
+        System.out.println("4. All Reports");
         System.out.print("Enter choice: ");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
         System.out.println();
 
         switch (choice) {
@@ -117,8 +118,12 @@ public class ReportGenerationUI {
                 generatePatientDemographicsReport();
                 break;
             case 3:
+                generatePatientVisitHistoryReport();
+                break;
+            case 4:
                 generatePatientRecordSummaryReport();
                 generatePatientDemographicsReport();
+                generatePatientVisitHistoryReport();
                 break;
             default:
                 System.out.println("Invalid choice.");
@@ -156,12 +161,73 @@ public class ReportGenerationUI {
 
     private void generatePatientDemographicsReport() {
         ConsoleUtils.printHeader("Patient Demographics Report");
-        String sortBy = getSortField(1);
+        System.out.println("Select field to sort by:");
+        System.out.println("1. Age");
+        System.out.println("2. Gender");
+        System.out.println("3. Blood Type");
+        System.out.println("4. Allergies");
+        System.out.println("5. Registration Date");
+        System.out.println("6. Patient Name");
+        int sortFieldChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
         System.out.println();
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
-        System.out.println();
+
+        String sortBy;
+        switch (sortFieldChoice) {
+            case 1:
+                sortBy = "age";
+                break;
+            case 2:
+                sortBy = "gender";
+                break;
+            case 3:
+                sortBy = "blood";
+                break;
+            case 4:
+                sortBy = "allergies";
+                break;
+            case 5:
+                sortBy = "regdate";
+                break;
+            case 6:
+                sortBy = "name";
+                break;
+            default:
+                sortBy = "age";
+                break;
+        }
 
         System.out.println(patientControl.generatePatientDemographicsReport(sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
+    private void generatePatientVisitHistoryReport() {
+        ConsoleUtils.printHeader("Patient Visit History Report");
+        System.out.println("Sort by options:");
+        System.out.println("1. Name (default)");
+        System.out.println("2. Patient ID");
+        System.out.println("3. IC Number");
+        System.out.println("4. Email");
+        System.out.println("5. Phone");
+        System.out.println("6. Blood Type");
+        System.out.println("7. Allergies");
+        System.out.println("8. Registration Date");
+        System.out.println("9. Status");
+
+        int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter sort field choice: ", 1, 9);
+        System.out.println();
+        
+        System.out.println("Sort order:");
+        System.out.println("1. Ascending (A-Z, 0-9)");
+        System.out.println("2. Descending (Z-A, 9-0)");
+        
+        int orderChoice = ConsoleUtils.getIntInput(scanner, "Enter sort order choice: ", 1, 2);
+        System.out.println();
+
+        String sortBy = getSortField(sortChoice);
+        String sortOrder = orderChoice == 1 ? "asc" : "desc";
+        
+        System.out.println(patientControl.generatePatientVisitHistoryReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
 

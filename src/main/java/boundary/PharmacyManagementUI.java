@@ -163,12 +163,14 @@ public class PharmacyManagementUI {
         switch (choice) {
             case 1:
                 int addQuantity = ConsoleUtils.getIntInput(scanner, "Enter quantity to add: ", 1, 10000);
-                pharmacyControl.updateMedicineStock(medicine.getMedicineId(), medicine.getQuantityInStock() + addQuantity);
+                pharmacyControl.updateMedicineStock(medicine.getMedicineId(),
+                        medicine.getQuantityInStock() + addQuantity);
                 System.out.println("Medicine stock updated.");
                 break;
             case 2:
                 int removeQuantity = ConsoleUtils.getIntInput(scanner, "Enter quantity to remove: ", 1, 10000);
-                pharmacyControl.updateMedicineStock(medicine.getMedicineId(), medicine.getQuantityInStock() - removeQuantity);
+                pharmacyControl.updateMedicineStock(medicine.getMedicineId(),
+                        medicine.getQuantityInStock() - removeQuantity);
                 System.out.println("Medicine stock updated.");
                 break;
             case 3:
@@ -643,7 +645,7 @@ public class PharmacyManagementUI {
         System.out.println("4. Search by Manufacturer");
         System.out.println("5. Search by Status");
 
-        Medicine medicine = null;
+        ArrayBucketList<String, Medicine> medicines = null;
 
         int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 5);
         System.out.println();
@@ -651,7 +653,7 @@ public class PharmacyManagementUI {
         switch (choice) {
             case 1:
                 String medicineId = ConsoleUtils.getStringInput(scanner, "Enter Medicine ID: ");
-                medicine = pharmacyControl.findMedicineById(medicineId);
+                Medicine medicine = pharmacyControl.findMedicineById(medicineId);
                 if (medicine == null) {
                     System.out.println("Medicine not found.");
                 } else {
@@ -662,29 +664,29 @@ public class PharmacyManagementUI {
                 break;
             case 2:
                 String medicineName = ConsoleUtils.getStringInput(scanner, "Enter Medicine Name: ");
-                medicine = pharmacyControl.findMedicineByName(medicineName);
-                if (medicine == null) {
+                medicines = pharmacyControl.findMedicineByName(medicineName);
+                if (medicines.isEmpty()) {
                     System.out.println("Medicine not found.");
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
-                    System.out.println("\n" + medicine);
+                    System.out.println("\n" + medicines.parseElementsToString());
                 }
                 break;
             case 3:
                 String genericName = ConsoleUtils.getStringInput(scanner, "Enter Generic Name: ");
-                medicine = pharmacyControl.findMedicineByGenericName(genericName);
-                if (medicine == null) {
+                medicines = pharmacyControl.findMedicineByGenericName(genericName);
+                if (medicines.isEmpty()) {
                     System.out.println("Medicine not found.");
                 } else {
                     System.out.println();
                     ConsoleUtils.printHeader("Search Result");
-                    System.out.println("\n" + medicine);
+                    System.out.println("\n" + medicines.parseElementsToString());
                 }
                 break;
             case 4:
                 String manufacturer = ConsoleUtils.getStringInput(scanner, "Enter Manufacturer: ");
-                ArrayBucketList<String, Medicine> medicines = pharmacyControl.findMedicineByManufacturer(manufacturer);
+                medicines = pharmacyControl.findMedicineByManufacturer(manufacturer);
                 if (medicines.isEmpty()) {
                     System.out.println("No medicines found.");
                 } else {
@@ -695,6 +697,7 @@ public class PharmacyManagementUI {
                         System.out.println();
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
                         if (sortChoice == 1) {
                             System.out.println();
                             String sortBy = getMedicineSortField();
@@ -725,6 +728,7 @@ public class PharmacyManagementUI {
                         System.out.println();
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
                         if (sortChoice == 1) {
                             System.out.println();
                             String sortBy = getMedicineSortField();
@@ -750,15 +754,17 @@ public class PharmacyManagementUI {
         ConsoleUtils.printHeader("Search Prescriptions");
         System.out.println("1. Search by Prescription ID");
         System.out.println("2. Search by Patient ID");
-        System.out.println("3. Search by Doctor ID");
-        System.out.println("4. Search by Status");
-        System.out.println("5. Search by Payment Status");
-        System.out.println("6. Search by Date Range");
+        System.out.println("3. Search by Patient Name (prefix)");
+        System.out.println("4. Search by Doctor ID");
+        System.out.println("5. Search by Doctor Name (prefix)");
+        System.out.println("6. Search by Status");
+        System.out.println("7. Search by Payment Status");
+        System.out.println("8. Search by Date Range");
 
         Prescription prescription = null;
         ArrayBucketList<String, Prescription> prescriptions = null;
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
         System.out.println();
 
         switch (choice) {
@@ -790,6 +796,7 @@ public class PharmacyManagementUI {
                         System.out.println();
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
                         if (sortChoice == 1) {
                             System.out.println();
                             String sortBy = getPrescriptionSortField();
@@ -806,6 +813,34 @@ public class PharmacyManagementUI {
                 }
                 break;
             case 3:
+                String patientName = ConsoleUtils.getStringInput(scanner, "Enter Patient Name (prefix): ");
+                prescriptions = pharmacyControl.findPrescriptionsByPatientName(patientName);
+                if (prescriptions.isEmpty()) {
+                    System.out.println("No prescriptions found.");
+                } else {
+                    System.out.println();
+                    ConsoleUtils.printHeader("Search Result");
+                    if (prescriptions.getSize() > 1) {
+                        System.out.println("Found " + prescriptions.getSize() + " prescriptions.");
+                        System.out.println();
+                        System.out.println("Sort results?\n1. Yes\n2. No");
+                        int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
+                        if (sortChoice == 1) {
+                            String sortBy = getPrescriptionSortField();
+                            System.out.println();
+                            String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                            System.out.println(pharmacyControl.displaySortedPrescriptionSearchResults(prescriptions,
+                                    "Patient Name: " + patientName, sortBy, sortOrder));
+                        } else {
+                            System.out.println("\n" + prescriptions.parseElementsToString());
+                        }
+                    } else {
+                        System.out.println("\n" + prescriptions.parseElementsToString());
+                    }
+                }
+                break;
+            case 4:
                 String doctorId = ConsoleUtils.getStringInput(scanner, "Enter Doctor ID: ");
                 prescriptions = pharmacyControl.findPrescriptionsByDoctor(doctorId);
                 if (prescriptions.isEmpty()) {
@@ -818,6 +853,7 @@ public class PharmacyManagementUI {
                         System.out.println();
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
                         if (sortChoice == 1) {
                             System.out.println();
                             String sortBy = getPrescriptionSortField();
@@ -833,7 +869,35 @@ public class PharmacyManagementUI {
                     }
                 }
                 break;
-            case 4:
+            case 5:
+                String doctorName = ConsoleUtils.getStringInput(scanner, "Enter Doctor Name (prefix): ");
+                prescriptions = pharmacyControl.findPrescriptionsByDoctorName(doctorName);
+                if (prescriptions.isEmpty()) {
+                    System.out.println("No prescriptions found.");
+                } else {
+                    System.out.println();
+                    ConsoleUtils.printHeader("Search Result");
+                    if (prescriptions.getSize() > 1) {
+                        System.out.println("Found " + prescriptions.getSize() + " prescriptions.");
+                        System.out.println();
+                        System.out.println("Sort results?\n1. Yes\n2. No");
+                        int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
+                        if (sortChoice == 1) {
+                            String sortBy = getPrescriptionSortField();
+                            System.out.println();
+                            String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                            System.out.println(pharmacyControl.displaySortedPrescriptionSearchResults(prescriptions,
+                                    "Doctor Name: " + doctorName, sortBy, sortOrder));
+                        } else {
+                            System.out.println("\n" + prescriptions.parseElementsToString());
+                        }
+                    } else {
+                        System.out.println("\n" + prescriptions.parseElementsToString());
+                    }
+                }
+                break;
+            case 6:
                 System.out.println("Select status:");
                 System.out.println("1. ACTIVE  2. DISPENSED  3. EXPIRED  4. CANCELLED");
                 int statusChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
@@ -848,6 +912,7 @@ public class PharmacyManagementUI {
                         System.out.println();
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
                         if (sortChoice == 1) {
                             String sortBy = getPrescriptionSortField();
                             System.out.println();
@@ -862,7 +927,8 @@ public class PharmacyManagementUI {
                     }
                 }
                 break;
-            case 5:
+
+            case 7:
                 System.out.println("Select payment status:");
                 System.out.println("1. PAID  2. PENDING  3. CANCELLED");
                 int payChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
@@ -878,6 +944,7 @@ public class PharmacyManagementUI {
                         System.out.println();
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
                         if (sortChoice == 1) {
                             System.out.println();
                             String sortBy = getPrescriptionSortField();
@@ -893,7 +960,7 @@ public class PharmacyManagementUI {
                     }
                 }
                 break;
-            case 6:
+            case 8:
                 LocalDate startDate = ConsoleUtils.getDateInput(scanner, "Enter start date (DD-MM-YYYY): ",
                         DateType.PAST_DATE_ONLY);
                 LocalDate endDate = ConsoleUtils.getDateInput(scanner, "Enter end date (DD-MM-YYYY): ",
@@ -916,6 +983,7 @@ public class PharmacyManagementUI {
                         System.out.println();
                         System.out.println("Sort results?\n1. Yes\n2. No");
                         int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                        System.out.println();
                         if (sortChoice == 1) {
                             System.out.println();
                             String sortBy = getPrescriptionSortField();

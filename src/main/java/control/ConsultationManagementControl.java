@@ -1,6 +1,8 @@
 package control;
 
 import adt.ArrayBucketList;
+import adt.ArrayBucketListFactory;
+import adt.IndexingUtility;
 import utility.ConsoleUtils;
 import entity.Consultation;
 import entity.Patient;
@@ -30,6 +32,12 @@ public class ConsultationManagementControl {
     private ArrayBucketList<String, Consultation> inProgressConsultations;
     private ArrayBucketList<String, Consultation> completedConsultations;
     private ArrayBucketList<String, Consultation> cancelledConsultations;
+    // Indices
+    private ArrayBucketList<String, Consultation> consultationIndexById;
+    private ArrayBucketList<String, ArrayBucketList<String, Consultation>> consultationIndexByPatientId;
+    private ArrayBucketList<String, ArrayBucketList<String, Consultation>> consultationIndexByDoctorId;
+    private ArrayBucketList<Consultation.PaymentStatus, ArrayBucketList<String, Consultation>> consultationIndexByPaymentStatus;
+    private ArrayBucketList<java.time.LocalDate, ArrayBucketList<String, Consultation>> consultationIndexByDate;
     private ConsultationDao consultationDao;
     private ScheduleDao scheduleDao;
     private PatientDao patientDao;
@@ -41,6 +49,12 @@ public class ConsultationManagementControl {
         this.inProgressConsultations = new ArrayBucketList<String, Consultation>();
         this.completedConsultations = new ArrayBucketList<String, Consultation>();
         this.cancelledConsultations = new ArrayBucketList<String, Consultation>();
+        // Initialize indices
+        this.consultationIndexById = ArrayBucketListFactory.createForStringIds(256);
+        this.consultationIndexByPatientId = ArrayBucketListFactory.createForStringIds(128);
+        this.consultationIndexByDoctorId = ArrayBucketListFactory.createForStringIds(128);
+        this.consultationIndexByPaymentStatus = ArrayBucketListFactory.createForEnums(8);
+        this.consultationIndexByDate = ArrayBucketListFactory.createForLocalDates(64);
         this.consultationDao = new ConsultationDao();
         this.scheduleDao = new ScheduleDao();
         this.patientDao = new PatientDao();
@@ -55,6 +69,13 @@ public class ConsultationManagementControl {
             }
             consultations = consultationDao.findAll();
             categorizeConsultations();
+            // Build indices
+            Iterator<Consultation> buildIterator = consultations.iterator();
+            while (buildIterator.hasNext()) {
+                Consultation consultation = buildIterator.next();
+                consultationIndexById.add(consultation.getConsultationId(), consultation);
+                indexConsultation(consultation);
+            }
         } catch (Exception exception) {
             System.err.println("Error loading consultation data: " + exception.getMessage());
         }
@@ -122,6 +143,7 @@ public class ConsultationManagementControl {
             scheduledConsultations.remove(nextConsultation.getConsultationId());
             inProgressConsultations.add(nextConsultation.getConsultationId(), nextConsultation);
             consultations.add(nextConsultation.getConsultationId(), nextConsultation);
+            reindexConsultation(nextConsultation);
 
             return "Consultation started successfully for: " + nextConsultation.getPatient().getFullName() +
                     " (Slot: " + nextConsultation.getConsultationDate().format(DateTimeFormatter.ofPattern("HH:mm"))
@@ -159,6 +181,7 @@ public class ConsultationManagementControl {
                 inProgressConsultations.remove(consultation.getConsultationId());
                 completedConsultations.add(consultation.getConsultationId(), consultation);
                 consultations.add(consultation.getConsultationId(), consultation);
+                reindexConsultation(consultation);
 
                 return true;
             }
@@ -269,6 +292,8 @@ public class ConsultationManagementControl {
             // Add to in-memory collections
             consultations.add(consultation.getConsultationId(), consultation);
             scheduledConsultations.add(consultation.getConsultationId(), consultation);
+            consultationIndexById.add(consultation.getConsultationId(), consultation);
+            indexConsultation(consultation);
 
             return true;
         } catch (Exception exception) {
@@ -299,6 +324,7 @@ public class ConsultationManagementControl {
                 scheduledConsultations.remove(consultation.getConsultationId());
                 cancelledConsultations.add(consultation.getConsultationId(), consultation);
                 consultations.add(consultation.getConsultationId(), consultation);
+                reindexConsultation(consultation);
 
                 return true;
             }
@@ -311,43 +337,22 @@ public class ConsultationManagementControl {
 
     // In-memory search and retrieval methods
     public Consultation findConsultationById(String consultationId) {
-        return consultations.getValue(consultationId);
+        return consultationIndexById.getValue(consultationId);
     }
 
     public ArrayBucketList<String, Consultation> findConsultationsByPatient(String patientId) {
-        ArrayBucketList<String, Consultation> patientConsultations = new ArrayBucketList<>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getPatient().getPatientId().equals(patientId)) {
-                patientConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return patientConsultations;
+        ArrayBucketList<String, Consultation> group = consultationIndexByPatientId.getValue(patientId);
+        return group != null ? group : new ArrayBucketList<>();
     }
 
     public ArrayBucketList<String, Consultation> findConsultationsByDoctor(String doctorId) {
-        ArrayBucketList<String, Consultation> doctorConsultations = new ArrayBucketList<>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getDoctor().getDoctorId().equals(doctorId)) {
-                doctorConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return doctorConsultations;
+        ArrayBucketList<String, Consultation> group = consultationIndexByDoctorId.getValue(doctorId);
+        return group != null ? group : new ArrayBucketList<>();
     }
 
     public ArrayBucketList<String, Consultation> findConsultationsByDate(LocalDateTime date) {
-        ArrayBucketList<String, Consultation> dateConsultations = new ArrayBucketList<>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getConsultationDate().toLocalDate().equals(date.toLocalDate())) {
-                dateConsultations.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return dateConsultations;
+        ArrayBucketList<String, Consultation> group = consultationIndexByDate.getValue(date.toLocalDate());
+        return group != null ? group : new ArrayBucketList<>();
     }
 
     public ArrayBucketList<String, Consultation> getScheduledConsultations() {
@@ -398,15 +403,8 @@ public class ConsultationManagementControl {
 
     public ArrayBucketList<String, Consultation> findConsultationsByPaymentStatus(
             Consultation.PaymentStatus paymentStatus) {
-        ArrayBucketList<String, Consultation> result = new ArrayBucketList<>();
-        Iterator<Consultation> consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            Consultation consultation = consultationIterator.next();
-            if (consultation.getPaymentStatus() == paymentStatus) {
-                result.add(consultation.getConsultationId(), consultation);
-            }
-        }
-        return result;
+        ArrayBucketList<String, Consultation> group = consultationIndexByPaymentStatus.getValue(paymentStatus);
+        return group != null ? group : new ArrayBucketList<>();
     }
 
     public int getScheduledConsultationsCount() {
@@ -496,6 +494,33 @@ public class ConsultationManagementControl {
             }
         }
         return doctors;
+    }
+
+    // Indexing helpers
+    private void indexConsultation(Consultation consultation) {
+        if (consultation == null) {
+            return;
+        }
+        IndexingUtility.addToIndexGroup(consultationIndexByPatientId, consultation.getPatient().getPatientId(),
+                consultation.getConsultationId(), consultation);
+        IndexingUtility.addToIndexGroup(consultationIndexByDoctorId, consultation.getDoctor().getDoctorId(),
+                consultation.getConsultationId(), consultation);
+        IndexingUtility.addToIndexGroup(consultationIndexByPaymentStatus, consultation.getPaymentStatus(),
+                consultation.getConsultationId(), consultation);
+        IndexingUtility.addToIndexGroup(consultationIndexByDate, consultation.getConsultationDate().toLocalDate(),
+                consultation.getConsultationId(), consultation);
+    }
+
+    private void reindexConsultation(Consultation consultation) {
+        if (consultation == null) {
+            return;
+        }
+        // Remove and re-add to reflect potential key changes
+        IndexingUtility.removeFromIndexGroup(consultationIndexByPatientId, consultation.getPatient().getPatientId(), consultation.getConsultationId());
+        IndexingUtility.removeFromIndexGroup(consultationIndexByDoctorId, consultation.getDoctor().getDoctorId(), consultation.getConsultationId());
+        IndexingUtility.removeFromIndexGroup(consultationIndexByPaymentStatus, consultation.getPaymentStatus(), consultation.getConsultationId());
+        IndexingUtility.removeFromIndexGroup(consultationIndexByDate, consultation.getConsultationDate().toLocalDate(), consultation.getConsultationId());
+        indexConsultation(consultation);
     }
 
     // Reporting Methods
@@ -608,12 +633,7 @@ public class ConsultationManagementControl {
         report.append("-".repeat(120)).append("\n");
 
         // Convert to array for sorting
-        Consultation[] consultationArray = new Consultation[consultations.getSize()];
-        int index = 0;
-        consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            consultationArray[index++] = consultationIterator.next();
-        }
+        Consultation[] consultationArray = consultations.toArray(Consultation.class);
 
         // Sort the consultation array
         sortConsultationArray(consultationArray, sortBy, sortOrder);
@@ -758,12 +778,7 @@ public class ConsultationManagementControl {
         report.append("-".repeat(120)).append("\n");
 
         // Convert to array for sorting
-        Consultation[] consultationArray = new Consultation[completedConsultations.getSize()];
-        int index = 0;
-        consultationIterator = completedConsultations.iterator();
-        while (consultationIterator.hasNext()) {
-            consultationArray[index++] = consultationIterator.next();
-        }
+        Consultation[] consultationArray = completedConsultations.toArray(Consultation.class);
 
         // Sort the consultation array
         sortConsultationArray(consultationArray, sortBy, sortOrder);
@@ -979,12 +994,7 @@ public class ConsultationManagementControl {
         report.append("-".repeat(135)).append("\n");
 
         // Convert to array for sorting
-        Consultation[] consultationArray = new Consultation[consultations.getSize()];
-        int index = 0;
-        consultationIterator = consultations.iterator();
-        while (consultationIterator.hasNext()) {
-            consultationArray[index++] = consultationIterator.next();
-        }
+        Consultation[] consultationArray = consultations.toArray(Consultation.class);
 
         // Sort the consultation array
         sortConsultationEfficiencyArray(consultationArray, sortBy, sortOrder);
@@ -1301,12 +1311,7 @@ public class ConsultationManagementControl {
             return "No consultations found.";
         }
 
-        Consultation[] items = new Consultation[list.getSize()];
-        int pos = 0;
-        Iterator<Consultation> it = list.iterator();
-        while (it.hasNext() && pos < items.length) {
-            items[pos++] = it.next();
-        }
+        Consultation[] items = list.toArray(Consultation.class);
 
         Comparator<Consultation> comparator = getConsultationComparator(sortBy);
         if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {

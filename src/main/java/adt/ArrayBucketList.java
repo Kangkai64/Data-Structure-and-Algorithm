@@ -16,6 +16,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     private int bucketCount;
     private static final int DEFAULT_BUCKET_COUNT = 1 << 4;
     private static final double LOAD_FACTOR_THRESHOLD = 0.75;
+    private HashFunction<K> hashFunction;
 
     /**
      * Default constructor with 16 buckets
@@ -34,9 +35,28 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         this.numberOfEntries = 0;
         this.buckets = (LinkedList[]) new ArrayBucketList<?, ?>.LinkedList[bucketCount];
         this.queueData = new LinkedList();
+        this.hashFunction = this::defaultHashEntity;
 
-        for (int index = 0; index < bucketCount; index++) {
-            buckets[index] = new LinkedList();
+        for (int bucketIndex = 0; bucketIndex < bucketCount; bucketIndex++) {
+            buckets[bucketIndex] = new LinkedList();
+        }
+    }
+
+    /**
+     * Constructor with specified bucket count and custom hash function
+     *
+     * @param bucketCount number of buckets in the array
+     * @param hashFunction custom hash function to compute bucket index
+     */
+    public ArrayBucketList(int bucketCount, HashFunction<K> hashFunction) {
+        this.bucketCount = bucketCount;
+        this.numberOfEntries = 0;
+        this.buckets = (LinkedList[]) new ArrayBucketList<?, ?>.LinkedList[bucketCount];
+        this.queueData = new LinkedList();
+        this.hashFunction = (hashFunction != null) ? hashFunction : this::defaultHashEntity;
+
+        for (int bucketIndex = 0; bucketIndex < bucketCount; bucketIndex++) {
+            buckets[bucketIndex] = new LinkedList();
         }
     }
 
@@ -60,25 +80,33 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
      * Hash function (moved from HashUtility)
      */
     private int hashEntity(K key, int bucketCount) {
+        return (hashFunction != null) ? hashFunction.hash(key, bucketCount) : defaultHashEntity(key, bucketCount);
+    }
+
+    /**
+     * Default hash implementation used when no custom function is provided
+     */
+    private int defaultHashEntity(K key, int bucketCount) {
         if (key == null) {
             return 0;
         }
-
         String keyStr = key.toString();
         int hash = 0;
-
-        // Use a prime multiplier and process each character
-        // This helps break up patterns in sequential IDs
         for (int i = 0; i < keyStr.length(); i++) {
             hash = hash * 31 + keyStr.charAt(i);
         }
-
-        // Additional mixing to improve distribution
-        hash ^= (hash >>> 16); // XOR with upper bits
-        hash *= 0x85ebca6b; // Multiply by a large prime-like number
-        hash ^= (hash >>> 13); // More mixing
-
+        hash ^= (hash >>> 16);
+        hash *= 0x85ebca6b;
+        hash ^= (hash >>> 13);
         return Math.abs(hash) % bucketCount;
+    }
+
+    /**
+     * Functional interface for custom hash functions
+     */
+    @FunctionalInterface
+    public interface HashFunction<T> {
+        int hash(T key, int bucketCount);
     }
 
     /**
@@ -196,6 +224,34 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     }
 
     /**
+     * Returns a new ArrayBucketList containing all entries from the same hashed
+     * bucket whose String keys start with the given prefix (case-insensitive).
+     * If the provided key is not a String, or prefix is null/empty, returns an empty list.
+     */
+    public ArrayBucketList<K, V> getByStringKeyPrefix(String prefix) {
+        ArrayBucketList<K, V> matches = new ArrayBucketList<>(4, this.hashFunction);
+        if (prefix == null) {
+            return matches;
+        }
+        String normalizedPrefix = prefix.trim().toLowerCase();
+        if (normalizedPrefix.isEmpty()) {
+            return matches;
+        }
+        int bucketIndex = hashEntity((K) prefix, bucketCount);
+        LinkedList bucket = buckets[bucketIndex];
+        for (Node node : bucket) {
+            Object keyObj = node.getKey();
+            if (keyObj instanceof String) {
+                String keyStr = ((String) keyObj).toLowerCase();
+                if (keyStr.startsWith(normalizedPrefix)) {
+                    matches.add((K) node.getKey(), (V) node.getValue());
+                }
+            }
+        }
+        return matches;
+    }
+
+    /**
      * Sees whether a specific entry is in the dictionary.
      * 
      * @param key an object search key of the desired entry
@@ -267,8 +323,8 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         LinkedList[] oldBuckets = buckets;
 
         buckets = (LinkedList[]) new ArrayBucketList<?, ?>.LinkedList[newBucketCount];
-        for (int index = 0; index < newBucketCount; index++) {
-            buckets[index] = new LinkedList();
+        for (int bucketIndex = 0; bucketIndex < newBucketCount; bucketIndex++) {
+            buckets[bucketIndex] = new LinkedList();
         }
 
         bucketCount = newBucketCount; // ensure rehashing uses the new size
@@ -291,9 +347,9 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         StringBuilder outputStr = new StringBuilder();
         outputStr.append("ArrayBucketList with ").append(numberOfEntries)
                 .append(" entries in ").append(bucketCount).append(" buckets:\n");
-        for (int bucketIndex = 0; bucketIndex < bucketCount; bucketIndex++) {
-            outputStr.append("Bucket ").append(bucketIndex).append(": ");
-            outputStr.append(buckets[bucketIndex].toString()).append("\n");
+        for (int index = 0; index < bucketCount; index++) {
+            outputStr.append("Bucket ").append(index).append(": ");
+            outputStr.append(buckets[index].toString()).append("\n");
         }
         return outputStr.toString();
     }

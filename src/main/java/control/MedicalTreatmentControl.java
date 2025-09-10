@@ -1,6 +1,8 @@
 package control;
 
 import adt.ArrayBucketList;
+import adt.ArrayBucketListFactory;
+import adt.IndexingUtility;
 import entity.MedicalTreatment;
 import entity.Patient;
 import entity.Doctor;
@@ -22,18 +24,32 @@ public class MedicalTreatmentControl {
 
     private ArrayBucketList<String, MedicalTreatment> treatments;
     private ArrayBucketList<String, MedicalTreatment> activeTreatments;
+    // Indices
+    private ArrayBucketList<String, MedicalTreatment> treatmentIndexById;
+    private ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByPatientId;
+    private ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByDoctorId;
+    private ArrayBucketList<MedicalTreatment.TreatmentStatus, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByStatus;
+    private ArrayBucketList<MedicalTreatment.PaymentStatus, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByPaymentStatus;
+    private ArrayBucketList<java.time.LocalDate, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByDate;
     private MedicalTreatmentDao treatmentDao;
 
     public MedicalTreatmentControl() {
         this.treatments = new ArrayBucketList<String, MedicalTreatment>();
         this.activeTreatments = new ArrayBucketList<String, MedicalTreatment>();
+        // Initialize indices
+        this.treatmentIndexById = ArrayBucketListFactory.createForStringIds(256);
+        this.treatmentIndexByPatientId = ArrayBucketListFactory.createForStringIds(128);
+        this.treatmentIndexByDoctorId = ArrayBucketListFactory.createForStringIds(128);
+        this.treatmentIndexByStatus = ArrayBucketListFactory.createForEnums(16);
+        this.treatmentIndexByPaymentStatus = ArrayBucketListFactory.createForEnums(8);
+        this.treatmentIndexByDate = ArrayBucketListFactory.createForLocalDates(64);
         this.treatmentDao = new MedicalTreatmentDao();
     }
 
     public void loadTreatmentData() {
         try {
             treatments = treatmentDao.findAll();
-            // Rebuild active treatments cache4
+            // Build indices and active cache
             activeTreatments.clear();
             Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
             while (treatmentIterator.hasNext()) {
@@ -41,6 +57,8 @@ public class MedicalTreatmentControl {
                 if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
                     activeTreatments.add(treatment.getTreatmentId(), treatment);
                 }
+                treatmentIndexById.add(treatment.getTreatmentId(), treatment);
+                indexTreatment(treatment);
             }
         } catch (Exception exception) {
             System.err.println("Error loading treatment data: " + exception.getMessage());
@@ -94,6 +112,8 @@ public class MedicalTreatmentControl {
             // Add to lists
             treatments.add(treatment.getTreatmentId(), treatment);
             activeTreatments.add(treatment.getTreatmentId(), treatment);
+            treatmentIndexById.add(treatment.getTreatmentId(), treatment);
+            indexTreatment(treatment);
 
             return treatment.getTreatmentId();
         } catch (Exception exception) {
@@ -135,6 +155,7 @@ public class MedicalTreatmentControl {
                     treatment.setTreatmentCost(treatmentCost);
 
                     treatments.add(treatment.getTreatmentId(), treatment);
+                    indexTreatment(treatment);
 
                     // Persist changes to database
                     return treatmentDao.update(treatment);
@@ -155,6 +176,7 @@ public class MedicalTreatmentControl {
                     treatment.setFollowUpDate(followUpDate);
 
                     treatments.add(treatment.getTreatmentId(), treatment);
+                    indexTreatment(treatment);
 
                     // Persist changes to database
                     return treatmentDao.updateNotesAndFollowUpDate(treatmentId, treatmentNotes, followUpDate);
@@ -193,6 +215,7 @@ public class MedicalTreatmentControl {
                 // Remove from active treatments
                 removeFromActiveTreatments(treatment);
                 treatments.add(treatment.getTreatmentId(), treatment);
+                indexTreatment(treatment);
                 return true;
             }
             return false;
@@ -216,6 +239,7 @@ public class MedicalTreatmentControl {
 
                 // Track as active
                 activeTreatments.add(treatment.getTreatmentId(), treatment);
+                indexTreatment(treatment);
                 return true;
             }
             return false;
@@ -239,6 +263,7 @@ public class MedicalTreatmentControl {
                 // Remove from active treatments
                 removeFromActiveTreatments(treatment);
                 treatments.add(treatment.getTreatmentId(), treatment);
+                indexTreatment(treatment);
 
                 return true;
             }
@@ -251,31 +276,17 @@ public class MedicalTreatmentControl {
 
     // Search and Retrieval Methods
     public MedicalTreatment findTreatmentById(String treatmentId) {
-        return treatments.getValue(treatmentId);
+        return treatmentIndexById.getValue(treatmentId);
     }
 
     public ArrayBucketList<String, MedicalTreatment> findTreatmentsByPatient(String patientId) {
-        ArrayBucketList<String, MedicalTreatment> patientTreatments = new ArrayBucketList<String, MedicalTreatment>();
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            if (treatment.getPatient().getPatientId().equals(patientId)) {
-                patientTreatments.add(treatment.getTreatmentId(), treatment);
-            }
-        }
-        return patientTreatments;
+        ArrayBucketList<String, MedicalTreatment> group = treatmentIndexByPatientId.getValue(patientId);
+        return group != null ? group : new ArrayBucketList<String, MedicalTreatment>();
     }
 
     public ArrayBucketList<String, MedicalTreatment> findTreatmentsByDoctor(String doctorId) {
-        ArrayBucketList<String, MedicalTreatment> doctorTreatments = new ArrayBucketList<String, MedicalTreatment>();
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            if (treatment.getDoctor().getDoctorId().equals(doctorId)) {
-                doctorTreatments.add(treatment.getTreatmentId(), treatment);
-            }
-        }
-        return doctorTreatments;
+        ArrayBucketList<String, MedicalTreatment> group = treatmentIndexByDoctorId.getValue(doctorId);
+        return group != null ? group : new ArrayBucketList<String, MedicalTreatment>();
     }
 
     // Public helper to render sorted search results for treatments
@@ -285,12 +296,7 @@ public class MedicalTreatmentControl {
             return "No treatments found.";
         }
 
-        MedicalTreatment[] items = new MedicalTreatment[list.getSize()];
-        int pos = 0;
-        Iterator<MedicalTreatment> it = list.iterator();
-        while (it.hasNext() && pos < items.length) {
-            items[pos++] = it.next();
-        }
+        MedicalTreatment[] items = list.toArray(MedicalTreatment.class);
 
         Comparator<MedicalTreatment> comparator = getTreatmentComparator(sortBy);
         if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
@@ -549,12 +555,7 @@ public class MedicalTreatmentControl {
         report.append("-".repeat(120)).append("\n");
 
         // Convert to array for sorting
-        MedicalTreatment[] treatmentArray = new MedicalTreatment[treatments.getSize()];
-        int index = 0;
-        Iterator<MedicalTreatment> arrayIterator = treatments.iterator();
-        while (arrayIterator.hasNext()) {
-            treatmentArray[index++] = arrayIterator.next();
-        }
+        MedicalTreatment[] treatmentArray = treatments.toArray(MedicalTreatment.class);
 
         // Sort the treatment array
         sortTreatmentArray(treatmentArray, sortBy, sortOrder);
@@ -700,12 +701,7 @@ public class MedicalTreatmentControl {
         report.append("-".repeat(120)).append("\n");
 
         // Convert to array for sorting
-        MedicalTreatment[] treatmentArray = new MedicalTreatment[treatments.getSize()];
-        int index = 0;
-        Iterator<MedicalTreatment> statusIterator = treatments.iterator();
-        while (statusIterator.hasNext()) {
-            treatmentArray[index++] = statusIterator.next();
-        }
+        MedicalTreatment[] treatmentArray = treatments.toArray(MedicalTreatment.class);
 
         // Sort the treatment array
         sortTreatmentArray(treatmentArray, sortBy, sortOrder);
@@ -895,12 +891,7 @@ public class MedicalTreatmentControl {
         report.append("-".repeat(145)).append("\n");
 
         // Convert to array for sorting
-        MedicalTreatment[] treatmentArray = new MedicalTreatment[treatments.getSize()];
-        int index = 0;
-        treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            treatmentArray[index++] = treatmentIterator.next();
-        }
+        MedicalTreatment[] treatmentArray = treatments.toArray(MedicalTreatment.class);
 
         // Sort the treatment array
         sortTreatmentOutcomeArray(treatmentArray, sortBy, sortOrder);
@@ -1250,17 +1241,24 @@ public class MedicalTreatmentControl {
     // Payment Status search
     public ArrayBucketList<String, MedicalTreatment> findTreatmentsByPaymentStatus(
             MedicalTreatment.PaymentStatus paymentStatus) {
-        ArrayBucketList<String, MedicalTreatment> results = new ArrayBucketList<String, MedicalTreatment>();
-        if (paymentStatus == null) {
-            return results;
+        ArrayBucketList<String, MedicalTreatment> group = treatmentIndexByPaymentStatus.getValue(paymentStatus);
+        return group != null ? group : new ArrayBucketList<String, MedicalTreatment>();
+    }
+
+    // Indexing helpers
+    private void indexTreatment(MedicalTreatment treatment) {
+        if (treatment == null) {
+            return;
         }
-        Iterator<MedicalTreatment> iterator = treatments.iterator();
-        while (iterator.hasNext()) {
-            MedicalTreatment treatment = iterator.next();
-            if (treatment.getPaymentStatus() == paymentStatus) {
-                results.add(treatment.getTreatmentId(), treatment);
-            }
-        }
-        return results;
+        IndexingUtility.addToIndexGroup(treatmentIndexByPatientId, treatment.getPatient().getPatientId(),
+                treatment.getTreatmentId(), treatment);
+        IndexingUtility.addToIndexGroup(treatmentIndexByDoctorId, treatment.getDoctor().getDoctorId(),
+                treatment.getTreatmentId(), treatment);
+        IndexingUtility.addToIndexGroup(treatmentIndexByStatus, treatment.getStatus(),
+                treatment.getTreatmentId(), treatment);
+        IndexingUtility.addToIndexGroup(treatmentIndexByPaymentStatus, treatment.getPaymentStatus(),
+                treatment.getTreatmentId(), treatment);
+        IndexingUtility.addToIndexGroup(treatmentIndexByDate, treatment.getTreatmentDate().toLocalDate(),
+                treatment.getTreatmentId(), treatment);
     }
 }

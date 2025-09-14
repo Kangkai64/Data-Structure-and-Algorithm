@@ -26,7 +26,7 @@ public class DoctorManagementUI {
     public void displayDoctorManagementMenu() {
         while (true) {
             ConsoleUtils.clearScreen();
-            doctorControl.loadActiveDoctors();
+            doctorControl.loadDoctorData();
             System.out.println("\n=== DOCTOR MANAGEMENT MODULE ===");
             System.out.println("1. Register New Doctor");
             System.out.println("2. Update Doctor Information");
@@ -505,7 +505,7 @@ public class DoctorManagementUI {
 
     private void searchByEmail() {
         String email = ConsoleUtils.getStringInput(scanner, "Enter Email: ");
-        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
+        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getActiveDoctors();
         ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
 
         Iterator<Doctor> iterator = allDoctors.iterator();
@@ -546,7 +546,7 @@ public class DoctorManagementUI {
 
     private void searchByLicenseNumber() {
         String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter License Number: ");
-        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getAllActiveDoctors();
+        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getActiveDoctors();
         ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
 
         Iterator<Doctor> iterator = allDoctors.iterator();

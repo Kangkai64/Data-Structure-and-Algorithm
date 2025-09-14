@@ -1,20 +1,25 @@
 package control;
 
+import adt.ArrayBucketList;
+import adt.ArrayBucketListFactory;
+import adt.IndexingUtility;
+import utility.ConsoleUtils;
+import entity.Doctor;
+import entity.Address;
+import entity.Schedule;
+import entity.Consultation;
+import entity.DayOfWeek;
+import dao.DoctorDao;
+import dao.AddressDao;
+import dao.ScheduleDao;
+import dao.ConsultationDao;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Iterator;
-import adt.ArrayBucketList;
-import dao.AddressDao;
-import dao.ConsultationDao;
-import dao.DoctorDao;
-import dao.ScheduleDao;
-import entity.Address;
-import entity.Consultation;
-import entity.DayOfWeek;
-import entity.Doctor;
-import entity.Schedule;
+
 import utility.QuickSort;
 
 /**
@@ -24,26 +29,111 @@ import utility.QuickSort;
  */
 public class DoctorManagementControl {
 
+    private ArrayBucketList<String, Doctor> doctors;
+    private ArrayBucketList<String, Doctor> activeDoctors;
+    private ArrayBucketList<String, Doctor> inactiveDoctors;
+    
+    // Indices for efficient searching
+    private ArrayBucketList<String, Doctor> doctorIndexById;
+    private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexByName;
+    private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexBySpecialty;
+    private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexByLicense;
+    private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexByEmail;
+    private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexByPhone;
+    private ArrayBucketList<Boolean, ArrayBucketList<String, Doctor>> doctorIndexByAvailability;
+    private ArrayBucketList<Integer, ArrayBucketList<String, Doctor>> doctorIndexByExperience;
+
     private DoctorDao doctorDao;
     private AddressDao addressDao;
     private ScheduleDao scheduleDao;
-    private ArrayBucketList<String, Doctor> activeDoctors;
     private ConsultationDao consultationDao;
 
     public DoctorManagementControl() {
+        this.doctors = new ArrayBucketList<String, Doctor>();
+        this.activeDoctors = new ArrayBucketList<String, Doctor>();
+        this.inactiveDoctors = new ArrayBucketList<String, Doctor>();
+        
+        // Initialize indices
+        this.doctorIndexById = ArrayBucketListFactory.createForStringIds(256);
+        this.doctorIndexByName = ArrayBucketListFactory.createForNamePrefix(26);
+        this.doctorIndexBySpecialty = ArrayBucketListFactory.createForNamePrefix(26);
+        this.doctorIndexByLicense = ArrayBucketListFactory.createForStringIds(128);
+        this.doctorIndexByEmail = ArrayBucketListFactory.createForNamePrefix(26);
+        this.doctorIndexByPhone = ArrayBucketListFactory.createForStringIds(128);
+        this.doctorIndexByAvailability = new ArrayBucketList<>();
+        this.doctorIndexByExperience = new ArrayBucketList<>();
+        
         this.doctorDao = new DoctorDao();
         this.addressDao = new AddressDao();
         this.scheduleDao = new ScheduleDao();
-        this.activeDoctors = new ArrayBucketList<String, Doctor>();
         this.consultationDao = new ConsultationDao();
     }
 
-    public void loadActiveDoctors() {
+    public void loadDoctorData() {
         try {
-            activeDoctors = doctorDao.findAll();
+            doctors = doctorDao.findAll();
+            categorizeDoctors();
+            
+            // Build indices
+            Iterator<Doctor> doctorIterator = doctors.iterator();
+            while (doctorIterator.hasNext()) {
+                Doctor doctor = doctorIterator.next();
+                doctorIndexById.add(doctor.getDoctorId(), doctor);
+                indexDoctor(doctor);
+            }
         } catch (Exception exception) {
-            System.err.println("Error loading active doctors: " + exception.getMessage());
+            System.err.println("Error loading doctor data: " + exception.getMessage());
         }
+    }
+
+    /**
+     * Categorize doctors into status-specific collections for efficient
+     * in-memory processing
+     */
+    private void categorizeDoctors() {
+        // Clear existing categorized collections
+        activeDoctors.clear();
+        inactiveDoctors.clear();
+
+        Iterator<Doctor> doctorIterator = doctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            if (doctor.isAvailable()) {
+                activeDoctors.add(doctor.getDoctorId(), doctor);
+            } else {
+                inactiveDoctors.add(doctor.getDoctorId(), doctor);
+            }
+        }
+    }
+
+    // Indexing helpers
+    private void indexDoctor(Doctor doctor) {
+        if (doctor == null) {
+            return;
+        }
+        IndexingUtility.addToIndexGroup(doctorIndexByName, doctor.getFullName(), doctor.getDoctorId(), doctor);
+        IndexingUtility.addToIndexGroup(doctorIndexBySpecialty, doctor.getMedicalSpecialty(), doctor.getDoctorId(), doctor);
+        IndexingUtility.addToIndexGroup(doctorIndexByLicense, doctor.getLicenseNumber(), doctor.getDoctorId(), doctor);
+        IndexingUtility.addToIndexGroup(doctorIndexByEmail, doctor.getEmail(), doctor.getDoctorId(), doctor);
+        IndexingUtility.addToIndexGroup(doctorIndexByPhone, doctor.getPhoneNumber(), doctor.getDoctorId(), doctor);
+        IndexingUtility.addToIndexGroup(doctorIndexByAvailability, doctor.isAvailable(), doctor.getDoctorId(), doctor);
+        IndexingUtility.addToIndexGroup(doctorIndexByExperience, doctor.getExpYears(), doctor.getDoctorId(), doctor);
+    }
+
+    private void reindexDoctor(Doctor oldDoctor, Doctor newDoctor) {
+        if (newDoctor == null) {
+            return;
+        }
+        if (oldDoctor != null) {
+            IndexingUtility.removeFromIndexGroup(doctorIndexByName, oldDoctor.getFullName(), oldDoctor.getDoctorId());
+            IndexingUtility.removeFromIndexGroup(doctorIndexBySpecialty, oldDoctor.getMedicalSpecialty(), oldDoctor.getDoctorId());
+            IndexingUtility.removeFromIndexGroup(doctorIndexByLicense, oldDoctor.getLicenseNumber(), oldDoctor.getDoctorId());
+            IndexingUtility.removeFromIndexGroup(doctorIndexByEmail, oldDoctor.getEmail(), oldDoctor.getDoctorId());
+            IndexingUtility.removeFromIndexGroup(doctorIndexByPhone, oldDoctor.getPhoneNumber(), oldDoctor.getDoctorId());
+            IndexingUtility.removeFromIndexGroup(doctorIndexByAvailability, oldDoctor.isAvailable(), oldDoctor.getDoctorId());
+            IndexingUtility.removeFromIndexGroup(doctorIndexByExperience, oldDoctor.getExpYears(), oldDoctor.getDoctorId());
+        }
+        indexDoctor(newDoctor);
     }
 
     // Doctor Registration Methods
@@ -70,8 +160,16 @@ public class DoctorManagementControl {
                 return false;
             }
 
-            // Add to active doctors list
+            // Add to collections and indices
+            doctors.add(doctor.getDoctorId(), doctor);
+            if (doctor.isAvailable()) {
             activeDoctors.add(doctor.getDoctorId(), doctor);
+            } else {
+                inactiveDoctors.add(doctor.getDoctorId(), doctor);
+            }
+            doctorIndexById.add(doctor.getDoctorId(), doctor);
+            indexDoctor(doctor);
+
             return true;
 
         } catch (Exception exception) {
@@ -84,6 +182,8 @@ public class DoctorManagementControl {
             String phoneNumber, String medicalSpecialty,
             int expYears, Address address) {
         try {
+            Doctor oldDoctor = findDoctorById(doctorId);
+            if (oldDoctor != null) {
             Doctor doctor = doctorDao.findById(doctorId);
             if (doctor != null) {
                 if (fullName != null && !fullName.trim().isEmpty()) {
@@ -121,8 +221,13 @@ public class DoctorManagementControl {
 
                 boolean updated = doctorDao.update(doctor);
                 if (updated) {
-                    updateActiveDoctorsList(doctor);
+                        // Update in-memory collections
+                        doctors.add(doctor.getDoctorId(), doctor);
+                        categorizeDoctors();
+                        doctorIndexById.add(doctor.getDoctorId(), doctor);
+                        reindexDoctor(oldDoctor, doctor);
                     return true;
+                    }
                 }
             }
             return false;
@@ -134,13 +239,20 @@ public class DoctorManagementControl {
 
     public boolean deactivateDoctor(String doctorId) {
         try {
+            Doctor oldDoctor = findDoctorById(doctorId);
+            if (oldDoctor != null) {
             Doctor doctor = doctorDao.findById(doctorId);
             if (doctor != null) {
                 doctor.setAvailable(false);
                 boolean updated = doctorDao.update(doctor);
                 if (updated) {
-                    removeFromActiveDoctors(doctor);
+                        // Update in-memory collections
+                        doctors.add(doctor.getDoctorId(), doctor);
+                        categorizeDoctors();
+                        doctorIndexById.add(doctor.getDoctorId(), doctor);
+                        reindexDoctor(oldDoctor, doctor);
                     return true;
+                    }
                 }
             }
             return false;
@@ -150,11 +262,238 @@ public class DoctorManagementControl {
         }
     }
 
+    // Search and Retrieval Methods
+    public Doctor findDoctorById(String doctorId) {
+        return doctorIndexById.getValue(doctorId);
+    }
+
+    public ArrayBucketList<String, Doctor> findDoctorsByName(String name) {
+        ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
+        if (name == null || name.trim().isEmpty()) {
+            return results;
+        }
+        String query = name.trim();
+        
+        ArrayBucketList<String, ArrayBucketList<String, Doctor>> groups = doctorIndexByName.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, Doctor>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Doctor> group = groupIterator.next();
+            Iterator<Doctor> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                Doctor doctor = iterator.next();
+                results.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        return results;
+    }
+
+    public ArrayBucketList<String, Doctor> findDoctorsBySpecialty(String specialty) {
+        ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
+        if (specialty == null || specialty.trim().isEmpty()) {
+            return results;
+        }
+        String query = specialty.trim();
+        
+        ArrayBucketList<String, ArrayBucketList<String, Doctor>> groups = doctorIndexBySpecialty.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, Doctor>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Doctor> group = groupIterator.next();
+            Iterator<Doctor> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                Doctor doctor = iterator.next();
+                results.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        return results;
+    }
+
+    public ArrayBucketList<String, Doctor> findDoctorsByLicense(String licenseNumber) {
+        ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
+        if (licenseNumber == null || licenseNumber.trim().isEmpty()) {
+            return results;
+        }
+        String query = licenseNumber.trim();
+        
+        ArrayBucketList<String, ArrayBucketList<String, Doctor>> groups = doctorIndexByLicense.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, Doctor>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Doctor> group = groupIterator.next();
+            Iterator<Doctor> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                Doctor doctor = iterator.next();
+                results.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        return results;
+    }
+
+    public ArrayBucketList<String, Doctor> findDoctorsByEmail(String email) {
+        ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
+        if (email == null || email.trim().isEmpty()) {
+            return results;
+        }
+        String query = email.trim();
+        
+        ArrayBucketList<String, ArrayBucketList<String, Doctor>> groups = doctorIndexByEmail.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, Doctor>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Doctor> group = groupIterator.next();
+            Iterator<Doctor> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                Doctor doctor = iterator.next();
+                results.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        return results;
+    }
+
+    public ArrayBucketList<String, Doctor> findDoctorsByPhone(String phoneNumber) {
+        ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return results;
+        }
+        String query = phoneNumber.trim();
+        
+        ArrayBucketList<String, ArrayBucketList<String, Doctor>> groups = doctorIndexByPhone.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, Doctor>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Doctor> group = groupIterator.next();
+            Iterator<Doctor> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                Doctor doctor = iterator.next();
+                results.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        return results;
+    }
+
+    public ArrayBucketList<String, Doctor> findDoctorsByAvailability(boolean isAvailable) {
+        ArrayBucketList<String, Doctor> group = doctorIndexByAvailability.getValue(isAvailable);
+        return group != null ? group : new ArrayBucketList<String, Doctor>();
+    }
+
+    public ArrayBucketList<String, Doctor> findDoctorsByExperience(int minYears) {
+        ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
+        Iterator<Doctor> doctorIterator = doctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            if (doctor.getExpYears() >= minYears) {
+                results.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        return results;
+    }
+
+    public ArrayBucketList<String, Doctor> getActiveDoctors() {
+        return activeDoctors;
+    }
+
+    public ArrayBucketList<String, Doctor> getInactiveDoctors() {
+        return inactiveDoctors;
+    }
+
+    public ArrayBucketList<String, Doctor> getAllDoctors() {
+        return doctors;
+    }
+
+    public int getTotalDoctors() {
+        return doctors.getSize();
+    }
+
+    public int getTotalActiveDoctors() {
+        return activeDoctors.getSize();
+    }
+
+    public int getActiveDoctorsCount() {
+        return activeDoctors.getSize();
+    }
+
+    public int getInactiveDoctorsCount() {
+        return inactiveDoctors.getSize();
+    }
+
+    // Display Methods for Search Results
+    public String displaySortedDoctorSearchResults(ArrayBucketList<String, Doctor> doctors, String searchCriteria, String sortBy, String sortOrder) {
+        if (doctors == null || doctors.isEmpty()) {
+            return "No doctors found.";
+        }
+
+        Doctor[] doctorArray = doctors.toArray(Doctor.class);
+
+        Comparator<Doctor> comparator = getDoctorComparator(sortBy);
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+        utility.QuickSort.sort(doctorArray, comparator);
+
+        StringBuilder result = new StringBuilder();
+        result.append("\n=== Doctor Search Results ===\n");
+        result.append("Criteria: ").append(searchCriteria).append("\n");
+        result.append(String.format("Sorted by: %s (%s)\n\n", getSortFieldDisplayName(sortBy),
+                (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) ? "DESC" : "ASC"));
+        result.append(String.format("%-12s | %-25s | %-20s | %-15s | %-12s | %-25s | %-15s\n",
+                "Doctor ID", "Full Name", "Specialty", "Experience", "License", "Email", "Phone"));
+        result.append("-".repeat(130)).append("\n");
+
+        for (Doctor doctor : doctorArray) {
+            if (doctor == null) continue;
+            
+            String id = doctor.getDoctorId() != null ? doctor.getDoctorId() : "N/A";
+            String name = doctor.getFullName() != null ? doctor.getFullName() : "N/A";
+            String specialty = doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "N/A";
+            String experience = doctor.getExpYears() + " years";
+            String license = doctor.getLicenseNumber() != null ? doctor.getLicenseNumber() : "N/A";
+            String email = doctor.getEmail() != null ? doctor.getEmail() : "N/A";
+            String phone = doctor.getPhoneNumber() != null ? doctor.getPhoneNumber() : "N/A";
+
+            // Truncate long names and emails
+            if (name.length() > 25) name = name.substring(0, 22) + "...";
+            if (specialty.length() > 20) specialty = specialty.substring(0, 17) + "...";
+            if (email.length() > 25) email = email.substring(0, 22) + "...";
+            if (phone.length() > 15) phone = phone.substring(0, 12) + "...";
+
+            result.append(String.format("%-12s | %-25s | %-20s | %-15s | %-12s | %-25s | %-15s\n",
+                    id, name, specialty, experience, license, email, phone));
+        }
+
+        result.append("-".repeat(130)).append("\n");
+        result.append("Total Results: ").append(doctors.getSize()).append(" doctor(s) found\n");
+        return result.toString();
+    }
+
+    private String getSortFieldDisplayName(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "id" -> "Doctor ID";
+            case "name" -> "Full Name";
+            case "specialty" -> "Medical Specialty";
+            case "experience" -> "Experience Years";
+            case "license" -> "License Number";
+            case "email" -> "Email Address";
+            case "phone" -> "Phone Number";
+            case "availability" -> "Availability Status";
+            default -> "Default";
+        };
+    }
+
+    private Comparator<Doctor> getDoctorComparator(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "id" -> Comparator.comparing(d -> d.getDoctorId() != null ? d.getDoctorId() : "");
+            case "name" -> Comparator.comparing(d -> d.getFullName() != null ? d.getFullName() : "");
+            case "specialty" -> Comparator.comparing(d -> d.getMedicalSpecialty() != null ? d.getMedicalSpecialty() : "");
+            case "experience" -> Comparator.comparing(Doctor::getExpYears);
+            case "license" -> Comparator.comparing(d -> d.getLicenseNumber() != null ? d.getLicenseNumber() : "");
+            case "email" -> Comparator.comparing(d -> d.getEmail() != null ? d.getEmail() : "");
+            case "phone" -> Comparator.comparing(d -> d.getPhoneNumber() != null ? d.getPhoneNumber() : "");
+            case "availability" -> Comparator.comparing(Doctor::isAvailable);
+            default -> Comparator.comparing(d -> d.getFullName() != null ? d.getFullName() : "");
+        };
+    }
+
     // Schedule Management Methods
     public boolean addSchedule(String doctorId, DayOfWeek dayOfWeek,
             String startTime, String endTime) {
         try {
-            Doctor doctor = doctorDao.findById(doctorId);
+            Doctor doctor = findDoctorById(doctorId);
             if (doctor != null) {
                 boolean scheduleAvailability = doctor.isAvailable();
                 Schedule schedule = new Schedule(null, doctorId, dayOfWeek, startTime, endTime, scheduleAvailability);
@@ -163,7 +502,8 @@ public class DoctorManagementControl {
                     return false;
                 // keep in-memory cache in sync for reports
                 doctor.addSchedule(schedule);
-                updateActiveDoctorsList(doctor);
+                doctors.add(doctor.getDoctorId(), doctor);
+                doctorIndexById.add(doctor.getDoctorId(), doctor);
                 return true;
             }
             return false;
@@ -183,10 +523,11 @@ public class DoctorManagementControl {
                 boolean updated = scheduleDao.update(schedule);
                 if (updated) {
                     // Update the doctor's in-memory schedule list
-                    Doctor doctor = doctorDao.findById(schedule.getDoctorId());
+                    Doctor doctor = findDoctorById(schedule.getDoctorId());
                     if (doctor != null) {
                         doctor.updateSchedule(schedule);
-                        updateActiveDoctorsList(doctor);
+                        doctors.add(doctor.getDoctorId(), doctor);
+                        doctorIndexById.add(doctor.getDoctorId(), doctor);
                     }
                     return true;
                 }
@@ -291,163 +632,264 @@ public class DoctorManagementControl {
     }
 
     public ArrayBucketList<String, Doctor> getAvailableDoctors() {
-        ArrayBucketList<String, Doctor> availableDoctors = new ArrayBucketList<String, Doctor>();
-        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor doctor = doctorIterator.next();
-            if (doctor.isAvailable()) {
-                availableDoctors.add(doctor.getDoctorId(), doctor);
-            }
-        }
-        return availableDoctors;
+        return findDoctorsByAvailability(true);
     }
 
     public ArrayBucketList<String, Doctor> getDoctorsBySpecialty(String specialty) {
-        ArrayBucketList<String, Doctor> specialtyDoctors = new ArrayBucketList<String, Doctor>();
-        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor doctor = doctorIterator.next();
-            if (doctor.getMedicalSpecialty() != null
-                    && doctor.getMedicalSpecialty().toLowerCase().contains(specialty.toLowerCase()) 
-                    && doctor.isAvailable()) {
-                specialtyDoctors.add(doctor.getDoctorId(), doctor);
-            }
-        }
-        return specialtyDoctors;
-    }
-
-    // Search and Retrieval Methods
-    public Doctor findDoctorById(String doctorId) {
-        Doctor foundDoctor = null;
-        Iterator<Doctor> iterator = getAllActiveDoctors().iterator();
+        ArrayBucketList<String, Doctor> results = findDoctorsBySpecialty(specialty);
+        ArrayBucketList<String, Doctor> availableResults = ArrayBucketListFactory.createForStringIds(16);
+        Iterator<Doctor> iterator = results.iterator();
         while (iterator.hasNext()) {
             Doctor doctor = iterator.next();
-            if (doctor.getDoctorId().equals(doctorId)) {
-                foundDoctor = doctor;
+            if (doctor.isAvailable()) {
+                availableResults.add(doctor.getDoctorId(), doctor);
             }
         }
-        return foundDoctor;
-    }
-
-    public ArrayBucketList<String, Doctor> findDoctorsByName(String name) {
-        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
-        Iterator<Doctor> iterator = getAllActiveDoctors().iterator();
-        while (iterator.hasNext()) {
-            Doctor doctor = iterator.next();
-            if (doctor.getFullName() != null
-                    && doctor.getFullName().toLowerCase().contains(name.toLowerCase())) {
-                foundDoctors.add(doctor.getDoctorId(), doctor);
-            }
-        }
-        return foundDoctors;
+        return availableResults;
     }
 
     public Doctor findDoctorByIcNumber(String icNumber) {
-        return activeDoctors.getValue(icNumber);
+        Iterator<Doctor> iterator = doctors.iterator();
+        while (iterator.hasNext()) {
+            Doctor doctor = iterator.next();
+            if (doctor.getICNumber() != null && doctor.getICNumber().equals(icNumber)) {
+                return doctor;
+            }
+        }
+        return null;
     }
 
-    /**
-     * Displays sorted doctor search results with sorting options
-     */
-    public String displaySortedDoctorSearchResults(ArrayBucketList<String, Doctor> doctors, String searchCriteria, String sortBy, String sortOrder) {
-        if (doctors.isEmpty()) {
-            return "No doctors found.";
+    public String generateDoctorInformationReport() {
+        return generateDoctorInformationReport(null, true);
+    }
+
+    // Reporting Methods
+    public String generateDoctorInformationReport(String sortBy, String sortOrder) {
+        StringBuilder report = new StringBuilder();
+
+        // Header with decorative lines (centered)
+        report.append("=".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DOCTOR MANAGEMENT SYSTEM - DOCTOR INFORMATION REPORT", 120))
+                .append("\n");
+        report.append("=".repeat(120)).append("\n\n");
+
+        // Generation info with weekday
+        report.append("Generated at: ")
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append("\n");
+        report.append("*".repeat(120)).append("\n\n");
+
+        // Summary statistics
+        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("SUMMARY STATISTICS", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+        report.append(String.format("Total Doctors: %d\n", getTotalDoctors()));
+        report.append(String.format("Active Doctors: %d\n", getActiveDoctorsCount()));
+        report.append(String.format("Inactive Doctors: %d\n", getInactiveDoctorsCount()));
+        report.append(String.format("Available Doctors: %d\n", getAvailableDoctors().getSize()));
+
+        // Specialty distribution analysis using arrays
+        String[] specialties = new String[20];
+        int[] specialtyCounts = new int[20];
+        int specialtyCount = 0;
+
+        Iterator<Doctor> doctorIterator = doctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            String specialty = doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "General";
+
+            // Find if specialty already exists
+            int specialtyIndex = -1;
+            for (int index = 0; index < specialtyCount; index++) {
+                if (specialties[index].equals(specialty)) {
+                    specialtyIndex = index;
+                    break;
+                }
+            }
+
+            // If specialty doesn't exist, add new entry
+            if (specialtyIndex == -1) {
+                specialties[specialtyCount] = specialty;
+                specialtyCounts[specialtyCount] = 1;
+                specialtyCount++;
+            } else {
+                // Update existing specialty count
+                specialtyCounts[specialtyIndex]++;
+            }
         }
+
+        report.append("\nSPECIALTY DISTRIBUTION:\n");
+        for (int index = 0; index < specialtyCount; index++) {
+            report.append(String.format("%-20s: %d doctors\n", specialties[index], specialtyCounts[index]));
+        }
+
+        report.append("-".repeat(120)).append("\n\n");
+
+        // Detailed doctor table with sorting
+        report.append(ConsoleUtils.centerText("DETAILED DOCTOR INFORMATION", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
+        report.append(String.format("%-12s | %-25s | %-20s | %-15s | %-12s | %-25s | %-15s\n",
+                "Doctor ID", "Full Name", "Specialty", "Experience", "License", "Email", "Phone"));
+        report.append("-".repeat(120)).append("\n");
 
         // Convert to array for sorting
         Doctor[] doctorArray = doctors.toArray(Doctor.class);
         
-        // Create comparator for sorting
-        final boolean ascending = sortOrder == null || !sortOrder.equalsIgnoreCase("desc");
-        java.util.Comparator<Doctor> comparator = new java.util.Comparator<Doctor>() {
-            @Override
-            public int compare(Doctor firstDoctor, Doctor secondDoctor) {
-                if (firstDoctor == null && secondDoctor == null) return 0;
-                if (firstDoctor == null) return ascending ? -1 : 1;
-                if (secondDoctor == null) return ascending ? 1 : -1;
+        // Sort the doctor array
+        sortDoctorArray(doctorArray, sortBy, sortOrder);
 
-                int result = 0;
-                String key = sortBy == null ? "name" : sortBy.toLowerCase();
-                switch (key) {
-                    case "id":
-                        result = safeStr(firstDoctor.getDoctorId()).compareToIgnoreCase(safeStr(secondDoctor.getDoctorId()));
-                        break;
-                    case "license":
-                        result = safeStr(firstDoctor.getLicenseNumber()).compareToIgnoreCase(safeStr(secondDoctor.getLicenseNumber()));
-                        break;
-                    case "specialty":
-                        result = safeStr(firstDoctor.getMedicalSpecialty()).compareToIgnoreCase(safeStr(secondDoctor.getMedicalSpecialty()));
-                        break;
-                    case "experience":
-                        int firstExperience = firstDoctor.getExpYears();
-                        int secondExperience = secondDoctor.getExpYears();
-                        result = Integer.compare(firstExperience, secondExperience);
-                        break;
-                    case "email":
-                        result = safeStr(firstDoctor.getEmail()).compareToIgnoreCase(safeStr(secondDoctor.getEmail()));
-                        break;
-                    case "phone":
-                        result = safeStr(firstDoctor.getPhoneNumber()).compareToIgnoreCase(safeStr(secondDoctor.getPhoneNumber()));
-                        break;
-                    case "name":
-                    default:
-                        result = safeStr(firstDoctor.getFullName()).compareToIgnoreCase(safeStr(secondDoctor.getFullName()));
-                        break;
-                }
-                return ascending ? result : -result;
-            }
-        };
-
-        // Sort the array
-        utility.QuickSort.sort(doctorArray, comparator);
-
-        StringBuilder result = new StringBuilder();
-        result.append("\n=== Doctor Search Results ===\n");
-        result.append("Search Criteria: ").append(searchCriteria).append("\n");
-        result.append("Sorted By: ").append(sortBy).append(" | Order: ").append(ascending ? "Ascending" : "Descending").append("\n");
-        result.append("Total Results: ").append(doctors.getSize()).append(" doctor(s) found\n\n");
-
-        result.append("--- Doctor List ---\n");
-        result.append("-".repeat(120)).append("\n");
-        result.append(String.format("| %-12s | %-25s | %-20s | %-15s | %-12s | %-25s |\n", 
-                "Doctor ID", "Full Name", "Specialty", "Experience", "License", "Email"));
-        result.append("-".repeat(120)).append("\n");
-
+        // Generate sorted table
         for (Doctor doctor : doctorArray) {
-            if (doctor == null) continue;
-            
-            String id = doctor.getDoctorId() != null ? doctor.getDoctorId() : "N/A";
-            String name = doctor.getFullName() != null ? doctor.getFullName() : "N/A";
-            String specialty = doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "N/A";
+            String id = doctor.getDoctorId() != null ? doctor.getDoctorId() : "-";
+            String name = doctor.getFullName() != null ? doctor.getFullName() : "-";
+            String specialty = doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "-";
             String experience = doctor.getExpYears() + " years";
-            String license = doctor.getLicenseNumber() != null ? doctor.getLicenseNumber() : "N/A";
-            String email = doctor.getEmail() != null ? doctor.getEmail() : "N/A";
+            String license = doctor.getLicenseNumber() != null ? doctor.getLicenseNumber() : "-";
+            String email = doctor.getEmail() != null ? doctor.getEmail() : "-";
+            String phone = doctor.getPhoneNumber() != null ? doctor.getPhoneNumber() : "-";
 
             // Truncate long names and emails
             if (name.length() > 25) name = name.substring(0, 22) + "...";
             if (specialty.length() > 20) specialty = specialty.substring(0, 17) + "...";
             if (email.length() > 25) email = email.substring(0, 22) + "...";
+            if (phone.length() > 15) phone = phone.substring(0, 12) + "...";
 
-            result.append(String.format("| %-12s | %-25s | %-20s | %-15s | %-12s | %-25s |\n", 
-                    id, name, specialty, experience, license, email));
+            report.append(String.format("%-12s | %-25s | %-20s | %-15s | %-12s | %-25s | %-15s\n",
+                    id, name, specialty, experience, license, email, phone));
         }
 
-        result.append("-".repeat(120)).append("\n");
-        result.append(">>> End of Search <<<\n");
+        report.append("-".repeat(120)).append("\n");
+        report.append("*".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF DOCTOR INFORMATION REPORT", 120)).append("\n");
+        report.append("=".repeat(120)).append("\n");
 
-        return result.toString();
+        return report.toString();
     }
 
-    private String safeStr(String str) {
-        return str == null ? "" : str;
+    public String generateDoctorWorkloadReport(String sortBy, String sortOrder) {
+        StringBuilder report = new StringBuilder();
+
+        // Header with decorative lines (centered)
+        report.append("=".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DOCTOR MANAGEMENT SYSTEM - DOCTOR WORKLOAD REPORT", 120))
+                .append("\n");
+        report.append("=".repeat(120)).append("\n\n");
+
+        // Generation info with weekday
+        report.append("Generated at: ")
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append("\n");
+        report.append("*".repeat(120)).append("\n\n");
+
+        // Summary statistics
+        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("WORKLOAD SUMMARY", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+        report.append(String.format("Total Active Doctors: %d\n", getActiveDoctorsCount()));
+        report.append(String.format("Total Weekly Hours: %.1f hours\n", calculateTotalWeeklyHours()));
+        report.append(String.format("Average Weekly Hours per Doctor: %.1f hours\n", calculateAverageWeeklyHours()));
+
+        report.append("-".repeat(120)).append("\n\n");
+
+        // Detailed workload table with sorting
+        report.append(ConsoleUtils.centerText("DETAILED DOCTOR WORKLOAD", 120)).append("\n");
+        report.append("-".repeat(120)).append("\n");
+
+        // Add sorting information
+        report.append(String.format("Sorted by: %s (%s order)\n\n",
+                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
+
+        report.append(String.format("%-12s | %-25s | %-20s | %-15s | %-15s | %-15s\n",
+                "Doctor ID", "Full Name", "Specialty", "Weekly Hours", "Annual Hours", "Consultations"));
+        report.append("-".repeat(120)).append("\n");
+
+        // Convert to array for sorting
+        Doctor[] doctorArray = doctors.toArray(Doctor.class);
+
+        // Sort the doctor array
+        sortDoctorArray(doctorArray, sortBy, sortOrder);
+
+        // Generate sorted table
+        for (Doctor doctor : doctorArray) {
+            String id = doctor.getDoctorId() != null ? doctor.getDoctorId() : "-";
+            String name = doctor.getFullName() != null ? doctor.getFullName() : "-";
+            String specialty = doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "-";
+            double weeklyHours = calculateWeeklyHoursForDoctor(doctor.getDoctorId());
+            double annualHours = weeklyHours * 52.0;
+            int consultations = getConsultationCountForDoctor(doctor.getDoctorId());
+
+            // Truncate long names
+            if (name.length() > 25) name = name.substring(0, 22) + "...";
+            if (specialty.length() > 20) specialty = specialty.substring(0, 17) + "...";
+
+            report.append(String.format("%-12s | %-25s | %-20s | %-15.1f | %-15.1f | %-15d\n",
+                    id, name, specialty, weeklyHours, annualHours, consultations));
+        }
+
+        report.append("-".repeat(120)).append("\n");
+        report.append("*".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF DOCTOR WORKLOAD REPORT", 120)).append("\n");
+        report.append("=".repeat(120)).append("\n");
+
+        return report.toString();
     }
 
-    public ArrayBucketList<String, Doctor> getAllActiveDoctors() {
-        return activeDoctors;
+    // Helper methods for reports
+    private double calculateTotalWeeklyHours() {
+        double total = 0.0;
+        Iterator<Doctor> doctorIterator = doctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            total += calculateWeeklyHoursForDoctor(doctor.getDoctorId());
+        }
+        return total;
     }
 
-    public int getTotalActiveDoctors() {
-        return activeDoctors.getSize();
+    private double calculateAverageWeeklyHours() {
+        int activeCount = getActiveDoctorsCount();
+        return activeCount > 0 ? calculateTotalWeeklyHours() / activeCount : 0.0;
+    }
+
+    private double calculateWeeklyHoursForDoctor(String doctorId) {
+        try {
+            ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
+            double totalHours = 0.0;
+            Iterator<Schedule> scheduleIterator = schedules.iterator();
+            while (scheduleIterator.hasNext()) {
+                Schedule schedule = scheduleIterator.next();
+                if (schedule.isAvailable()) {
+                    try {
+                        java.time.LocalTime from = java.time.LocalTime.parse(schedule.getFromTime());
+                        java.time.LocalTime to = java.time.LocalTime.parse(schedule.getToTime());
+                        long minutes = java.time.Duration.between(from, to).toMinutes();
+                        if (minutes > 0) {
+                            totalHours += minutes / 60.0;
+                        }
+                    } catch (Exception e) {
+                        // Skip invalid time formats
+                    }
+                }
+            }
+            return totalHours;
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
+    private void sortDoctorArray(Doctor[] doctorArray, String sortBy, String sortOrder) {
+        if (doctorArray == null || doctorArray.length < 2) return;
+
+        Comparator<Doctor> comparator = getDoctorComparator(sortBy);
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            comparator = comparator.reversed();
+        }
+
+        utility.QuickSort.sort(doctorArray, comparator);
     }
 
     // Reporting Methods
@@ -457,21 +899,6 @@ public class DoctorManagementControl {
         StringBuilder builder = new StringBuilder();
         for (int charIndex = 0; charIndex < count; charIndex++)
             builder.append(ch);
-        return builder.toString();
-    }
-
-    private String centerText(String text, int width) {
-        if (text == null)
-            text = "";
-        if (text.length() >= width)
-            return text;
-        int padding = (width - text.length()) / 2;
-        StringBuilder builder = new StringBuilder();
-        for (int paddingIndex = 0; paddingIndex < padding; paddingIndex++)
-            builder.append(' ');
-        builder.append(text);
-        while (builder.length() < width)
-            builder.append(' ');
         return builder.toString();
     }
 
@@ -498,60 +925,6 @@ public class DoctorManagementControl {
         return builder.toString();
     }
 
-    public String generateDoctorInformationReport() {
-        StringBuilder report = new StringBuilder();
-        String title = "DOCTOR INFORMATION REPORT";
-        String line = repeatChar('=', REPORT_WIDTH);
-        report.append("\n").append(line).append("\n");
-        report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
-
-        report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
-                .append("\n");
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
-
-        String doctorIdHeader = padRight("Doctor ID", 12);
-        String nameHeader = padRight("Name", 28);
-        String specialtyHeader = padRight("Specialty", 22);
-        String licenseHeader = padRight("License", 22);
-        String consultationHeader = padRight("Consultations", 16);
-        report.append(" ")
-                .append(doctorIdHeader).append(" | ")
-                .append(nameHeader).append(" | ")
-                .append(specialtyHeader).append(" | ")
-                .append(licenseHeader).append(" | ")
-                .append(consultationHeader)
-                .append("\n");
-        report.append(line).append("\n");
-
-        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor doctor = doctorIterator.next();
-            String doctorIdColumn = padRight(doctor.getDoctorId(), 12);
-            String nameColumn = padRight(doctor.getFullName(), 28);
-            String specialtyColumn = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
-            String licenseColumn = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
-            int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
-            String consultationColumn = padLeft(String.valueOf(consultCount), 16);
-            report.append(" ")
-                    .append(doctorIdColumn).append(" | ")
-                    .append(nameColumn).append(" | ")
-                    .append(specialtyColumn).append(" | ")
-                    .append(licenseColumn).append(" | ")
-                    .append(consultationColumn)
-                    .append("\n");
-        }
-
-        report.append("\n");
-        report.append("Total active doctors : ").append(getTotalActiveDoctors()).append("\n");
-        report.append("Total available      : ").append(getAvailableDoctors().getSize()).append("\n");
-
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
-        report.append(centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
-        return report.toString();
-    }
-
     /**
      *
      * @param sortBy
@@ -566,7 +939,7 @@ public class DoctorManagementControl {
         String title = "DOCTOR INFORMATION REPORT";
         String line = repeatChar('=', REPORT_WIDTH);
         report.append("\n").append(line).append("\n");
-        report.append(centerText(title, REPORT_WIDTH)).append("\n\n");
+        report.append(ConsoleUtils.centerText(title, REPORT_WIDTH)).append("\n\n");
 
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
@@ -643,7 +1016,7 @@ public class DoctorManagementControl {
         report.append("Total available      : ").append(getAvailableDoctors().getSize()).append("\n");
 
         report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
-        report.append(centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
         report.append(repeatChar('=', REPORT_WIDTH));
         return report.toString();
     }
@@ -701,7 +1074,7 @@ public class DoctorManagementControl {
         StringBuilder report = new StringBuilder();
         String title = "DOCTOR WORKLOAD REPORT (Estimated Annual Hours)";
         String line = repeatChar('=', REPORT_WIDTH);
-        report.append(centerText(title, REPORT_WIDTH)).append("\n");
+        report.append(ConsoleUtils.centerText(title, REPORT_WIDTH)).append("\n");
         report.append(line).append("\n\n");
 
         report.append("Generated at: ")
@@ -827,7 +1200,7 @@ public class DoctorManagementControl {
         report.append("Total annual hours (all doctors) : ")
                 .append(String.format(java.util.Locale.US, "%.2f", totalAnnual)).append("\n\n");
         report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
-        report.append(centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
         report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
         return report.toString();
     }
@@ -897,7 +1270,7 @@ public class DoctorManagementControl {
         String title = "DOCTOR PERFORMANCE ANALYSIS REPORT";
         String line = repeatChar('=', TABLEWIDTH);
         report.append("\n").append(line).append("\n");
-        report.append(centerText(title, TABLEWIDTH)).append("\n\n");
+        report.append(ConsoleUtils.centerText(title, TABLEWIDTH)).append("\n\n");
 
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
@@ -906,7 +1279,7 @@ public class DoctorManagementControl {
 
         // Performance metrics calculation
         report.append("-".repeat(TABLEWIDTH)).append("\n");
-        report.append(centerText("PERFORMANCE METRICS SUMMARY", TABLEWIDTH)).append("\n");
+        report.append(ConsoleUtils.centerText("PERFORMANCE METRICS SUMMARY", TABLEWIDTH)).append("\n");
         report.append("-".repeat(TABLEWIDTH)).append("\n");
 
         // Calculate performance metrics for each doctor
@@ -1019,7 +1392,7 @@ public class DoctorManagementControl {
         report.append("-".repeat(TABLEWIDTH)).append("\n\n");
 
         // Detailed performance table
-        report.append(centerText("DETAILED DOCTOR PERFORMANCE", TABLEWIDTH)).append("\n");
+        report.append(ConsoleUtils.centerText("DETAILED DOCTOR PERFORMANCE", TABLEWIDTH)).append("\n");
         report.append("-".repeat(TABLEWIDTH)).append("\n");
 
         // Add sorting information
@@ -1092,7 +1465,7 @@ public class DoctorManagementControl {
 
         report.append("\n");
         report.append(repeatChar('=', TABLEWIDTH)).append("\n");
-        report.append(centerText("END OF PERFORMANCE REPORT", TABLEWIDTH)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF PERFORMANCE REPORT", TABLEWIDTH)).append("\n");
         report.append(repeatChar('=', TABLEWIDTH)).append("\n");
         return report.toString();
     }
@@ -1145,19 +1518,6 @@ public class DoctorManagementControl {
             tempValues[maxIndex] = -1; // Mark as used
         }
         return indices;
-    }
-
-    private String getSortFieldDisplayName(String sortBy) {
-        return switch (sortBy.toLowerCase()) {
-            case "name" -> "Doctor Name";
-            case "specialty" -> "Medical Specialty";
-            case "consultations" -> "Consultation Count";
-            case "success" -> "Success Rate";
-            case "satisfaction" -> "Patient Satisfaction";
-            case "revenue" -> "Total Revenue";
-            case "id" -> "Doctor ID";
-            default -> "Default";
-        };
     }
 
     private void sortDoctorArray(Doctor[] doctorArray, String sortBy, boolean ascending) {

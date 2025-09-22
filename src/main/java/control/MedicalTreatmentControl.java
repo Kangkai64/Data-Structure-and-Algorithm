@@ -24,6 +24,15 @@ public class MedicalTreatmentControl {
 
     private ArrayBucketList<String, MedicalTreatment> treatments;
     private ArrayBucketList<String, MedicalTreatment> activeTreatments;
+    // Split lists by status
+    private ArrayBucketList<String, MedicalTreatment> treatmentsPrescribed;
+    private ArrayBucketList<String, MedicalTreatment> treatmentsInProgress;
+    private ArrayBucketList<String, MedicalTreatment> treatmentsCompleted;
+    private ArrayBucketList<String, MedicalTreatment> treatmentsCancelled;
+    // Split lists by payment
+    private ArrayBucketList<String, MedicalTreatment> paymentsPaid;
+    private ArrayBucketList<String, MedicalTreatment> paymentsPending;
+    private ArrayBucketList<String, MedicalTreatment> paymentsCancelled;
     // Indices
     private ArrayBucketList<String, MedicalTreatment> treatmentIndexById;
     private ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByPatientId;
@@ -31,11 +40,21 @@ public class MedicalTreatmentControl {
     private ArrayBucketList<MedicalTreatment.TreatmentStatus, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByStatus;
     private ArrayBucketList<MedicalTreatment.PaymentStatus, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByPaymentStatus;
     private ArrayBucketList<java.time.LocalDate, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByDate;
+    private ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByPatientName;
+    private ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByDoctorName;
     private MedicalTreatmentDao treatmentDao;
 
     public MedicalTreatmentControl() {
         this.treatments = new ArrayBucketList<String, MedicalTreatment>();
         this.activeTreatments = new ArrayBucketList<String, MedicalTreatment>();
+        // Initialize split lists
+        this.treatmentsPrescribed = ArrayBucketListFactory.createForStringIds(128);
+        this.treatmentsInProgress = ArrayBucketListFactory.createForStringIds(128);
+        this.treatmentsCompleted = ArrayBucketListFactory.createForStringIds(128);
+        this.treatmentsCancelled = ArrayBucketListFactory.createForStringIds(128);
+        this.paymentsPaid = ArrayBucketListFactory.createForStringIds(128);
+        this.paymentsPending = ArrayBucketListFactory.createForStringIds(128);
+        this.paymentsCancelled = ArrayBucketListFactory.createForStringIds(128);
         // Initialize indices
         this.treatmentIndexById = ArrayBucketListFactory.createForStringIds(256);
         this.treatmentIndexByPatientId = ArrayBucketListFactory.createForStringIds(128);
@@ -43,20 +62,35 @@ public class MedicalTreatmentControl {
         this.treatmentIndexByStatus = ArrayBucketListFactory.createForEnums(16);
         this.treatmentIndexByPaymentStatus = ArrayBucketListFactory.createForEnums(8);
         this.treatmentIndexByDate = ArrayBucketListFactory.createForLocalDates(64);
+        this.treatmentIndexByPatientName = ArrayBucketListFactory.createForNamePrefix(26);
+        this.treatmentIndexByDoctorName = ArrayBucketListFactory.createForNamePrefix(26);
         this.treatmentDao = new MedicalTreatmentDao();
     }
 
     public void loadTreatmentData() {
         try {
             treatments = treatmentDao.findAll();
-            // Build indices and active cache
+            // Clear and rebuild indices and split lists
             activeTreatments.clear();
+            treatmentsPrescribed.clear();
+            treatmentsInProgress.clear();
+            treatmentsCompleted.clear();
+            treatmentsCancelled.clear();
+            paymentsPaid.clear();
+            paymentsPending.clear();
+            paymentsCancelled.clear();
+            treatmentIndexById.clear();
+            treatmentIndexByPatientId.clear();
+            treatmentIndexByDoctorId.clear();
+            treatmentIndexByStatus.clear();
+            treatmentIndexByPaymentStatus.clear();
+            treatmentIndexByDate.clear();
+            treatmentIndexByPatientName.clear();
+            treatmentIndexByDoctorName.clear();
             Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
             while (treatmentIterator.hasNext()) {
                 MedicalTreatment treatment = treatmentIterator.next();
-                if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
-                    activeTreatments.add(treatment.getTreatmentId(), treatment);
-                }
+                if (treatment == null) continue;
                 treatmentIndexById.add(treatment.getTreatmentId(), treatment);
                 indexTreatment(treatment);
             }
@@ -109,9 +143,8 @@ public class MedicalTreatmentControl {
                 return null;
             }
 
-            // Add to lists
+            // Add to indices and split lists
             treatments.add(treatment.getTreatmentId(), treatment);
-            activeTreatments.add(treatment.getTreatmentId(), treatment);
             treatmentIndexById.add(treatment.getTreatmentId(), treatment);
             indexTreatment(treatment);
 
@@ -147,6 +180,9 @@ public class MedicalTreatmentControl {
                         return false;
                     }
 
+                    MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
+                    MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
+                    
                     treatment.setDiagnosis(diagnosis);
                     treatment.setTreatmentPlan(treatmentPlan);
                     treatment.setPrescribedMedications(prescribedMedications);
@@ -154,8 +190,8 @@ public class MedicalTreatmentControl {
                     treatment.setFollowUpDate(followUpDate);
                     treatment.setTreatmentCost(treatmentCost);
 
-                    treatments.add(treatment.getTreatmentId(), treatment);
-                    indexTreatment(treatment);
+                    // Reindex to reflect any key changes
+                    reindexTreatment(treatment, oldStatus, oldPayment);
 
                     // Persist changes to database
                     return treatmentDao.update(treatment);
@@ -172,11 +208,14 @@ public class MedicalTreatmentControl {
                         return false;
                     }
 
+                    MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
+                    MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
+
                     treatment.setTreatmentNotes(treatmentNotes);
                     treatment.setFollowUpDate(followUpDate);
 
-                    treatments.add(treatment.getTreatmentId(), treatment);
-                    indexTreatment(treatment);
+                    // Reindex for potential date changes
+                    reindexTreatment(treatment, oldStatus, oldPayment);
 
                     // Persist changes to database
                     return treatmentDao.updateNotesAndFollowUpDate(treatmentId, treatmentNotes, followUpDate);
@@ -202,6 +241,8 @@ public class MedicalTreatmentControl {
                 if (!persisted) {
                     return false;
                 }
+                MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
+                MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.COMPLETED);
                 treatment.setPaymentStatus(MedicalTreatment.PaymentStatus.PAID);
                 // Optionally persist follow-up date if provided (can also clear when null)
@@ -212,10 +253,8 @@ public class MedicalTreatmentControl {
                     }
                     treatment.setFollowUpDate(followUpDate);
                 }
-                // Remove from active treatments
-                removeFromActiveTreatments(treatment);
-                treatments.add(treatment.getTreatmentId(), treatment);
-                indexTreatment(treatment);
+                // Reindex to move between status/payment lists and update indices
+                reindexTreatment(treatment, oldStatus, oldPayment);
                 return true;
             }
             return false;
@@ -235,11 +274,13 @@ public class MedicalTreatmentControl {
                 if (!persisted) {
                     return false;
                 }
+                MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
+                MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.IN_PROGRESS);
+                treatment.setPaymentStatus(MedicalTreatment.PaymentStatus.PENDING);
 
-                // Track as active
-                activeTreatments.add(treatment.getTreatmentId(), treatment);
-                indexTreatment(treatment);
+                // Reindex to move into active/status/payment lists
+                reindexTreatment(treatment, oldStatus, oldPayment);
                 return true;
             }
             return false;
@@ -258,12 +299,13 @@ public class MedicalTreatmentControl {
                 if (!persisted) {
                     return false;
                 }
+                MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
+                MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.CANCELLED);
+                treatment.setPaymentStatus(MedicalTreatment.PaymentStatus.CANCELLED);
 
-                // Remove from active treatments
-                removeFromActiveTreatments(treatment);
-                treatments.add(treatment.getTreatmentId(), treatment);
-                indexTreatment(treatment);
+                // Reindex to move lists
+                reindexTreatment(treatment, oldStatus, oldPayment);
 
                 return true;
             }
@@ -287,6 +329,50 @@ public class MedicalTreatmentControl {
     public ArrayBucketList<String, MedicalTreatment> findTreatmentsByDoctor(String doctorId) {
         ArrayBucketList<String, MedicalTreatment> group = treatmentIndexByDoctorId.getValue(doctorId);
         return group != null ? group : new ArrayBucketList<String, MedicalTreatment>();
+    }
+
+    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByPatientName(String patientNamePrefix) {
+        ArrayBucketList<String, MedicalTreatment> results = ArrayBucketListFactory.createForStringIds(16);
+        if (patientNamePrefix == null) {
+            return results;
+        }
+        String query = patientNamePrefix.trim();
+        if (query.isEmpty()) {
+            return results;
+        }
+        ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> groups = treatmentIndexByPatientName.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, MedicalTreatment>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, MedicalTreatment> group = groupIterator.next();
+            Iterator<MedicalTreatment> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                MedicalTreatment treatment = iterator.next();
+                results.add(treatment.getTreatmentId(), treatment);
+            }
+        }
+        return results;
+    }
+
+    public ArrayBucketList<String, MedicalTreatment> findTreatmentsByDoctorName(String doctorNamePrefix) {
+        ArrayBucketList<String, MedicalTreatment> results = ArrayBucketListFactory.createForStringIds(16);
+        if (doctorNamePrefix == null) {
+            return results;
+        }
+        String query = doctorNamePrefix.trim();
+        if (query.isEmpty()) {
+            return results;
+        }
+        ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> groups = treatmentIndexByDoctorName.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, MedicalTreatment>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, MedicalTreatment> group = groupIterator.next();
+            Iterator<MedicalTreatment> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                MedicalTreatment treatment = iterator.next();
+                results.add(treatment.getTreatmentId(), treatment);
+            }
+        }
+        return results;
     }
 
     // Public helper to render sorted search results for treatments
@@ -367,8 +453,8 @@ public class MedicalTreatmentControl {
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             java.time.LocalDate treatmentLocalDate = treatment.getTreatmentDate().toLocalDate();
-            boolean inLowerBound = (startDate == null) || !treatmentLocalDate.isBefore(startDate.minusDays(1));
-            boolean inUpperBound = (endDate == null) || !treatmentLocalDate.isAfter(endDate.plusDays(1));
+            boolean inLowerBound = (startDate == null) || !treatmentLocalDate.isBefore(startDate);
+            boolean inUpperBound = (endDate == null) || !treatmentLocalDate.isAfter(endDate);
             if (inLowerBound && inUpperBound) {
                 results.add(treatment.getTreatmentId(), treatment);
             }
@@ -377,15 +463,7 @@ public class MedicalTreatmentControl {
     }
 
     public ArrayBucketList<String, MedicalTreatment> getCompletedTreatments() {
-        ArrayBucketList<String, MedicalTreatment> completedTreatments = new ArrayBucketList<String, MedicalTreatment>();
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.COMPLETED) {
-                completedTreatments.add(treatment.getTreatmentId(), treatment);
-            }
-        }
-        return completedTreatments;
+        return treatmentsCompleted;
     }
 
     public ArrayBucketList<String, MedicalTreatment> getAllTreatments() {
@@ -412,7 +490,7 @@ public class MedicalTreatmentControl {
 
         // Generation info with weekday
         report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd-MM-uuuu HH:mm")))
                 .append("\n");
         report.append("*".repeat(120)).append("\n\n");
 
@@ -602,7 +680,7 @@ public class MedicalTreatmentControl {
 
         // Generation info with weekday
         report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd-MM-uuuu HH:mm")))
                 .append("\n");
         report.append("*".repeat(120)).append("\n\n");
 
@@ -754,7 +832,7 @@ public class MedicalTreatmentControl {
 
         // Generation info with weekday
         report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
+                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd-MM-uuuu HH:mm")))
                 .append("\n");
         report.append("*".repeat(145)).append("\n\n");
 
@@ -1102,27 +1180,11 @@ public class MedicalTreatmentControl {
 
     // Additional helper methods for reports
     public ArrayBucketList<String, MedicalTreatment> getPrescribedTreatments() {
-        ArrayBucketList<String, MedicalTreatment> prescribedTreatments = new ArrayBucketList<String, MedicalTreatment>();
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.PRESCRIBED) {
-                prescribedTreatments.add(treatment.getTreatmentId(), treatment);
-            }
-        }
-        return prescribedTreatments;
+        return treatmentsPrescribed;
     }
 
     public ArrayBucketList<String, MedicalTreatment> getCancelledTreatments() {
-        ArrayBucketList<String, MedicalTreatment> cancelledTreatments = new ArrayBucketList<String, MedicalTreatment>();
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
-        while (treatmentIterator.hasNext()) {
-            MedicalTreatment treatment = treatmentIterator.next();
-            if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.CANCELLED) {
-                cancelledTreatments.add(treatment.getTreatmentId(), treatment);
-            }
-        }
-        return cancelledTreatments;
+        return treatmentsCancelled;
     }
 
     public boolean hasTreatmentForConsultation(String consultationId) {
@@ -1250,15 +1312,141 @@ public class MedicalTreatmentControl {
         if (treatment == null) {
             return;
         }
-        IndexingUtility.addToIndexGroup(treatmentIndexByPatientId, treatment.getPatient().getPatientId(),
-                treatment.getTreatmentId(), treatment);
-        IndexingUtility.addToIndexGroup(treatmentIndexByDoctorId, treatment.getDoctor().getDoctorId(),
-                treatment.getTreatmentId(), treatment);
-        IndexingUtility.addToIndexGroup(treatmentIndexByStatus, treatment.getStatus(),
-                treatment.getTreatmentId(), treatment);
-        IndexingUtility.addToIndexGroup(treatmentIndexByPaymentStatus, treatment.getPaymentStatus(),
-                treatment.getTreatmentId(), treatment);
-        IndexingUtility.addToIndexGroup(treatmentIndexByDate, treatment.getTreatmentDate().toLocalDate(),
-                treatment.getTreatmentId(), treatment);
+        // Index by groups with null-safety
+        if (treatment.getPatient() != null && treatment.getPatient().getPatientId() != null) {
+            IndexingUtility.addToIndexGroup(treatmentIndexByPatientId, treatment.getPatient().getPatientId(),
+                    treatment.getTreatmentId(), treatment);
+        }
+        if (treatment.getPatient() != null && treatment.getPatient().getFullName() != null) {
+            IndexingUtility.addToIndexGroup(treatmentIndexByPatientName, treatment.getPatient().getFullName(),
+                    treatment.getTreatmentId(), treatment);
+        }
+        if (treatment.getDoctor() != null && treatment.getDoctor().getDoctorId() != null) {
+            IndexingUtility.addToIndexGroup(treatmentIndexByDoctorId, treatment.getDoctor().getDoctorId(),
+                    treatment.getTreatmentId(), treatment);
+        }
+        if (treatment.getDoctor() != null && treatment.getDoctor().getFullName() != null) {
+            IndexingUtility.addToIndexGroup(treatmentIndexByDoctorName, treatment.getDoctor().getFullName(),
+                    treatment.getTreatmentId(), treatment);
+        }
+        if (treatment.getStatus() != null) {
+            IndexingUtility.addToIndexGroup(treatmentIndexByStatus, treatment.getStatus(),
+                    treatment.getTreatmentId(), treatment);
+        }
+        if (treatment.getPaymentStatus() != null) {
+            IndexingUtility.addToIndexGroup(treatmentIndexByPaymentStatus, treatment.getPaymentStatus(),
+                    treatment.getTreatmentId(), treatment);
+        }
+        if (treatment.getTreatmentDate() != null) {
+            IndexingUtility.addToIndexGroup(treatmentIndexByDate, treatment.getTreatmentDate().toLocalDate(),
+                    treatment.getTreatmentId(), treatment);
+        }
+        // Maintain split lists and active cache
+        addTreatmentToStatusList(treatment);
+        addTreatmentToPaymentList(treatment);
+        if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
+            activeTreatments.add(treatment.getTreatmentId(), treatment);
+        }
+    }
+
+    private ArrayBucketList<String, MedicalTreatment> getTreatmentStatusList(MedicalTreatment.TreatmentStatus status) {
+        if (status == null) return null;
+        return switch (status) {
+            case PRESCRIBED -> treatmentsPrescribed;
+            case IN_PROGRESS -> treatmentsInProgress;
+            case COMPLETED -> treatmentsCompleted;
+            case CANCELLED -> treatmentsCancelled;
+        };
+    }
+
+    private ArrayBucketList<String, MedicalTreatment> getPaymentStatusList(MedicalTreatment.PaymentStatus status) {
+        if (status == null) return null;
+        return switch (status) {
+            case PAID -> paymentsPaid;
+            case PENDING -> paymentsPending;
+            case CANCELLED -> paymentsCancelled;
+        };
+    }
+
+    private void addTreatmentToStatusList(MedicalTreatment treatment) {
+        ArrayBucketList<String, MedicalTreatment> list = getTreatmentStatusList(treatment.getStatus());
+        if (list != null) {
+            list.add(treatment.getTreatmentId(), treatment);
+        }
+    }
+
+    private void removeTreatmentFromStatusList(MedicalTreatment treatment, MedicalTreatment.TreatmentStatus oldStatus) {
+        ArrayBucketList<String, MedicalTreatment> list = getTreatmentStatusList(oldStatus);
+        if (list != null) {
+            list.remove(treatment.getTreatmentId());
+        }
+    }
+
+    private void addTreatmentToPaymentList(MedicalTreatment treatment) {
+        ArrayBucketList<String, MedicalTreatment> list = getPaymentStatusList(treatment.getPaymentStatus());
+        if (list != null) {
+            list.add(treatment.getTreatmentId(), treatment);
+        }
+    }
+
+    private void removeTreatmentFromPaymentList(MedicalTreatment treatment, MedicalTreatment.PaymentStatus oldPayment) {
+        ArrayBucketList<String, MedicalTreatment> list = getPaymentStatusList(oldPayment);
+        if (list != null) {
+            list.remove(treatment.getTreatmentId());
+        }
+    }
+
+    private void reindexTreatment(MedicalTreatment treatment,
+                                  MedicalTreatment.TreatmentStatus oldStatus,
+                                  MedicalTreatment.PaymentStatus oldPayment) {
+        // Update active list
+        if (oldStatus == MedicalTreatment.TreatmentStatus.IN_PROGRESS &&
+                treatment.getStatus() != MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
+            removeFromActiveTreatments(treatment);
+        }
+        if (treatment.getStatus() == MedicalTreatment.TreatmentStatus.IN_PROGRESS) {
+            activeTreatments.add(treatment.getTreatmentId(), treatment);
+        }
+
+        // Update split lists
+        if (oldStatus != null && oldStatus != treatment.getStatus()) {
+            removeTreatmentFromStatusList(treatment, oldStatus);
+        }
+        addTreatmentToStatusList(treatment);
+
+        if (oldPayment != null && oldPayment != treatment.getPaymentStatus()) {
+            removeTreatmentFromPaymentList(treatment, oldPayment);
+        }
+        addTreatmentToPaymentList(treatment);
+
+        // Remove from old index groups by previous keys if changed, then re-add with new keys
+        // We only have current object; for safe cleanup, remove by current id from all plausible old groups using oldStatus/oldPayment
+        if (oldStatus != null && oldStatus != treatment.getStatus()) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByStatus, oldStatus, treatment.getTreatmentId());
+        }
+        if (oldPayment != null && oldPayment != treatment.getPaymentStatus()) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByPaymentStatus, oldPayment, treatment.getTreatmentId());
+        }
+        // Patient/Doctor/Date may have changed externally before this call; remove by known old values if available via DAO fetch
+        // As we don't pass the old entity here, proactively remove by id from all name/id groups to avoid duplicates
+        if (treatment.getPatient() != null) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByPatientId, treatment.getPatient().getPatientId(), treatment.getTreatmentId());
+            if (treatment.getPatient().getFullName() != null) {
+                IndexingUtility.removeFromIndexGroup(treatmentIndexByPatientName, treatment.getPatient().getFullName(), treatment.getTreatmentId());
+            }
+        }
+        if (treatment.getDoctor() != null) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByDoctorId, treatment.getDoctor().getDoctorId(), treatment.getTreatmentId());
+            if (treatment.getDoctor().getFullName() != null) {
+                IndexingUtility.removeFromIndexGroup(treatmentIndexByDoctorName, treatment.getDoctor().getFullName(), treatment.getTreatmentId());
+            }
+        }
+        if (treatment.getTreatmentDate() != null) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByDate, treatment.getTreatmentDate().toLocalDate(), treatment.getTreatmentId());
+        }
+
+        // Now add current values
+        treatmentIndexById.add(treatment.getTreatmentId(), treatment);
+        indexTreatment(treatment);
     }
 }

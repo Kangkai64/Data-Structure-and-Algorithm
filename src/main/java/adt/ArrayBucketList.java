@@ -110,7 +110,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     }
 
     /**
-     * Adds a new entry to the dictionary. If the given search key already exists,
+     * Adds a new entry to the ArrayBucketList. If the given search key already exists,
      * replaces the value.
      * 
      * @param key   an object search key of the new entry
@@ -132,7 +132,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
         } else {
             bucket.add(key, value);
             numberOfEntries++;
-            if (getLoadFactor() > LOAD_FACTOR_THRESHOLD) {
+            if (isFull()) {
                 resizeBuckets();
             }
             return null;
@@ -172,7 +172,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     }
 
     /**
-     * Removes a specific entry from the dictionary.
+     * Removes a specific entry from the ArrayBucketList.
      * 
      * @param key an object search key of the entry to be removed
      * @return either the value that was associated with the search key or null if
@@ -252,10 +252,10 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     }
 
     /**
-     * Sees whether a specific entry is in the dictionary.
+     * Sees whether a specific entry is in the ArrayBucketList.
      * 
      * @param key an object search key of the desired entry
-     * @return true if key is associated with an entry in the dictionary
+     * @return true if key is associated with an entry in the ArrayBucketList
      */
     @Override
     public boolean contains(K key) {
@@ -265,9 +265,9 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     }
 
     /**
-     * Sees whether the dictionary is empty.
+     * Sees whether the ArrayBucketList is empty.
      * 
-     * @return true if the dictionary is empty
+     * @return true if the ArrayBucketList is empty
      */
     @Override
     public boolean isEmpty() {
@@ -275,19 +275,19 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     }
 
     /**
-     * Sees whether the dictionary is full (always false for dynamic structure)
+     * Sees whether the ArrayBucketList is full
      * 
-     * @return true if the dictionary is full
+     * @return true if the ArrayBucketList is full
      */
     @Override
     public boolean isFull() {
-        return numberOfEntries == bucketCount;
+        return getLoadFactor() > LOAD_FACTOR_THRESHOLD;
     }
 
     /**
-     * Gets the size of the dictionary.
+     * Gets the size of the ArrayBucketList.
      * 
-     * @return the number of entries (key-value pairs) currently in the dictionary
+     * @return the number of entries (key-value pairs) currently in the ArrayBucketList
      */
     @Override
     public int getSize() {
@@ -295,7 +295,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
     }
 
     /**
-     * Removes all entries from the dictionary.
+     * Removes all entries from the ArrayBucketList.
      */
     @Override
     public void clear() {
@@ -310,7 +310,7 @@ public class ArrayBucketList<K, V> implements DictionaryInterface<K, V>, Seriali
      * 
      * @return load factor (total entries / bucket count)
      */
-    public double getLoadFactor() {
+    private double getLoadFactor() {
         return (double) numberOfEntries / bucketCount;
     }
 

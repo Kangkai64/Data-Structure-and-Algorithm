@@ -180,6 +180,12 @@ public class MedicalTreatmentControl {
                         return false;
                     }
 
+                    // Capture old keys before mutation
+                    String oldPatientId = treatment.getPatient() != null ? treatment.getPatient().getPatientId() : null;
+                    String oldPatientName = treatment.getPatient() != null ? treatment.getPatient().getFullName() : null;
+                    String oldDoctorId = treatment.getDoctor() != null ? treatment.getDoctor().getDoctorId() : null;
+                    String oldDoctorName = treatment.getDoctor() != null ? treatment.getDoctor().getFullName() : null;
+                    java.time.LocalDate oldDate = treatment.getTreatmentDate() != null ? treatment.getTreatmentDate().toLocalDate() : null;
                     MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
                     MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
                     
@@ -191,7 +197,7 @@ public class MedicalTreatmentControl {
                     treatment.setTreatmentCost(treatmentCost);
 
                     // Reindex to reflect any key changes
-                    reindexTreatment(treatment, oldStatus, oldPayment);
+                    reindexTreatment(treatment, oldPatientId, oldPatientName, oldDoctorId, oldDoctorName, oldDate, oldStatus, oldPayment);
 
                     // Persist changes to database
                     return treatmentDao.update(treatment);
@@ -208,6 +214,11 @@ public class MedicalTreatmentControl {
                         return false;
                     }
 
+                    String oldPatientId = treatment.getPatient() != null ? treatment.getPatient().getPatientId() : null;
+                    String oldPatientName = treatment.getPatient() != null ? treatment.getPatient().getFullName() : null;
+                    String oldDoctorId = treatment.getDoctor() != null ? treatment.getDoctor().getDoctorId() : null;
+                    String oldDoctorName = treatment.getDoctor() != null ? treatment.getDoctor().getFullName() : null;
+                    java.time.LocalDate oldDate = treatment.getTreatmentDate() != null ? treatment.getTreatmentDate().toLocalDate() : null;
                     MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
                     MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
 
@@ -215,7 +226,7 @@ public class MedicalTreatmentControl {
                     treatment.setFollowUpDate(followUpDate);
 
                     // Reindex for potential date changes
-                    reindexTreatment(treatment, oldStatus, oldPayment);
+                    reindexTreatment(treatment, oldPatientId, oldPatientName, oldDoctorId, oldDoctorName, oldDate, oldStatus, oldPayment);
 
                     // Persist changes to database
                     return treatmentDao.updateNotesAndFollowUpDate(treatmentId, treatmentNotes, followUpDate);
@@ -241,6 +252,11 @@ public class MedicalTreatmentControl {
                 if (!persisted) {
                     return false;
                 }
+                String oldPatientId = treatment.getPatient() != null ? treatment.getPatient().getPatientId() : null;
+                String oldPatientName = treatment.getPatient() != null ? treatment.getPatient().getFullName() : null;
+                String oldDoctorId = treatment.getDoctor() != null ? treatment.getDoctor().getDoctorId() : null;
+                String oldDoctorName = treatment.getDoctor() != null ? treatment.getDoctor().getFullName() : null;
+                java.time.LocalDate oldDate = treatment.getTreatmentDate() != null ? treatment.getTreatmentDate().toLocalDate() : null;
                 MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
                 MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.COMPLETED);
@@ -254,7 +270,7 @@ public class MedicalTreatmentControl {
                     treatment.setFollowUpDate(followUpDate);
                 }
                 // Reindex to move between status/payment lists and update indices
-                reindexTreatment(treatment, oldStatus, oldPayment);
+                reindexTreatment(treatment, oldPatientId, oldPatientName, oldDoctorId, oldDoctorName, oldDate, oldStatus, oldPayment);
                 return true;
             }
             return false;
@@ -274,13 +290,18 @@ public class MedicalTreatmentControl {
                 if (!persisted) {
                     return false;
                 }
+                String oldPatientId = treatment.getPatient() != null ? treatment.getPatient().getPatientId() : null;
+                String oldPatientName = treatment.getPatient() != null ? treatment.getPatient().getFullName() : null;
+                String oldDoctorId = treatment.getDoctor() != null ? treatment.getDoctor().getDoctorId() : null;
+                String oldDoctorName = treatment.getDoctor() != null ? treatment.getDoctor().getFullName() : null;
+                java.time.LocalDate oldDate = treatment.getTreatmentDate() != null ? treatment.getTreatmentDate().toLocalDate() : null;
                 MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
                 MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.IN_PROGRESS);
                 treatment.setPaymentStatus(MedicalTreatment.PaymentStatus.PENDING);
 
                 // Reindex to move into active/status/payment lists
-                reindexTreatment(treatment, oldStatus, oldPayment);
+                reindexTreatment(treatment, oldPatientId, oldPatientName, oldDoctorId, oldDoctorName, oldDate, oldStatus, oldPayment);
                 return true;
             }
             return false;
@@ -299,13 +320,18 @@ public class MedicalTreatmentControl {
                 if (!persisted) {
                     return false;
                 }
+                String oldPatientId = treatment.getPatient() != null ? treatment.getPatient().getPatientId() : null;
+                String oldPatientName = treatment.getPatient() != null ? treatment.getPatient().getFullName() : null;
+                String oldDoctorId = treatment.getDoctor() != null ? treatment.getDoctor().getDoctorId() : null;
+                String oldDoctorName = treatment.getDoctor() != null ? treatment.getDoctor().getFullName() : null;
+                java.time.LocalDate oldDate = treatment.getTreatmentDate() != null ? treatment.getTreatmentDate().toLocalDate() : null;
                 MedicalTreatment.TreatmentStatus oldStatus = treatment.getStatus();
                 MedicalTreatment.PaymentStatus oldPayment = treatment.getPaymentStatus();
                 treatment.setStatus(MedicalTreatment.TreatmentStatus.CANCELLED);
                 treatment.setPaymentStatus(MedicalTreatment.PaymentStatus.CANCELLED);
 
                 // Reindex to move lists
-                reindexTreatment(treatment, oldStatus, oldPayment);
+                reindexTreatment(treatment, oldPatientId, oldPatientName, oldDoctorId, oldDoctorName, oldDate, oldStatus, oldPayment);
 
                 return true;
             }
@@ -1397,6 +1423,11 @@ public class MedicalTreatmentControl {
     }
 
     private void reindexTreatment(MedicalTreatment treatment,
+                                  String oldPatientId,
+                                  String oldPatientName,
+                                  String oldDoctorId,
+                                  String oldDoctorName,
+                                  java.time.LocalDate oldDate,
                                   MedicalTreatment.TreatmentStatus oldStatus,
                                   MedicalTreatment.PaymentStatus oldPayment) {
         // Update active list
@@ -1419,30 +1450,27 @@ public class MedicalTreatmentControl {
         }
         addTreatmentToPaymentList(treatment);
 
-        // Remove from old index groups by previous keys if changed, then re-add with new keys
-        // We only have current object; for safe cleanup, remove by current id from all plausible old groups using oldStatus/oldPayment
+        // Remove from old index groups by previous keys if provided
+        if (oldPatientId != null) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByPatientId, oldPatientId, treatment.getTreatmentId());
+        }
+        if (oldPatientName != null) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByPatientName, oldPatientName, treatment.getTreatmentId());
+        }
+        if (oldDoctorId != null) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByDoctorId, oldDoctorId, treatment.getTreatmentId());
+        }
+        if (oldDoctorName != null) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByDoctorName, oldDoctorName, treatment.getTreatmentId());
+        }
+        if (oldDate != null) {
+            IndexingUtility.removeFromIndexGroup(treatmentIndexByDate, oldDate, treatment.getTreatmentId());
+        }
         if (oldStatus != null && oldStatus != treatment.getStatus()) {
             IndexingUtility.removeFromIndexGroup(treatmentIndexByStatus, oldStatus, treatment.getTreatmentId());
         }
         if (oldPayment != null && oldPayment != treatment.getPaymentStatus()) {
             IndexingUtility.removeFromIndexGroup(treatmentIndexByPaymentStatus, oldPayment, treatment.getTreatmentId());
-        }
-        // Patient/Doctor/Date may have changed externally before this call; remove by known old values if available via DAO fetch
-        // As we don't pass the old entity here, proactively remove by id from all name/id groups to avoid duplicates
-        if (treatment.getPatient() != null) {
-            IndexingUtility.removeFromIndexGroup(treatmentIndexByPatientId, treatment.getPatient().getPatientId(), treatment.getTreatmentId());
-            if (treatment.getPatient().getFullName() != null) {
-                IndexingUtility.removeFromIndexGroup(treatmentIndexByPatientName, treatment.getPatient().getFullName(), treatment.getTreatmentId());
-            }
-        }
-        if (treatment.getDoctor() != null) {
-            IndexingUtility.removeFromIndexGroup(treatmentIndexByDoctorId, treatment.getDoctor().getDoctorId(), treatment.getTreatmentId());
-            if (treatment.getDoctor().getFullName() != null) {
-                IndexingUtility.removeFromIndexGroup(treatmentIndexByDoctorName, treatment.getDoctor().getFullName(), treatment.getTreatmentId());
-            }
-        }
-        if (treatment.getTreatmentDate() != null) {
-            IndexingUtility.removeFromIndexGroup(treatmentIndexByDate, treatment.getTreatmentDate().toLocalDate(), treatment.getTreatmentId());
         }
 
         // Now add current values

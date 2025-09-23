@@ -1011,10 +1011,10 @@ public class ConsultationManagementControl {
                     : consultation.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
             String status = consultation.getStatus() == null ? "-" : consultation.getStatus().toString();
             
-            // Simulate efficiency metrics
-            double waitTime = Math.random() * 30 + 5;
-            double duration = Math.random() * 45 + 15;
-            double efficiency = Math.max(0, 100 - (waitTime + duration));
+            // Deterministic efficiency metrics
+            double waitTime = getWaitTimeForConsultation(consultation);
+            double duration = getDurationForConsultation(consultation);
+            double efficiency = getEfficiencyForConsultation(consultation);
 
             // Truncate long names
             if (patientName.length() > 22)
@@ -1129,15 +1129,38 @@ public class ConsultationManagementControl {
         };
     }
 
-    // Helper methods for efficiency metrics (simulated)
+    // Helper methods for efficiency metrics (deterministic for stable sorting)
     private double getWaitTimeForConsultation(Consultation consultation) {
-        // Simulate wait time based on consultation data
-        return Math.random() * 30 + 5; // 5-35 minutes
+        // Derive a stable pseudo-random value from consultation properties
+        int seed = 0;
+        if (consultation != null) {
+            if (consultation.getConsultationId() != null) seed ^= consultation.getConsultationId().hashCode();
+            if (consultation.getPatient() != null && consultation.getPatient().getPatientId() != null) {
+                seed ^= consultation.getPatient().getPatientId().hashCode();
+            }
+            if (consultation.getConsultationDate() != null) {
+                seed ^= consultation.getConsultationDate().getHour() * 31 + consultation.getConsultationDate().getMinute();
+            }
+        }
+        long mixed = (seed * 1103515245L + 12345L) & 0x7fffffffL; // LCG mix
+        double unit = (mixed % 10000) / 10000.0; // [0,1)
+        return 5.0 + unit * 30.0; // 5-35 minutes
     }
 
     private double getDurationForConsultation(Consultation consultation) {
-        // Simulate duration based on consultation data
-        return Math.random() * 45 + 15; // 15-60 minutes
+        int seed = 0x5bd1e995; // different mix
+        if (consultation != null) {
+            if (consultation.getConsultationId() != null) seed ^= consultation.getConsultationId().hashCode();
+            if (consultation.getDoctor() != null && consultation.getDoctor().getDoctorId() != null) {
+                seed ^= consultation.getDoctor().getDoctorId().hashCode();
+            }
+            if (consultation.getConsultationDate() != null) {
+                seed ^= consultation.getConsultationDate().getDayOfMonth() * 97;
+            }
+        }
+        long mixed = (seed * 1664525L + 1013904223L) & 0x7fffffffL; // LCG mix
+        double unit = (mixed % 10000) / 10000.0; // [0,1)
+        return 15.0 + unit * 45.0; // 15-60 minutes
     }
 
     private double getEfficiencyForConsultation(Consultation consultation) {

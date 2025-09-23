@@ -500,8 +500,7 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             preparedStatement.setString(7, consultation.getNotes());
             preparedStatement.setString(8, consultation.getStatus().name());
             preparedStatement.setString(9, consultation.getCancellationReason());
-            preparedStatement.setString(10, consultation.getPaymentStatus().name());
-            
+
             // Handle nextVisitDate - convert from LocalDateTime to Date for database
             if (consultation.getNextVisitDate() != null) {
                 preparedStatement.setDate(10, java.sql.Date.valueOf(consultation.getNextVisitDate().toLocalDate()));
@@ -510,7 +509,8 @@ public class ConsultationDao extends DaoTemplate<Consultation> {
             }
 
             preparedStatement.setDouble(11, consultation.getConsultationFee());
-            preparedStatement.setString(12, consultation.getConsultationId());
+            preparedStatement.setString(12, consultation.getPaymentStatus().name());
+            preparedStatement.setString(13, consultation.getConsultationId());
 
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;

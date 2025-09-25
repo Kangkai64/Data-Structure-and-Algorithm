@@ -306,7 +306,7 @@ public class DoctorManagementControl {
         }
         return results;
     }
-
+    
     public ArrayBucketList<String, Doctor> findDoctorsByLicense(String licenseNumber) {
         ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
         if (licenseNumber == null || licenseNumber.trim().isEmpty()) {

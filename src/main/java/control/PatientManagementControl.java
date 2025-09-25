@@ -238,6 +238,135 @@ public class PatientManagementControl {
        return activePatients.getValue(icNumber);
     }
 
+    // Finds patients by age range (inclusive)
+    public ArrayBucketList<String, Patient> findPatientsByAgeRange(int minAge, int maxAge) {
+        ensureDataLoaded();
+        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        if (minAge > maxAge) {
+            int temp = minAge;
+            minAge = maxAge;
+            maxAge = temp;
+        }
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            int age = patient.getAge();
+            if (age >= minAge && age <= maxAge) {
+                results.add(patient.getPatientId(), patient);
+            }
+        }
+        return results;
+    }
+
+    // Finds patients who visited within the past N days (based on registration date)
+    public ArrayBucketList<String, Patient> findPatientsVisitedWithinDays(int days) {
+        ensureDataLoaded();
+        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        if (days <= 0) return results;
+        java.time.LocalDate cutoff = java.time.LocalDate.now().minusDays(days);
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            java.time.LocalDate reg = patient.getRegistrationDate();
+            if (reg != null && (reg.isAfter(cutoff) || reg.isEqual(cutoff))) {
+                results.add(patient.getPatientId(), patient);
+            }
+        }
+        return results;
+    }
+
+    // Finds patients who visited within the past N months (based on registration date)
+    public ArrayBucketList<String, Patient> findPatientsVisitedWithinMonths(int months) {
+        ensureDataLoaded();
+        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        if (months <= 0) return results;
+        java.time.LocalDate cutoff = java.time.LocalDate.now().minusMonths(months);
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            java.time.LocalDate reg = patient.getRegistrationDate();
+            if (reg != null && (reg.isAfter(cutoff) || reg.isEqual(cutoff))) {
+                results.add(patient.getPatientId(), patient);
+            }
+        }
+        return results;
+    }
+
+    // Finds patients who visited within the past N years (based on registration date)
+    public ArrayBucketList<String, Patient> findPatientsVisitedWithinYears(int years) {
+        ensureDataLoaded();
+        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        if (years <= 0) return results;
+        java.time.LocalDate cutoff = java.time.LocalDate.now().minusYears(years);
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            java.time.LocalDate reg = patient.getRegistrationDate();
+            if (reg != null && (reg.isAfter(cutoff) || reg.isEqual(cutoff))) {
+                results.add(patient.getPatientId(), patient);
+            }
+        }
+        return results;
+    }
+
+
+    // Finds patients by address fields using a single keyword (matches any field or full combined address)
+    public ArrayBucketList<String, Patient> findPatientsByAddress(String keyword) {
+        ensureDataLoaded();
+        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        if (keyword == null) return results;
+        String query = normalizeAddress(keyword);
+        if (query.isEmpty()) return results;
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            if (patient.getAddress() == null) continue;
+            Address address = patient.getAddress();
+            String street = normalizeAddress(address.getStreet());
+            String city = normalizeAddress(address.getCity());
+            String state = normalizeAddress(address.getState());
+            String zip = normalizeAddress(address.getZipCode());
+            String country = normalizeAddress(address.getCountry());
+
+            // Match any field
+            boolean fieldMatch = street.contains(query) || city.contains(query) || state.contains(query)
+                    || zip.contains(query) || country.contains(query);
+
+            // Match combined full address
+            String combined = String.join(" ", street, city, state, zip, country).trim();
+            boolean combinedMatch = !combined.isEmpty() && (combined.contains(query) || query.contains(combined));
+
+            if (fieldMatch || combinedMatch) {
+                results.add(patient.getPatientId(), patient);
+            }
+        }
+        return results;
+    }
+
+    // Normalizes address strings for comparison
+    private String normalizeAddress(String input) {
+        if (input == null) return "";
+        String s = input.toLowerCase();
+        s = s.replaceAll("[\\p{Punct}]", " "); // remove punctuation
+        s = s.replaceAll("\\s+", " ").trim();
+        return s;
+    }
+
+    // Finds patients by specific blood type
+    public ArrayBucketList<String, Patient> findPatientsByBloodType(BloodType bloodType) {
+        ensureDataLoaded();
+        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        if (bloodType == null) return results;
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            if (patient.getBloodType() != null && patient.getBloodType() == bloodType) {
+                results.add(patient.getPatientId(), patient);
+            }
+        }
+        return results;
+    }
+
     // Returns the active patients
     public ArrayBucketList<String, Patient> getAllActivePatients() {
         ensureDataLoaded();
@@ -802,6 +931,205 @@ public class PatientManagementControl {
                 "------------------------------------------------------------------------------------------------------------\n");
         result.append(">>> End of Search <<<\n");
 
+        return result.toString();
+    }
+
+    // Detailed table for age range (adds Age column explicitly)
+    public String displayPatientsByAgeRangeDetailed(int minAge, int maxAge, String sortBy, String sortOrder) {
+        ArrayBucketList<String, Patient> patients = findPatientsByAgeRange(minAge, maxAge);
+        if (patients.isEmpty()) {
+            return "No patients found.";
+        }
+
+        Patient[] patientArray = patients.toArray(Patient.class);
+        sortPatientArray(patientArray, sortBy, sortOrder);
+
+        StringBuilder result = new StringBuilder();
+        result.append("\n=== Patient Search Results ===\n");
+        result.append("Search Criteria: Age Range: ").append(minAge).append(" - ").append(maxAge).append("\n");
+        result.append("Sorted By: ").append(sortBy)
+                .append(" | Order: ").append(sortOrder != null && sortOrder.equalsIgnoreCase("desc") ? "Descending" : "Ascending").append("\n");
+        result.append("Search Date: ")
+                .append(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm")))
+                .append("\n");
+        result.append("Total Results: ").append(patients.getSize()).append(" patient(s) found\n\n");
+
+        result.append("--- Patient List ---\n");
+        result.append("-".repeat(116)).append("\n");
+        result.append(String.format("| %-12s | %-25s | %-8s | %-15s | %-25s | %-12s |\n",
+                "Patient ID", "Full Name", "Age", "IC Number", "Email", "Phone"));
+        result.append("-".repeat(116)).append("\n");
+
+        for (Patient patient : patientArray) {
+            if (patient == null) continue;
+            String id = patient.getPatientId() == null ? "-" : patient.getPatientId();
+            String name = patient.getFullName() == null ? "-" : patient.getFullName();
+            String ageStr = String.valueOf(patient.getAge());
+            String ic = patient.getICNumber() == null ? "-" : patient.getICNumber();
+            String email = patient.getEmail() == null ? "-" : patient.getEmail();
+            String phone = patient.getPhoneNumber() == null ? "-" : patient.getPhoneNumber();
+
+            if (name.length() > 25) name = name.substring(0, 22) + "...";
+            if (email.length() > 25) email = email.substring(0, 22) + "...";
+
+            result.append(String.format("| %-12s | %-25s | %-8s | %-15s | %-25s | %-12s |\n",
+                    id, name, ageStr, ic, email, phone));
+        }
+
+        result.append("-".repeat(116)).append("\n");
+        result.append(">>> End of Search <<<\n");
+        return result.toString();
+    }
+
+    // Detailed display for recent visits (with Registration Date column)
+    public String displayRecentPatientsDetailed(ArrayBucketList<String, Patient> patients, String criteria, String sortBy, String sortOrder) {
+        if (patients.isEmpty()) {
+            return "No patients found.";
+        }
+
+        Patient[] patientArray = patients.toArray(Patient.class);
+        sortPatientArray(patientArray, sortBy, sortOrder);
+
+        StringBuilder result = new StringBuilder();
+        result.append("\n=== Patient Search Results ===\n");
+        result.append("Search Criteria: ").append(criteria).append("\n");
+        result.append("Sorted By: ").append(sortBy)
+                .append(" | Order: ").append(sortOrder != null && sortOrder.equalsIgnoreCase("desc") ? "Descending" : "Ascending").append("\n");
+        result.append("Search Date: ")
+                .append(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm")))
+                .append("\n");
+        result.append("Total Results: ").append(patients.getSize()).append(" patient(s) found\n\n");
+
+        result.append("--- Patient List ---\n");
+        result.append("-".repeat(120)).append("\n");
+        result.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-12s |\n",
+                "Patient ID", "Full Name", "IC Number", "Email", "Phone", "Reg Date"));
+        result.append("-".repeat(120)).append("\n");
+
+        for (Patient patient : patientArray) {
+            if (patient == null) continue;
+            String id = patient.getPatientId() == null ? "-" : patient.getPatientId();
+            String name = patient.getFullName() == null ? "-" : patient.getFullName();
+            String ic = patient.getICNumber() == null ? "-" : patient.getICNumber();
+            String email = patient.getEmail() == null ? "-" : patient.getEmail();
+            String phone = patient.getPhoneNumber() == null ? "-" : patient.getPhoneNumber();
+            String regDate = patient.getRegistrationDate() == null ? "-"
+                    : patient.getRegistrationDate().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-uuuu"));
+
+            if (name.length() > 25) name = name.substring(0, 22) + "...";
+            if (email.length() > 25) email = email.substring(0, 22) + "...";
+
+            result.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-12s |\n",
+                    id, name, ic, email, phone, regDate));
+        }
+
+        result.append("-".repeat(120)).append("\n");
+        result.append(">>> End of Search <<<\n");
+        return result.toString();
+    }
+
+    // Detailed address table with separate columns
+    public String displayPatientsByAddressDetailed(String keyword, String sortBy, String sortOrder) {
+        ArrayBucketList<String, Patient> patients = findPatientsByAddress(keyword);
+        if (patients.isEmpty()) {
+            return "No patients found.";
+        }
+
+        // Convert to array and sort using the same mechanism
+        Patient[] patientArray = patients.toArray(Patient.class);
+        sortPatientArray(patientArray, sortBy, sortOrder);
+
+        StringBuilder result = new StringBuilder();
+        result.append("\n=== Patient Search Results ===\n");
+        result.append("Search Criteria: Address contains: '")
+                .append(keyword == null ? "" : keyword.trim()).append("'\n");
+        result.append("Sorted By: ").append(sortBy)
+                .append(" | Order: ").append(sortOrder != null && sortOrder.equalsIgnoreCase("desc") ? "Descending" : "Ascending").append("\n");
+        result.append("Search Date: ")
+                .append(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm")))
+                .append("\n");
+        result.append("Total Results: ").append(patients.getSize()).append(" patient(s) found\n\n");
+
+        result.append("--- Patient List ---\n");
+        result.append("-".repeat(203)).append("\n");
+        result.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-28s | %-18s | %-15s | %-10s | %-12s |\n",
+                "Patient ID", "Full Name", "IC Number", "Email", "Phone", "Street", "City", "State", "Postcode", "Country"));
+        result.append("-".repeat(203)).append("\n");
+
+        for (Patient patient : patientArray) {
+            if (patient == null) continue;
+            Address addr = patient.getAddress();
+            String street = addr != null && addr.getStreet() != null ? addr.getStreet() : "-";
+            String city = addr != null && addr.getCity() != null ? addr.getCity() : "-";
+            String state = addr != null && addr.getState() != null ? addr.getState() : "-";
+            String zip = addr != null && addr.getZipCode() != null ? addr.getZipCode() : "-";
+            String country = addr != null && addr.getCountry() != null ? addr.getCountry() : "-";
+
+            String id = patient.getPatientId() == null ? "-" : patient.getPatientId();
+            String name = patient.getFullName() == null ? "-" : patient.getFullName();
+            String ic = patient.getICNumber() == null ? "-" : patient.getICNumber();
+            String email = patient.getEmail() == null ? "-" : patient.getEmail();
+            String phone = patient.getPhoneNumber() == null ? "-" : patient.getPhoneNumber();
+
+            if (name.length() > 25) name = name.substring(0, 22) + "...";
+            if (email.length() > 25) email = email.substring(0, 22) + "...";
+            if (street.length() > 28) street = street.substring(0, 25) + "...";
+            if (city.length() > 18) city = city.substring(0, 15) + "...";
+
+            result.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-28s | %-18s | %-12s | %-10s | %-12s |\n",
+                    id, name, ic, email, phone, street, city, state, zip, country));
+        }
+
+        result.append("-".repeat(203)).append("\n");
+        result.append(">>> End of Search <<<\n");
+        return result.toString();
+    }
+
+    // Detailed table for blood type search (adds Blood Type column explicitly)
+    public String displayPatientsByBloodTypeDetailed(BloodType bloodType, String sortBy, String sortOrder) {
+        ArrayBucketList<String, Patient> patients = findPatientsByBloodType(bloodType);
+        if (patients.isEmpty()) {
+            return "No patients found.";
+        }
+
+        Patient[] patientArray = patients.toArray(Patient.class);
+        sortPatientArray(patientArray, sortBy, sortOrder);
+
+        StringBuilder result = new StringBuilder();
+        result.append("\n=== Patient Search Results ===\n");
+        result.append("Search Criteria: Blood Type: ")
+                .append(bloodType == null ? "-" : bloodType.toString()).append("\n");
+        result.append("Sorted By: ").append(sortBy)
+                .append(" | Order: ").append(sortOrder != null && sortOrder.equalsIgnoreCase("desc") ? "Descending" : "Ascending").append("\n");
+        result.append("Search Date: ")
+                .append(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm")))
+                .append("\n");
+        result.append("Total Results: ").append(patients.getSize()).append(" patient(s) found\n\n");
+
+        result.append("--- Patient List ---\n");
+        result.append("-".repeat(121)).append("\n");
+        result.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-13s |\n",
+                "Patient ID", "Full Name", "IC Number", "Email", "Phone", "Blood Type"));
+        result.append("-".repeat(121)).append("\n");
+
+        for (Patient patient : patientArray) {
+            if (patient == null) continue;
+            String id = patient.getPatientId() == null ? "-" : patient.getPatientId();
+            String name = patient.getFullName() == null ? "-" : patient.getFullName();
+            String ic = patient.getICNumber() == null ? "-" : patient.getICNumber();
+            String email = patient.getEmail() == null ? "-" : patient.getEmail();
+            String phone = patient.getPhoneNumber() == null ? "-" : patient.getPhoneNumber();
+            String blood = patient.getBloodType() == null ? "-" : patient.getBloodType().toString();
+
+            if (name.length() > 25) name = name.substring(0, 22) + "...";
+            if (email.length() > 25) email = email.substring(0, 22) + "...";
+
+            result.append(String.format("| %-12s | %-25s | %-15s | %-25s | %-12s | %-13s |\n",
+                    id, name, ic, email, phone, blood));
+        }
+
+        result.append("-".repeat(121)).append("\n");
+        result.append(">>> End of Search <<<\n");
         return result.toString();
     }
 

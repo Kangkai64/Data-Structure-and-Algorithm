@@ -2,6 +2,8 @@ package boundary;
 
 import java.sql.SQLException;
 import java.util.Scanner;
+import java.util.regex.Pattern;
+
 import adt.ArrayBucketList;
 import control.AddressManagementControl;
 import control.PatientManagementControl;
@@ -357,10 +359,14 @@ public class PatientManagementUI {
         ConsoleUtils.printHeader("Search Patients");
         System.out.println("1. Search by Patient ID");
         System.out.println("2. Search by IC Number");
-        System.out.println("3. Search by Full Name");
+        System.out.println("3. Search by Patient Name");
         System.out.println("4. Search by Email");
+        System.out.println("5. Search by Address");
+        System.out.println("6. Search by Blood Type");
+        System.out.println("7. Search by Age Range");
+        System.out.println("8. Search by Recent Visits");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 8);
         System.out.println();
 
         switch (choice) {
@@ -375,6 +381,18 @@ public class PatientManagementUI {
                 break;
             case 4:
                 searchPatientByEmail();
+                break;
+            case 5:
+                searchPatientsByAddress();
+                break;
+            case 6:
+                searchPatientsByBloodType();
+                break;
+            case 7:
+                searchPatientsByAgeRange();
+                break;
+            case 8:
+                searchPatientsByRecentVisits();
                 break;
             default:
                 System.out.println("Invalid choice.");
@@ -396,7 +414,7 @@ public class PatientManagementUI {
 
     private void searchPatientsByName() {
         ConsoleUtils.printHeader("Search Patients by Name (Patient List)");
-        String name = ConsoleUtils.getStringInput(scanner, "Enter patient name (partial match): ");
+        String name = ConsoleUtils.getStringInput(scanner, "Enter patient name (E.g. Name contains 'Tan'): ");
         ArrayBucketList<String, Patient> patients = patientControl.findPatientsByName(name);
         if (patients.isEmpty()) {
             System.out.println("No patients found.");
@@ -467,6 +485,123 @@ public class PatientManagementUI {
             System.out.println();
             System.out.println(patientControl.displayPatientSearchResult(patient, "IC Number: " + icNumber));
         }
+        ConsoleUtils.waitMessage();
+    }
+
+    private void searchPatientsByAddress() {
+        ConsoleUtils.printHeader("Search Patients by Address (Patient List)");
+        String keyword = ConsoleUtils.getInputMatching(scanner, "Enter address keyword (street/city/state/postcode/country): ", Pattern.compile("(?s).+"), "Input cannot be empty");
+        String sortBy = getPatientSortField();
+        System.out.println();
+        String sortOrder = getSortOrder();
+        System.out.println();
+        System.out.println(patientControl.displayPatientsByAddressDetailed(keyword, sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
+    private void searchPatientsByBloodType() {
+        ConsoleUtils.printHeader("Search Patients by Blood Type (Patient List)");
+        System.out.println("Select blood type:");
+        System.out.println("1. A_POSITIVE  2. A_NEGATIVE  3. B_POSITIVE  4. B_NEGATIVE");
+        System.out.println("5. AB_POSITIVE 6. AB_NEGATIVE 7. O_POSITIVE  8. O_NEGATIVE  9. OTHERS");
+        int bloodTypeChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 9);
+        BloodType bloodType = patientControl.getBloodTypeFromChoice(bloodTypeChoice);
+        String sortBy = getPatientSortField();
+        System.out.println();
+        String sortOrder = getSortOrder();
+        System.out.println();
+        System.out.println(patientControl.displayPatientsByBloodTypeDetailed(bloodType, sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
+    private void searchPatientsByAgeRange() {
+        ConsoleUtils.printHeader("Search Patients by Age Range (Patient List)");
+        int minAge = ConsoleUtils.getIntInput(scanner, "Enter the youngest age to search for: ", 0, 150);
+        int maxAge = ConsoleUtils.getIntInput(scanner, "Enter the oldest age to search for: ", 0, 150);
+        String sortBy = getPatientSortField();
+        System.out.println();
+        String sortOrder = getSortOrder();
+        System.out.println();
+        System.out.println(patientControl.displayPatientsByAgeRangeDetailed(minAge, maxAge, sortBy, sortOrder));
+        ConsoleUtils.waitMessage();
+    }
+
+    private void searchPatientsByRecentVisits() {
+        ConsoleUtils.printHeader("Search Patients by Recent Visits (Patient List)");
+        System.out.println("Select period:");
+        System.out.println("1. Last 3 days");
+        System.out.println("2. Last 7 days");
+        System.out.println("3. Last 14 days");
+        System.out.println("4. Last 1 month");
+        System.out.println("5. Last 3 months");
+        System.out.println("6. Last 6 months");
+        System.out.println("7. Last 1 year");
+        System.out.println("8. Last 3 years");
+        System.out.println("9. Last 5 years");
+        System.out.println("10. Last 10 years");
+        int periodChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 10);
+
+        String sortBy = getPatientSortField();
+        System.out.println();
+        String sortOrder = getSortOrder();
+        System.out.println();
+
+        String output;
+        switch (periodChoice) {
+            case 1:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinDays(3),
+                        "Visited within last 3 day(s)", sortBy, sortOrder);
+                break;
+            case 2:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinDays(7),
+                        "Visited within last 7 day(s)", sortBy, sortOrder);
+                break;
+            case 3:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinDays(14),
+                        "Visited within last 14 day(s)", sortBy, sortOrder);
+                break;
+            case 4:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinMonths(1),
+                        "Visited within last 1 month(s)", sortBy, sortOrder);
+                break;
+            case 5:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinMonths(3),
+                        "Visited within last 3 month(s)", sortBy, sortOrder);
+                break;
+            case 6:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinMonths(6),
+                        "Visited within last 6 month(s)", sortBy, sortOrder);
+                break;
+            case 7:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinYears(1),
+                        "Visited within last 1 year(s)", sortBy, sortOrder);
+                break;
+            case 8:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinYears(3),
+                        "Visited within last 3 year(s)", sortBy, sortOrder);
+                break;
+            case 9:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinYears(5),
+                        "Visited within last 5 year(s)", sortBy, sortOrder);
+                break;
+            case 10:
+                output = patientControl.displayRecentPatientsDetailed(
+                        patientControl.findPatientsVisitedWithinYears(10),
+                        "Visited within last 10 year(s)", sortBy, sortOrder);
+                break;
+            default:
+                output = "Invalid choice.";
+        }
+        System.out.println(output);
         ConsoleUtils.waitMessage();
     }
 

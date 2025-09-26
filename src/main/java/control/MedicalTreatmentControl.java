@@ -22,7 +22,7 @@ import utility.ConsoleUtils;
  */
 public class MedicalTreatmentControl {
 
-    private ArrayBucketList<String, MedicalTreatment> treatments;
+    private ArrayBucketList<String, MedicalTreatment> treatmentIndexById;
     private ArrayBucketList<String, MedicalTreatment> activeTreatments;
     // Split lists by status
     private ArrayBucketList<String, MedicalTreatment> treatmentsPrescribed;
@@ -33,8 +33,6 @@ public class MedicalTreatmentControl {
     private ArrayBucketList<String, MedicalTreatment> paymentsPaid;
     private ArrayBucketList<String, MedicalTreatment> paymentsPending;
     private ArrayBucketList<String, MedicalTreatment> paymentsCancelled;
-    // Indices
-    private ArrayBucketList<String, MedicalTreatment> treatmentIndexById;
     private ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByPatientId;
     private ArrayBucketList<String, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByDoctorId;
     private ArrayBucketList<MedicalTreatment.TreatmentStatus, ArrayBucketList<String, MedicalTreatment>> treatmentIndexByStatus;
@@ -45,7 +43,7 @@ public class MedicalTreatmentControl {
     private MedicalTreatmentDao treatmentDao;
 
     public MedicalTreatmentControl() {
-        this.treatments = new ArrayBucketList<String, MedicalTreatment>();
+        this.treatmentIndexById = ArrayBucketListFactory.createForStringIds(256);
         this.activeTreatments = new ArrayBucketList<String, MedicalTreatment>();
         // Initialize split lists
         this.treatmentsPrescribed = ArrayBucketListFactory.createForStringIds(128);
@@ -55,8 +53,6 @@ public class MedicalTreatmentControl {
         this.paymentsPaid = ArrayBucketListFactory.createForStringIds(128);
         this.paymentsPending = ArrayBucketListFactory.createForStringIds(128);
         this.paymentsCancelled = ArrayBucketListFactory.createForStringIds(128);
-        // Initialize indices
-        this.treatmentIndexById = ArrayBucketListFactory.createForStringIds(256);
         this.treatmentIndexByPatientId = ArrayBucketListFactory.createForStringIds(128);
         this.treatmentIndexByDoctorId = ArrayBucketListFactory.createForStringIds(128);
         this.treatmentIndexByStatus = ArrayBucketListFactory.createForEnums(16);
@@ -69,7 +65,7 @@ public class MedicalTreatmentControl {
 
     public void loadTreatmentData() {
         try {
-            treatments = treatmentDao.findAll();
+            treatmentIndexById = treatmentDao.findAll();
             // Clear and rebuild indices and split lists
             activeTreatments.clear();
             treatmentsPrescribed.clear();
@@ -79,7 +75,6 @@ public class MedicalTreatmentControl {
             paymentsPaid.clear();
             paymentsPending.clear();
             paymentsCancelled.clear();
-            treatmentIndexById.clear();
             treatmentIndexByPatientId.clear();
             treatmentIndexByDoctorId.clear();
             treatmentIndexByStatus.clear();
@@ -87,11 +82,10 @@ public class MedicalTreatmentControl {
             treatmentIndexByDate.clear();
             treatmentIndexByPatientName.clear();
             treatmentIndexByDoctorName.clear();
-            Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+            Iterator<MedicalTreatment> treatmentIterator = treatmentIndexById.iterator();
             while (treatmentIterator.hasNext()) {
                 MedicalTreatment treatment = treatmentIterator.next();
                 if (treatment == null) continue;
-                treatmentIndexById.add(treatment.getTreatmentId(), treatment);
                 indexTreatment(treatment);
             }
         } catch (Exception exception) {
@@ -144,7 +138,7 @@ public class MedicalTreatmentControl {
             }
 
             // Add to indices and split lists
-            treatments.add(treatment.getTreatmentId(), treatment);
+            treatmentIndexById.add(treatment.getTreatmentId(), treatment);
             treatmentIndexById.add(treatment.getTreatmentId(), treatment);
             indexTreatment(treatment);
 
@@ -454,7 +448,7 @@ public class MedicalTreatmentControl {
         if (consultationId == null) {
             return results;
         }
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        Iterator<MedicalTreatment> treatmentIterator = treatmentIndexById.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             Consultation consultation = treatment.getConsultation();
@@ -475,7 +469,7 @@ public class MedicalTreatmentControl {
         if (startDate == null && endDate == null) {
             return results;
         }
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        Iterator<MedicalTreatment> treatmentIterator = treatmentIndexById.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             java.time.LocalDate treatmentLocalDate = treatment.getTreatmentDate().toLocalDate();
@@ -493,11 +487,11 @@ public class MedicalTreatmentControl {
     }
 
     public ArrayBucketList<String, MedicalTreatment> getAllTreatments() {
-        return treatments;
+        return treatmentIndexById;
     }
 
     public int getTotalTreatments() {
-        return treatments.getSize();
+        return treatmentIndexById.getSize();
     }
 
     public int getActiveTreatmentsCount() {
@@ -538,7 +532,7 @@ public class MedicalTreatmentControl {
         double[] revenueByYear = new double[20];
         int yearCount = 0;
 
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        Iterator<MedicalTreatment> treatmentIterator = treatmentIndexById.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             if (treatment.getTreatmentDate() != null) {
@@ -611,7 +605,7 @@ public class MedicalTreatmentControl {
         double[] statusRevenue = new double[10];
         int statusCount = 0;
 
-        treatmentIterator = treatments.iterator();
+        treatmentIterator = treatmentIndexById.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             String status = treatment.getStatus() != null ? treatment.getStatus().toString() : "UNKNOWN";
@@ -659,7 +653,7 @@ public class MedicalTreatmentControl {
         report.append("-".repeat(120)).append("\n");
 
         // Convert to array for sorting
-        MedicalTreatment[] treatmentArray = treatments.toArray(MedicalTreatment.class);
+        MedicalTreatment[] treatmentArray = treatmentIndexById.toArray(MedicalTreatment.class);
 
         // Sort the treatment array
         sortTreatmentArray(treatmentArray, sortBy, sortOrder);
@@ -728,7 +722,7 @@ public class MedicalTreatmentControl {
         double[] doctorRevenue = new double[50];
         int doctorCount = 0;
 
-        Iterator<MedicalTreatment> doctorIterator = treatments.iterator();
+        Iterator<MedicalTreatment> doctorIterator = treatmentIndexById.iterator();
         while (doctorIterator.hasNext()) {
             MedicalTreatment treatment = doctorIterator.next();
             if (treatment.getDoctor() != null) {
@@ -805,7 +799,7 @@ public class MedicalTreatmentControl {
         report.append("-".repeat(120)).append("\n");
 
         // Convert to array for sorting
-        MedicalTreatment[] treatmentArray = treatments.toArray(MedicalTreatment.class);
+        MedicalTreatment[] treatmentArray = treatmentIndexById.toArray(MedicalTreatment.class);
 
         // Sort the treatment array
         sortTreatmentArray(treatmentArray, sortBy, sortOrder);
@@ -886,7 +880,7 @@ public class MedicalTreatmentControl {
 
         // Get unique doctors
         ArrayBucketList<String, Doctor> uniqueDoctors = new ArrayBucketList<>();
-        Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+        Iterator<MedicalTreatment> treatmentIterator = treatmentIndexById.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             if (treatment.getDoctor() != null) {
@@ -905,7 +899,7 @@ public class MedicalTreatmentControl {
             double totalSuccessRate = 0;
             double totalRecoveryTime = 0;
             
-            Iterator<MedicalTreatment> doctorTreatmentIterator = treatments.iterator();
+            Iterator<MedicalTreatment> doctorTreatmentIterator = treatmentIndexById.iterator();
             while (doctorTreatmentIterator.hasNext()) {
                 MedicalTreatment treatment = doctorTreatmentIterator.next();
                 if (treatment.getDoctor() != null && 
@@ -942,7 +936,7 @@ public class MedicalTreatmentControl {
         String[] recoveryTimeLabels = { "0-7 days", "8-14 days", "15-30 days", "31-60 days", "61-90 days", "90+ days" };
         int[] recoveryTimeCounts = new int[6];
 
-        treatmentIterator = treatments.iterator();
+        treatmentIterator = treatmentIndexById.iterator();
         while (treatmentIterator.hasNext()) {
             MedicalTreatment treatment = treatmentIterator.next();
             double recoveryTime = calculateTreatmentRecoveryTime(treatment);
@@ -967,7 +961,7 @@ public class MedicalTreatmentControl {
             int statusCount = 0;
             double statusSuccessRate = 0;
             
-            treatmentIterator = treatments.iterator();
+            treatmentIterator = treatmentIndexById.iterator();
             while (treatmentIterator.hasNext()) {
                 MedicalTreatment treatment = treatmentIterator.next();
                 if (treatment.getStatus() != null && treatment.getStatus().toString().equals(status)) {
@@ -995,7 +989,7 @@ public class MedicalTreatmentControl {
         report.append("-".repeat(145)).append("\n");
 
         // Convert to array for sorting
-        MedicalTreatment[] treatmentArray = treatments.toArray(MedicalTreatment.class);
+        MedicalTreatment[] treatmentArray = treatmentIndexById.toArray(MedicalTreatment.class);
 
         // Sort the treatment array
         sortTreatmentOutcomeArray(treatmentArray, sortBy, sortOrder);
@@ -1215,7 +1209,7 @@ public class MedicalTreatmentControl {
 
     public boolean hasTreatmentForConsultation(String consultationId) {
         try {
-            Iterator<MedicalTreatment> treatmentIterator = treatments.iterator();
+            Iterator<MedicalTreatment> treatmentIterator = treatmentIndexById.iterator();
             while (treatmentIterator.hasNext()) {
                 MedicalTreatment treatment = treatmentIterator.next();
                 if (treatment.getConsultation().getConsultationId().equals(consultationId)) {

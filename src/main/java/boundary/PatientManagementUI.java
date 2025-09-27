@@ -98,7 +98,6 @@ public class PatientManagementUI {
         BloodType bloodType = patientControl.getBloodTypeFromChoice(bloodTypeChoice);
 
         String allergiesInput = ConsoleUtils.getStringInput(scanner, "Enter allergies (comma-separated, or 'None'): ");
-        String allergies = allergiesInput.equalsIgnoreCase("None") ? "None" : allergiesInput;
 
         String emergencyContact = ConsoleUtils.getPhoneInput(scanner, "Enter emergency contact (0XX-XXXXXXX): ");
 
@@ -414,7 +413,7 @@ public class PatientManagementUI {
 
     private void searchPatientsByName() {
         ConsoleUtils.printHeader("Search Patients by Name (Patient List)");
-        String name = ConsoleUtils.getStringInput(scanner, "Enter patient name (E.g. Name contains 'Tan'): ");
+        String name = ConsoleUtils.getStringInput(scanner, "Enter patient name (E.g. Name start with 'Tan'): ");
         ArrayBucketList<String, Patient> patients = patientControl.findPatientsByName(name);
         if (patients.isEmpty()) {
             System.out.println("No patients found.");
@@ -445,7 +444,7 @@ public class PatientManagementUI {
 
     private void searchPatientByEmail() {
         ConsoleUtils.printHeader("Search Patients by Email (Patient List)");
-        String email = ConsoleUtils.getStringInput(scanner, "Enter email (partial match): ");
+        String email = ConsoleUtils.getStringInput(scanner, "Enter email (E.g. Email starts with 'Tan'): ");
         ArrayBucketList<String, Patient> patients = patientControl.findPatientsByEmail(email);
         if (patients.isEmpty()) {
             System.out.println("No patients found.");
@@ -490,7 +489,14 @@ public class PatientManagementUI {
 
     private void searchPatientsByAddress() {
         ConsoleUtils.printHeader("Search Patients by Address (Patient List)");
-        String keyword = ConsoleUtils.getInputMatching(scanner, "Enter address keyword (street/city/state/postcode/country): ", Pattern.compile("(?s).+"), "Input cannot be empty");
+        System.out.println("Search by any address component:");
+        System.out.println("- Street name (e.g., 'Main Street', 'Oak')");
+        System.out.println("- City name (e.g., 'Kuala Lumpur', 'KL')");
+        System.out.println("- State name (e.g., 'Selangor', 'Penang')");
+        System.out.println("- Postal code (e.g., '40000', '50000')");
+        System.out.println("- Country name (e.g., 'Malaysia', 'MY')");
+        System.out.println();
+        String keyword = ConsoleUtils.getInputMatching(scanner, "Enter address keyword: ", Pattern.compile("(?s).+"), "Input cannot be empty");
         String sortBy = getPatientSortField();
         System.out.println();
         String sortOrder = getSortOrder();

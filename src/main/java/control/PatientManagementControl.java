@@ -6,6 +6,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 
 import adt.ArrayBucketList;
+import adt.ArrayBucketListFactory;
+import adt.IndexingUtility;
 import dao.AddressDao;
 import dao.PatientDao;
 import entity.Address;
@@ -24,25 +26,200 @@ public class PatientManagementControl {
 
     private PatientDao patientDao;
     private AddressDao addressDao;
-    private ArrayBucketList<String, Patient> patienQueue;
+    private ArrayBucketList<String, Patient> patientQueue;
     private ArrayBucketList<String, Patient> activePatients;
+
+    // Patient search indices (following PharmayManagementControl pattern)
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByName;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByEmail;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByPhone;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByIcNumber;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByAddress;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByStreet;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByCity;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByState;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByZipCode;
+    private ArrayBucketList<String, ArrayBucketList<String, Patient>> patientIndexByCountry;
+    private ArrayBucketList<BloodType, ArrayBucketList<String, Patient>> patientIndexByBloodType;
+    private ArrayBucketList<Integer, ArrayBucketList<String, Patient>> patientIndexByAge;
+    private ArrayBucketList<LocalDate, ArrayBucketList<String, Patient>> patientIndexByRegistrationDate;
 
     public PatientManagementControl() {
         this.patientDao = new PatientDao();
         this.addressDao = new AddressDao();
-        this.patienQueue = new ArrayBucketList<String, Patient>();
+        this.patientQueue = new ArrayBucketList<String, Patient>();
         this.activePatients = new ArrayBucketList<String, Patient>();
+
+        // Initialize search indices with appropriate strategies
+        this.patientIndexByName = ArrayBucketListFactory.createForNamePrefix(26);
+        this.patientIndexByEmail = ArrayBucketListFactory.createForNamePrefix(26);
+        this.patientIndexByPhone = ArrayBucketListFactory.createForStringIds(16);
+        this.patientIndexByIcNumber = ArrayBucketListFactory.createForStringIds(16);
+        this.patientIndexByAddress = ArrayBucketListFactory.createForNamePrefix(26);
+        this.patientIndexByStreet = ArrayBucketListFactory.createForNamePrefix(26);
+        this.patientIndexByCity = ArrayBucketListFactory.createForNamePrefix(26);
+        this.patientIndexByState = ArrayBucketListFactory.createForNamePrefix(26);
+        this.patientIndexByZipCode = ArrayBucketListFactory.createForStringIds(16);
+        this.patientIndexByCountry = ArrayBucketListFactory.createForNamePrefix(26);
+        this.patientIndexByBloodType = ArrayBucketListFactory.createForEnums(16);
+        this.patientIndexByAge = ArrayBucketListFactory.createForStringIds(100);
+        this.patientIndexByRegistrationDate = ArrayBucketListFactory.createForLocalDates(64);
     }
 
     // Load all active patients from persistent storage into the in-memory cachea
     public void loadActivePatients() {
         try {
             activePatients = patientDao.findAll();
+            // Rebuild all indices after loading
+            rebuildAllIndices();
         } catch (Exception exception) {
             System.err.println("Error loading active patients: " + exception.getMessage());
             System.err.println("Initializing with empty patient list...");
             activePatients = new ArrayBucketList<String, Patient>();
         }
+    }
+
+    // ---------------- Indexing helpers (following PharmacyManagementControl pattern) ----------------
+    private void indexPatient(Patient patient) {
+        if (patient == null) return;
+        
+        // Index by searchable fields
+        IndexingUtility.addToIndexGroup(patientIndexByName, patient.getFullName(), patient.getPatientId(), patient);
+        IndexingUtility.addToIndexGroup(patientIndexByEmail, patient.getEmail(), patient.getPatientId(), patient);
+        IndexingUtility.addToIndexGroup(patientIndexByPhone, patient.getPhoneNumber(), patient.getPatientId(), patient);
+        IndexingUtility.addToIndexGroup(patientIndexByIcNumber, patient.getICNumber(), patient.getPatientId(), patient);
+        
+        // Index by address components
+        if (patient.getAddress() != null) {
+            Address address = patient.getAddress();
+            String normalizedAddress = normalizeAddressForIndexing(address);
+            IndexingUtility.addToIndexGroup(patientIndexByAddress, normalizedAddress, patient.getPatientId(), patient);
+            
+            // Index individual address components
+            String street = normalizeAddress(address.getStreet());
+            String city = normalizeAddress(address.getCity());
+            String state = normalizeAddress(address.getState());
+            String zip = normalizeAddress(address.getZipCode());
+            String country = normalizeAddress(address.getCountry());
+            
+            if (!street.isEmpty()) {
+                IndexingUtility.addToIndexGroup(patientIndexByStreet, street, patient.getPatientId(), patient);
+            }
+            if (!city.isEmpty()) {
+                IndexingUtility.addToIndexGroup(patientIndexByCity, city, patient.getPatientId(), patient);
+            }
+            if (!state.isEmpty()) {
+                IndexingUtility.addToIndexGroup(patientIndexByState, state, patient.getPatientId(), patient);
+            }
+            if (!zip.isEmpty()) {
+                IndexingUtility.addToIndexGroup(patientIndexByZipCode, zip, patient.getPatientId(), patient);
+            }
+            if (!country.isEmpty()) {
+                IndexingUtility.addToIndexGroup(patientIndexByCountry, country, patient.getPatientId(), patient);
+            }
+        }
+        
+        // Index by blood type
+        if (patient.getBloodType() != null) {
+            IndexingUtility.addToIndexGroup(patientIndexByBloodType, patient.getBloodType(), patient.getPatientId(), patient);
+        }
+        
+        // Index by age
+        IndexingUtility.addToIndexGroup(patientIndexByAge, patient.getAge(), patient.getPatientId(), patient);
+        
+        // Index by registration date
+        if (patient.getRegistrationDate() != null) {
+            IndexingUtility.addToIndexGroup(patientIndexByRegistrationDate, patient.getRegistrationDate(), patient.getPatientId(), patient);
+        }
+    }
+
+    private void reindexPatient(Patient oldPatient, Patient newPatient) {
+        if (newPatient == null) return;
+        
+        // Remove from old indices
+        if (oldPatient != null) {
+            IndexingUtility.removeFromIndexGroup(patientIndexByName, oldPatient.getFullName(), oldPatient.getPatientId());
+            IndexingUtility.removeFromIndexGroup(patientIndexByEmail, oldPatient.getEmail(), oldPatient.getPatientId());
+            IndexingUtility.removeFromIndexGroup(patientIndexByPhone, oldPatient.getPhoneNumber(), oldPatient.getPatientId());
+            IndexingUtility.removeFromIndexGroup(patientIndexByIcNumber, oldPatient.getICNumber(), oldPatient.getPatientId());
+            
+            if (oldPatient.getAddress() != null) {
+                Address oldAddress = oldPatient.getAddress();
+                String oldNormalizedAddress = normalizeAddressForIndexing(oldAddress);
+                IndexingUtility.removeFromIndexGroup(patientIndexByAddress, oldNormalizedAddress, oldPatient.getPatientId());
+                
+                // Remove from individual address component indices
+                String oldStreet = normalizeAddress(oldAddress.getStreet());
+                String oldCity = normalizeAddress(oldAddress.getCity());
+                String oldState = normalizeAddress(oldAddress.getState());
+                String oldZip = normalizeAddress(oldAddress.getZipCode());
+                String oldCountry = normalizeAddress(oldAddress.getCountry());
+                
+                if (!oldStreet.isEmpty()) {
+                    IndexingUtility.removeFromIndexGroup(patientIndexByStreet, oldStreet, oldPatient.getPatientId());
+                }
+                if (!oldCity.isEmpty()) {
+                    IndexingUtility.removeFromIndexGroup(patientIndexByCity, oldCity, oldPatient.getPatientId());
+                }
+                if (!oldState.isEmpty()) {
+                    IndexingUtility.removeFromIndexGroup(patientIndexByState, oldState, oldPatient.getPatientId());
+                }
+                if (!oldZip.isEmpty()) {
+                    IndexingUtility.removeFromIndexGroup(patientIndexByZipCode, oldZip, oldPatient.getPatientId());
+                }
+                if (!oldCountry.isEmpty()) {
+                    IndexingUtility.removeFromIndexGroup(patientIndexByCountry, oldCountry, oldPatient.getPatientId());
+                }
+            }
+            
+            if (oldPatient.getBloodType() != null) {
+                IndexingUtility.removeFromIndexGroup(patientIndexByBloodType, oldPatient.getBloodType(), oldPatient.getPatientId());
+            }
+            
+            IndexingUtility.removeFromIndexGroup(patientIndexByAge, oldPatient.getAge(), oldPatient.getPatientId());
+            
+            if (oldPatient.getRegistrationDate() != null) {
+                IndexingUtility.removeFromIndexGroup(patientIndexByRegistrationDate, oldPatient.getRegistrationDate(), oldPatient.getPatientId());
+            }
+        }
+        
+        // Add to new indices
+        indexPatient(newPatient);
+    }
+
+    private void rebuildAllIndices() {
+        // Clear all indices
+        patientIndexByName.clear();
+        patientIndexByEmail.clear();
+        patientIndexByPhone.clear();
+        patientIndexByIcNumber.clear();
+        patientIndexByAddress.clear();
+        patientIndexByStreet.clear();
+        patientIndexByCity.clear();
+        patientIndexByState.clear();
+        patientIndexByZipCode.clear();
+        patientIndexByCountry.clear();
+        patientIndexByBloodType.clear();
+        patientIndexByAge.clear();
+        patientIndexByRegistrationDate.clear();
+        
+        // Rebuild indices for all patients
+        Iterator<Patient> patientIterator = activePatients.iterator();
+        while (patientIterator.hasNext()) {
+            Patient patient = patientIterator.next();
+            indexPatient(patient);
+        }
+    }
+
+    // Normalizes address for indexing (combines all address fields)
+    private String normalizeAddressForIndexing(Address address) {
+        if (address == null) return "";
+        String street = normalizeAddress(address.getStreet());
+        String city = normalizeAddress(address.getCity());
+        String state = normalizeAddress(address.getState());
+        String zip = normalizeAddress(address.getZipCode());
+        String country = normalizeAddress(address.getCountry());
+        return String.join(" ", street, city, state, zip, country).trim();
     }
 
     // Ensure data is loaded before performing operations
@@ -75,6 +252,8 @@ public class PatientManagementControl {
             }
 
             activePatients.add(patient.getPatientId(), patient);
+            // Index the new patient
+            indexPatient(patient);
             return true;
 
         } catch (Exception exception) {
@@ -117,6 +296,14 @@ public class PatientManagementControl {
         try {
             Patient patient = patientDao.findById(patientId);
             if (patient != null) {
+                // Get the old patient data before updating
+                Patient oldPatient = new Patient(patient.getFullName(), patient.getICNumber(), 
+                    patient.getEmail(), patient.getPhoneNumber(), patient.getAddress(),
+                    patient.getRegistrationDate(), patient.getPatientId(), patient.getBloodType(),
+                    patient.getAllergies(), patient.getEmergencyContact());
+                oldPatient.setActive(patient.isActive());
+                
+                // Update the patient with new data
                 patient.setFullName(fullName);
                 patient.setEmail(email);
                 patient.setPhoneNumber(phoneNumber);
@@ -127,6 +314,8 @@ public class PatientManagementControl {
 
                 boolean updated = patientDao.update(patient);
                 if (updated) {
+                    // Reindex the updated patient
+                    reindexPatient(oldPatient, patient);
                     updateActivePatientsList(patient);
                     return true;
                 }
@@ -162,185 +351,308 @@ public class PatientManagementControl {
         if (patient == null || !patient.isActive()) {
             return false;
         }
-        if (patienQueue.queueContains(patient.getPatientId())) {
+        if (patientQueue.queueContains(patient.getPatientId())) {
             return false;
         }
-        patienQueue.addToQueue(patient.getPatientId(), patient);
+        patientQueue.addToQueue(patient.getPatientId(), patient);
         return true;
     }
 
     // Removes and returns the next patient from the queue
     public Patient getNextPatientFromQueue() {
-        return patienQueue.removeFront();
+        return patientQueue.removeFront();
     }
 
-    public Patient peekNextPatient() {
-        return patienQueue.peekFront();
-    }
 
     public int getQueueSize() {
-        return patienQueue.getQueueSize();
+        return patientQueue.getQueueSize();
     }
 
     public boolean isPatientInQueue(Patient patient) {
         if (patient == null)
             return false;
-        return patienQueue.queueContains(patient.getPatientId());
+        return patientQueue.queueContains(patient.getPatientId());
     }
 
-    public void clearQueue() {
-        patienQueue.clear();
-    }
 
     // Search and Retrieval Methods
     public Patient findPatientById(String patientId) {
-        Patient patient = null;
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient p = patientIterator.next();
-            if (p.getPatientId().equals(patientId)) {
-                patient = p;
-            }
-        }
-        return patient;
+        ensureDataLoaded();
+        return activePatients.getValue(patientId);
     }
 
-    // Finds a patient by name
+    // Finds a patient by name (using indexed search with partial matching)
     public ArrayBucketList<String, Patient> findPatientsByName(String name) {
         ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            if (patient.getFullName().toLowerCase().contains(name.toLowerCase())) {
-                results.add(patient.getPatientId(), patient);
+        ArrayBucketList<String, Patient> results = ArrayBucketListFactory.createForStringIds(16);
+        if (name == null || name.trim().isEmpty()) {
+            return results;
+        }
+        String query = name.trim().toLowerCase();
+        
+        // Strategy 1: Try prefix matching first (most efficient)
+        ArrayBucketList<String, ArrayBucketList<String, Patient>> groups = patientIndexByName.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, Patient>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Patient> group = groupIterator.next();
+            Iterator<Patient> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                Patient patient = iterator.next();
+                if (patient.getFullName() != null && patient.getFullName().toLowerCase().contains(query)) {
+                    results.add(patient.getPatientId(), patient);
+                }
             }
         }
+        
+        // Strategy 2: If query is short (1-2 chars), also search other groups for partial matches
+        if (query.length() <= 2) {
+            // Get all groups and search for partial matches
+            Iterator<ArrayBucketList<String, Patient>> allGroupsIterator = patientIndexByName.iterator();
+            while (allGroupsIterator.hasNext()) {
+                ArrayBucketList<String, Patient> group = allGroupsIterator.next();
+                Iterator<Patient> iterator = group.iterator();
+                while (iterator.hasNext()) {
+                    Patient patient = iterator.next();
+                    if (patient.getFullName() != null && 
+                        patient.getFullName().toLowerCase().contains(query) &&
+                        !results.contains(patient.getPatientId())) {
+                        results.add(patient.getPatientId(), patient);
+                    }
+                }
+            }
+        }
+        
         return results;
     }
 
-    // Finds a patient by email
+    // Finds a patient by email (using indexed search with partial matching)
     public ArrayBucketList<String, Patient> findPatientsByEmail(String email) {
         ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            if (patient.getEmail().toLowerCase().contains(email.toLowerCase())) {
-                results.add(patient.getPatientId(), patient);
+        ArrayBucketList<String, Patient> results = ArrayBucketListFactory.createForStringIds(16);
+        if (email == null || email.trim().isEmpty()) {
+            return results;
+        }
+        String query = email.trim().toLowerCase();
+        
+        // Strategy 1: Try prefix matching first (most efficient)
+        ArrayBucketList<String, ArrayBucketList<String, Patient>> groups = patientIndexByEmail.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, Patient>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Patient> group = groupIterator.next();
+            Iterator<Patient> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                Patient patient = iterator.next();
+                if (patient.getEmail() != null && patient.getEmail().toLowerCase().contains(query)) {
+                    results.add(patient.getPatientId(), patient);
+                }
             }
         }
+        
+        // Strategy 2: If query is short (1-2 chars), also search other groups for partial matches
+        if (query.length() <= 2) {
+            // Get all groups and search for partial matches
+            Iterator<ArrayBucketList<String, Patient>> allGroupsIterator = patientIndexByEmail.iterator();
+            while (allGroupsIterator.hasNext()) {
+                ArrayBucketList<String, Patient> group = allGroupsIterator.next();
+                Iterator<Patient> iterator = group.iterator();
+                while (iterator.hasNext()) {
+                    Patient patient = iterator.next();
+                    if (patient.getEmail() != null && 
+                        patient.getEmail().toLowerCase().contains(query) &&
+                        !results.contains(patient.getPatientId())) {
+                        results.add(patient.getPatientId(), patient);
+                    }
+                }
+            }
+        }
+        
         return results;
     }
 
-    // Finds a patient by IC number
+    // Finds a patient by IC number (using indexed search)
     public Patient findPatientsByIcNumber(String icNumber) {
-       return activePatients.getValue(icNumber);
+        ensureDataLoaded();
+        ArrayBucketList<String, Patient> group = patientIndexByIcNumber.getValue(icNumber);
+        if (group != null && !group.isEmpty()) {
+            // Return the first patient with this IC number (should be unique)
+            Iterator<Patient> iterator = group.iterator();
+            if (iterator.hasNext()) {
+                return iterator.next();
+            }
+        }
+        return null;
     }
 
-    // Finds patients by age range (inclusive)
+    // Finds patients by age range (inclusive) - using indexed search
     public ArrayBucketList<String, Patient> findPatientsByAgeRange(int minAge, int maxAge) {
         ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        ArrayBucketList<String, Patient> results = ArrayBucketListFactory.createForStringIds(16);
         if (minAge > maxAge) {
             int temp = minAge;
             minAge = maxAge;
             maxAge = temp;
         }
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            int age = patient.getAge();
-            if (age >= minAge && age <= maxAge) {
-                results.add(patient.getPatientId(), patient);
+        
+        // Search through age index for patients in range
+        for (int age = minAge; age <= maxAge; age++) {
+            ArrayBucketList<String, Patient> ageGroup = patientIndexByAge.getValue(age);
+            if (ageGroup != null) {
+                Iterator<Patient> iterator = ageGroup.iterator();
+                while (iterator.hasNext()) {
+                    Patient patient = iterator.next();
+                    results.add(patient.getPatientId(), patient);
+                }
             }
         }
         return results;
     }
 
-    // Finds patients who visited within the past N days (based on registration date)
+    // Finds patients who visited within the past N days (using indexed search)
     public ArrayBucketList<String, Patient> findPatientsVisitedWithinDays(int days) {
         ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        ArrayBucketList<String, Patient> results = ArrayBucketListFactory.createForStringIds(16);
         if (days <= 0) return results;
         java.time.LocalDate cutoff = java.time.LocalDate.now().minusDays(days);
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            java.time.LocalDate reg = patient.getRegistrationDate();
-            if (reg != null && (reg.isAfter(cutoff) || reg.isEqual(cutoff))) {
-                results.add(patient.getPatientId(), patient);
+        
+        // Search through registration date index
+        java.time.LocalDate currentDate = java.time.LocalDate.now();
+        while (!currentDate.isBefore(cutoff)) {
+            ArrayBucketList<String, Patient> dateGroup = patientIndexByRegistrationDate.getValue(currentDate);
+            if (dateGroup != null) {
+                Iterator<Patient> iterator = dateGroup.iterator();
+                while (iterator.hasNext()) {
+                    Patient patient = iterator.next();
+                    results.add(patient.getPatientId(), patient);
+                }
             }
+            currentDate = currentDate.minusDays(1);
         }
         return results;
     }
 
-    // Finds patients who visited within the past N months (based on registration date)
+    // Finds patients who visited within the past N months (using indexed search)
     public ArrayBucketList<String, Patient> findPatientsVisitedWithinMonths(int months) {
         ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        ArrayBucketList<String, Patient> results = ArrayBucketListFactory.createForStringIds(16);
         if (months <= 0) return results;
         java.time.LocalDate cutoff = java.time.LocalDate.now().minusMonths(months);
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            java.time.LocalDate reg = patient.getRegistrationDate();
-            if (reg != null && (reg.isAfter(cutoff) || reg.isEqual(cutoff))) {
-                results.add(patient.getPatientId(), patient);
+        
+        // Search through registration date index
+        java.time.LocalDate currentDate = java.time.LocalDate.now();
+        while (!currentDate.isBefore(cutoff)) {
+            ArrayBucketList<String, Patient> dateGroup = patientIndexByRegistrationDate.getValue(currentDate);
+            if (dateGroup != null) {
+                Iterator<Patient> iterator = dateGroup.iterator();
+                while (iterator.hasNext()) {
+                    Patient patient = iterator.next();
+                    results.add(patient.getPatientId(), patient);
+                }
             }
+            currentDate = currentDate.minusDays(1);
         }
         return results;
     }
 
-    // Finds patients who visited within the past N years (based on registration date)
+    // Finds patients who visited within the past N years (using indexed search)
     public ArrayBucketList<String, Patient> findPatientsVisitedWithinYears(int years) {
         ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        ArrayBucketList<String, Patient> results = ArrayBucketListFactory.createForStringIds(16);
         if (years <= 0) return results;
         java.time.LocalDate cutoff = java.time.LocalDate.now().minusYears(years);
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            java.time.LocalDate reg = patient.getRegistrationDate();
-            if (reg != null && (reg.isAfter(cutoff) || reg.isEqual(cutoff))) {
-                results.add(patient.getPatientId(), patient);
+        
+        // Search through registration date index
+        java.time.LocalDate currentDate = java.time.LocalDate.now();
+        while (!currentDate.isBefore(cutoff)) {
+            ArrayBucketList<String, Patient> dateGroup = patientIndexByRegistrationDate.getValue(currentDate);
+            if (dateGroup != null) {
+                Iterator<Patient> iterator = dateGroup.iterator();
+                while (iterator.hasNext()) {
+                    Patient patient = iterator.next();
+                    results.add(patient.getPatientId(), patient);
+                }
             }
+            currentDate = currentDate.minusDays(1);
         }
         return results;
     }
 
 
-    // Finds patients by address fields using a single keyword (matches any field or full combined address)
+    // Finds patients by address fields using indexed search with partial matching
     public ArrayBucketList<String, Patient> findPatientsByAddress(String keyword) {
         ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        ArrayBucketList<String, Patient> results = ArrayBucketListFactory.createForStringIds(16);
         if (keyword == null) return results;
         String query = normalizeAddress(keyword);
         if (query.isEmpty()) return results;
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            if (patient.getAddress() == null) continue;
-            Address address = patient.getAddress();
-            String street = normalizeAddress(address.getStreet());
-            String city = normalizeAddress(address.getCity());
-            String state = normalizeAddress(address.getState());
-            String zip = normalizeAddress(address.getZipCode());
-            String country = normalizeAddress(address.getCountry());
-
-            // Match any field
-            boolean fieldMatch = street.contains(query) || city.contains(query) || state.contains(query)
-                    || zip.contains(query) || country.contains(query);
-
-            // Match combined full address
-            String combined = String.join(" ", street, city, state, zip, country).trim();
-            boolean combinedMatch = !combined.isEmpty() && (combined.contains(query) || query.contains(combined));
-
-            if (fieldMatch || combinedMatch) {
-                results.add(patient.getPatientId(), patient);
+        
+        // Search through individual address component indices for efficient partial matching
+        searchAddressComponent(patientIndexByStreet, query, results);
+        searchAddressComponent(patientIndexByCity, query, results);
+        searchAddressComponent(patientIndexByState, query, results);
+        searchAddressComponent(patientIndexByZipCode, query, results);
+        searchAddressComponent(patientIndexByCountry, query, results);
+        
+        // Also search the combined address index for partial matches
+        searchAddressComponent(patientIndexByAddress, query, results);
+        
+        return results;
+    }
+    
+    // Helper method to search address components with partial matching
+    private void searchAddressComponent(ArrayBucketList<String, ArrayBucketList<String, Patient>> index, 
+                                      String query, ArrayBucketList<String, Patient> results) {
+        // Strategy 1: Try prefix matching first (most efficient)
+        ArrayBucketList<String, ArrayBucketList<String, Patient>> groups = index.getByStringKeyPrefix(query);
+        Iterator<ArrayBucketList<String, Patient>> groupIterator = groups.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Patient> group = groupIterator.next();
+            Iterator<Patient> iterator = group.iterator();
+            while (iterator.hasNext()) {
+                Patient patient = iterator.next();
+                if (!results.contains(patient.getPatientId())) {
+                    results.add(patient.getPatientId(), patient);
+                }
             }
         }
-        return results;
+        
+        // Strategy 2: For short queries, search all groups for partial matches
+        if (query.length() <= 3) {
+            Iterator<ArrayBucketList<String, Patient>> allGroupsIterator = index.iterator();
+            while (allGroupsIterator.hasNext()) {
+                ArrayBucketList<String, Patient> group = allGroupsIterator.next();
+                Iterator<Patient> iterator = group.iterator();
+                while (iterator.hasNext()) {
+                    Patient patient = iterator.next();
+                    if (!results.contains(patient.getPatientId())) {
+                        // Check if this patient's address component contains the query
+                        if (patient.getAddress() != null) {
+                            String componentValue = getAddressComponentValue(patient.getAddress(), index);
+                            if (componentValue.contains(query)) {
+                                results.add(patient.getPatientId(), patient);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Helper method to get the appropriate address component value based on the index
+    private String getAddressComponentValue(Address address, ArrayBucketList<String, ArrayBucketList<String, Patient>> index) {
+        if (index == patientIndexByStreet) {
+            return normalizeAddress(address.getStreet());
+        } else if (index == patientIndexByCity) {
+            return normalizeAddress(address.getCity());
+        } else if (index == patientIndexByState) {
+            return normalizeAddress(address.getState());
+        } else if (index == patientIndexByZipCode) {
+            return normalizeAddress(address.getZipCode());
+        } else if (index == patientIndexByCountry) {
+            return normalizeAddress(address.getCountry());
+        } else if (index == patientIndexByAddress) {
+            return normalizeAddressForIndexing(address);
+        }
+        return "";
     }
 
     // Normalizes address strings for comparison
@@ -352,26 +664,24 @@ public class PatientManagementControl {
         return s;
     }
 
-    // Finds patients by specific blood type
+    // Finds patients by specific blood type (using indexed search)
     public ArrayBucketList<String, Patient> findPatientsByBloodType(BloodType bloodType) {
         ensureDataLoaded();
-        ArrayBucketList<String, Patient> results = new ArrayBucketList<String, Patient>();
+        ArrayBucketList<String, Patient> results = ArrayBucketListFactory.createForStringIds(16);
         if (bloodType == null) return results;
-        Iterator<Patient> patientIterator = activePatients.iterator();
-        while (patientIterator.hasNext()) {
-            Patient patient = patientIterator.next();
-            if (patient.getBloodType() != null && patient.getBloodType() == bloodType) {
+        
+        // Direct lookup from blood type index
+        ArrayBucketList<String, Patient> bloodTypeGroup = patientIndexByBloodType.getValue(bloodType);
+        if (bloodTypeGroup != null) {
+            Iterator<Patient> iterator = bloodTypeGroup.iterator();
+            while (iterator.hasNext()) {
+                Patient patient = iterator.next();
                 results.add(patient.getPatientId(), patient);
             }
         }
         return results;
     }
 
-    // Returns the active patients
-    public ArrayBucketList<String, Patient> getAllActivePatients() {
-        ensureDataLoaded();
-        return activePatients;
-    }
 
     public int getTotalActivePatients() {
         ensureDataLoaded();

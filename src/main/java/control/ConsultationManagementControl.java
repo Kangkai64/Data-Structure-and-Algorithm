@@ -857,9 +857,8 @@ public class ConsultationManagementControl {
                 int hour = consultation.getConsultationDate().getHour();
                 hourlyConsultations[hour]++;
                 
-                // Simulate wait time and duration based on consultation data
-                double waitTime = Math.random() * 30 + 5; // 5-35 minutes
-                double duration = Math.random() * 45 + 15; // 15-60 minutes
+                double waitTime = getWaitTimeForConsultation(consultation);
+                double duration = getDurationForConsultation(consultation);
                 
                 hourlyWaitTimes[hour] += waitTime;
                 hourlyDurations[hour] += duration;
@@ -920,8 +919,8 @@ public class ConsultationManagementControl {
                 if (consultation.getDoctor() != null && 
                     consultation.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
                     consultationCount++;
-                    totalDuration += Math.random() * 45 + 15; // Simulate duration
-                    totalWaitTime += Math.random() * 30 + 5; // Simulate wait time
+                    totalDuration += getDurationForConsultation(consultation);
+                    totalWaitTime += getWaitTimeForConsultation(consultation);
                 }
             }
             
@@ -964,7 +963,7 @@ public class ConsultationManagementControl {
         consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
             Consultation consultation = consultationIterator.next();
-            double waitTime = Math.random() * 60 + 5; // Simulate wait time
+            double waitTime = getWaitTimeForConsultation(consultation);
             
             for (int i = 0; i < waitTimeRanges.length - 1; i++) {
                 if (waitTime >= waitTimeRanges[i] && waitTime < waitTimeRanges[i + 1]) {

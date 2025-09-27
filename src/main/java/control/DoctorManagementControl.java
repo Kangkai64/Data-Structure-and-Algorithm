@@ -40,6 +40,7 @@ public class DoctorManagementControl {
     private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexByLicense;
     private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexByEmail;
     private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexByPhone;
+    private ArrayBucketList<String, ArrayBucketList<String, Doctor>> doctorIndexByIcNumber;
     private ArrayBucketList<Boolean, ArrayBucketList<String, Doctor>> doctorIndexByAvailability;
     private ArrayBucketList<Integer, ArrayBucketList<String, Doctor>> doctorIndexByExperience;
 
@@ -60,6 +61,7 @@ public class DoctorManagementControl {
         this.doctorIndexByLicense = ArrayBucketListFactory.createForStringIds(128);
         this.doctorIndexByEmail = ArrayBucketListFactory.createForNamePrefix(26);
         this.doctorIndexByPhone = ArrayBucketListFactory.createForStringIds(128);
+        this.doctorIndexByIcNumber = ArrayBucketListFactory.createForStringIds(128);
         this.doctorIndexByAvailability = new ArrayBucketList<>();
         this.doctorIndexByExperience = new ArrayBucketList<>();
         
@@ -116,6 +118,7 @@ public class DoctorManagementControl {
         IndexingUtility.addToIndexGroup(doctorIndexByLicense, doctor.getLicenseNumber(), doctor.getDoctorId(), doctor);
         IndexingUtility.addToIndexGroup(doctorIndexByEmail, doctor.getEmail(), doctor.getDoctorId(), doctor);
         IndexingUtility.addToIndexGroup(doctorIndexByPhone, doctor.getPhoneNumber(), doctor.getDoctorId(), doctor);
+        IndexingUtility.addToIndexGroup(doctorIndexByIcNumber, doctor.getICNumber(), doctor.getDoctorId(), doctor);
         IndexingUtility.addToIndexGroup(doctorIndexByAvailability, doctor.isAvailable(), doctor.getDoctorId(), doctor);
         IndexingUtility.addToIndexGroup(doctorIndexByExperience, doctor.getExpYears(), doctor.getDoctorId(), doctor);
     }
@@ -130,6 +133,7 @@ public class DoctorManagementControl {
             IndexingUtility.removeFromIndexGroup(doctorIndexByLicense, oldDoctor.getLicenseNumber(), oldDoctor.getDoctorId());
             IndexingUtility.removeFromIndexGroup(doctorIndexByEmail, oldDoctor.getEmail(), oldDoctor.getDoctorId());
             IndexingUtility.removeFromIndexGroup(doctorIndexByPhone, oldDoctor.getPhoneNumber(), oldDoctor.getDoctorId());
+            IndexingUtility.removeFromIndexGroup(doctorIndexByIcNumber, oldDoctor.getICNumber(), oldDoctor.getDoctorId());
             IndexingUtility.removeFromIndexGroup(doctorIndexByAvailability, oldDoctor.isAvailable(), oldDoctor.getDoctorId());
             IndexingUtility.removeFromIndexGroup(doctorIndexByExperience, oldDoctor.getExpYears(), oldDoctor.getDoctorId());
         }
@@ -183,52 +187,52 @@ public class DoctorManagementControl {
             int expYears, Address address) {
         try {
             Doctor oldDoctor = findDoctorById(doctorId);
-            if (oldDoctor != null) {
-            Doctor doctor = doctorDao.findById(doctorId);
-            if (doctor != null) {
-                if (fullName != null && !fullName.trim().isEmpty()) {
-                    doctor.setFullName(fullName);
-                }
-                if (email != null && !email.trim().isEmpty()) {
-                    doctor.setEmail(email);
-                }
-                if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
-                    doctor.setPhoneNumber(phoneNumber);
-                }
-                if (medicalSpecialty != null && !medicalSpecialty.trim().isEmpty()) {
-                    doctor.setMedicalSpecialty(medicalSpecialty);
-                }
-                if (expYears >= 0) {
-                    doctor.setExpYears(expYears);
-                }
-                // Note: expYears = -1 means no update needed (from UI)
-                if (address != null) {
-                    Address currentAddress = doctor.getAddress();
-                    boolean addressPersisted;
-                    if (currentAddress != null && currentAddress.getAddressId() != null) {
-                        // Update existing address record
-                        address.setAddressId(currentAddress.getAddressId());
-                        addressPersisted = addressDao.update(address);
-                    } else {
-                        // Insert new address record and assign generated ID
-                        addressPersisted = addressDao.insertAndReturnId(address);
-                    }
-                    if (!addressPersisted) {
-                        return false;
-                    }
-                    doctor.setAddress(address);
-                }
+            if (oldDoctor == null) {
+                return false;
+            }
+            
+            // Create updated doctor from existing one
+            Doctor doctor = new Doctor(
+                fullName != null && !fullName.trim().isEmpty() ? fullName : oldDoctor.getFullName(),
+                oldDoctor.getICNumber(),
+                email != null && !email.trim().isEmpty() ? email : oldDoctor.getEmail(),
+                phoneNumber != null && !phoneNumber.trim().isEmpty() ? phoneNumber : oldDoctor.getPhoneNumber(),
+                address != null ? address : oldDoctor.getAddress(),
+                oldDoctor.getRegistrationDate(),
+                oldDoctor.getDoctorId(),
+                medicalSpecialty != null && !medicalSpecialty.trim().isEmpty() ? medicalSpecialty : oldDoctor.getMedicalSpecialty(),
+                oldDoctor.getLicenseNumber(),
+                expYears >= 0 ? expYears : oldDoctor.getExpYears()
+            );
+            doctor.setAvailable(oldDoctor.isAvailable());
 
-                boolean updated = doctorDao.update(doctor);
-                if (updated) {
-                        // Update in-memory collections
-                        doctors.add(doctor.getDoctorId(), doctor);
-                        categorizeDoctors();
-                        doctorIndexById.add(doctor.getDoctorId(), doctor);
-                        reindexDoctor(oldDoctor, doctor);
-                    return true;
-                    }
+            // Update address if provided
+            if (address != null) {
+                Address currentAddress = oldDoctor.getAddress();
+                boolean addressPersisted;
+                if (currentAddress != null && currentAddress.getAddressId() != null) {
+                    // Update existing address record
+                    address.setAddressId(currentAddress.getAddressId());
+                    addressPersisted = addressDao.update(address);
+                } else {
+                    // Insert new address record and assign generated ID
+                    addressPersisted = addressDao.insertAndReturnId(address);
                 }
+                if (!addressPersisted) {
+                    return false;
+                }
+                doctor.setAddress(address);
+            }
+
+            // Update in database
+            boolean updated = doctorDao.update(doctor);
+            if (updated) {
+                // Update in-memory collections
+                doctors.add(doctor.getDoctorId(), doctor);
+                categorizeDoctors();
+                doctorIndexById.add(doctor.getDoctorId(), doctor);
+                reindexDoctor(oldDoctor, doctor);
+                return true;
             }
             return false;
         } catch (Exception exception) {
@@ -240,20 +244,34 @@ public class DoctorManagementControl {
     public boolean deactivateDoctor(String doctorId) {
         try {
             Doctor oldDoctor = findDoctorById(doctorId);
-            if (oldDoctor != null) {
-            Doctor doctor = doctorDao.findById(doctorId);
-            if (doctor != null) {
-                doctor.setAvailable(false);
-                boolean updated = doctorDao.update(doctor);
-                if (updated) {
-                        // Update in-memory collections
-                        doctors.add(doctor.getDoctorId(), doctor);
-                        categorizeDoctors();
-                        doctorIndexById.add(doctor.getDoctorId(), doctor);
-                        reindexDoctor(oldDoctor, doctor);
-                    return true;
-                    }
-                }
+            if (oldDoctor == null) {
+                return false;
+            }
+            
+            // Create updated doctor with availability set to false
+            Doctor doctor = new Doctor(
+                oldDoctor.getFullName(),
+                oldDoctor.getICNumber(),
+                oldDoctor.getEmail(),
+                oldDoctor.getPhoneNumber(),
+                oldDoctor.getAddress(),
+                oldDoctor.getRegistrationDate(),
+                oldDoctor.getDoctorId(),
+                oldDoctor.getMedicalSpecialty(),
+                oldDoctor.getLicenseNumber(),
+                oldDoctor.getExpYears()
+            );
+            doctor.setAvailable(false);
+
+            // Update in database
+            boolean updated = doctorDao.update(doctor);
+            if (updated) {
+                // Update in-memory collections
+                doctors.add(doctor.getDoctorId(), doctor);
+                categorizeDoctors();
+                doctorIndexById.add(doctor.getDoctorId(), doctor);
+                reindexDoctor(oldDoctor, doctor);
+                return true;
             }
             return false;
         } catch (Exception exception) {
@@ -374,18 +392,62 @@ public class DoctorManagementControl {
 
     public ArrayBucketList<String, Doctor> findDoctorsByExperience(int minYears) {
         ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
-        Iterator<Doctor> doctorIterator = doctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor doctor = doctorIterator.next();
-            if (doctor.getExpYears() >= minYears) {
-                results.add(doctor.getDoctorId(), doctor);
+        if (minYears < 0) {
+            return results;
+        }
+        
+        // Use the experience index for efficient range queries
+        Iterator<ArrayBucketList<String, Doctor>> groupIterator = doctorIndexByExperience.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Doctor> group = groupIterator.next();
+            // Get the experience level for this group by checking the first doctor
+            Iterator<Doctor> doctorIterator = group.iterator();
+            if (doctorIterator.hasNext()) {
+                Doctor firstDoctor = doctorIterator.next();
+                int groupExperience = firstDoctor.getExpYears();
+                
+                // If this group's experience level meets the minimum requirement
+                if (groupExperience >= minYears) {
+                    // Add all doctors from this group
+                    Iterator<Doctor> groupDoctorIterator = group.iterator();
+                    while (groupDoctorIterator.hasNext()) {
+                        Doctor doctor = groupDoctorIterator.next();
+                        results.add(doctor.getDoctorId(), doctor);
+                    }
+                }
             }
         }
         return results;
     }
 
-    public ArrayBucketList<String, Doctor> getActiveDoctors() {
-        return activeDoctors;
+    public ArrayBucketList<String, Doctor> findDoctorsByExperienceRange(int minYears, int maxYears) {
+        ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(16);
+        if (minYears < 0 || maxYears < 0 || minYears > maxYears) {
+            return results;
+        }
+        
+        // Use the experience index for efficient range queries
+        Iterator<ArrayBucketList<String, Doctor>> groupIterator = doctorIndexByExperience.iterator();
+        while (groupIterator.hasNext()) {
+            ArrayBucketList<String, Doctor> group = groupIterator.next();
+            // Get the experience level for this group by checking the first doctor
+            Iterator<Doctor> doctorIterator = group.iterator();
+            if (doctorIterator.hasNext()) {
+                Doctor firstDoctor = doctorIterator.next();
+                int groupExperience = firstDoctor.getExpYears();
+                
+                // If this group's experience level is within the range
+                if (groupExperience >= minYears && groupExperience <= maxYears) {
+                    // Add all doctors from this group
+                    Iterator<Doctor> groupDoctorIterator = group.iterator();
+                    while (groupDoctorIterator.hasNext()) {
+                        Doctor doctor = groupDoctorIterator.next();
+                        results.add(doctor.getDoctorId(), doctor);
+                    }
+                }
+            }
+        }
+        return results;
     }
 
     public ArrayBucketList<String, Doctor> getInactiveDoctors() {
@@ -398,10 +460,6 @@ public class DoctorManagementControl {
 
     public int getTotalDoctors() {
         return doctors.getSize();
-    }
-
-    public int getTotalActiveDoctors() {
-        return activeDoctors.getSize();
     }
 
     public int getActiveDoctorsCount() {
@@ -539,14 +597,6 @@ public class DoctorManagementControl {
         }
     }
 
-    public ArrayBucketList<String, Schedule> getDoctorSchedules(String doctorId) {
-        try {
-            return scheduleDao.findByDoctorId(doctorId);
-        } catch (Exception exception) {
-            System.err.println("Error getting doctor schedules: " + exception.getMessage());
-            return new ArrayBucketList<String, Schedule>();
-        }
-    }
 
     public Schedule[] getDoctorSchedulesOrderedArray(String doctorId) {
         try {
@@ -581,18 +631,34 @@ public class DoctorManagementControl {
     // Availability Management Methods
     public boolean setDoctorAvailability(String doctorId, boolean isAvailable) {
         try {
-            Doctor doctor = doctorDao.findById(doctorId);
-            if (doctor == null)
+            Doctor oldDoctor = findDoctorById(doctorId);
+            if (oldDoctor == null) {
                 return false;
+            }
 
+            // Update in database
             boolean updated = doctorDao.updateAvailability(doctorId, isAvailable);
-            if (!updated)
+            if (!updated) {
                 return false;
+            }
 
+            // Create updated doctor with new availability
+            Doctor doctor = new Doctor(
+                oldDoctor.getFullName(),
+                oldDoctor.getICNumber(),
+                oldDoctor.getEmail(),
+                oldDoctor.getPhoneNumber(),
+                oldDoctor.getAddress(),
+                oldDoctor.getRegistrationDate(),
+                oldDoctor.getDoctorId(),
+                oldDoctor.getMedicalSpecialty(),
+                oldDoctor.getLicenseNumber(),
+                oldDoctor.getExpYears()
+            );
             doctor.setAvailable(isAvailable);
 
             // Cascade schedules to match doctor availability
-            ArrayBucketList<String, Schedule> schedules = getDoctorSchedules(doctorId);
+            ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
             Iterator<Schedule> scheduleIterator = schedules.iterator();
             while (scheduleIterator.hasNext()) {
                 Schedule schedule = scheduleIterator.next();
@@ -609,12 +675,13 @@ public class DoctorManagementControl {
                             + e.getMessage());
                 }
             }
-            // Reflect activeDoctors cache: remove when unavailable, update/add when available
-            if (isAvailable) {
-                updateActiveDoctorsList(doctor);
-            } else {
-                removeFromActiveDoctors(doctor);
-            }
+            
+            // Update in-memory collections
+            doctors.add(doctor.getDoctorId(), doctor);
+            categorizeDoctors();
+            doctorIndexById.add(doctor.getDoctorId(), doctor);
+            reindexDoctor(oldDoctor, doctor);
+            
             return true;
         } catch (Exception exception) {
             System.err.println("Error setting doctor availability: " + exception.getMessage());
@@ -649,18 +716,56 @@ public class DoctorManagementControl {
     }
 
     public Doctor findDoctorByIcNumber(String icNumber) {
-        Iterator<Doctor> iterator = doctors.iterator();
-        while (iterator.hasNext()) {
-            Doctor doctor = iterator.next();
-            if (doctor.getICNumber() != null && doctor.getICNumber().equals(icNumber)) {
-                return doctor;
-            }
+        if (icNumber == null || icNumber.trim().isEmpty()) {
+            return null;
         }
-        return null;
+        // Use direct hash-based lookup since doctors are stored with IC number as key
+        return doctors.getValue(icNumber.trim());
     }
 
-    public String generateDoctorInformationReport() {
-        return generateDoctorInformationReport(null, true);
+
+    public ArrayBucketList<String, Doctor> findDoctorsByMultipleCriteria(String name, String specialty, 
+            boolean isAvailable, int minExperience) {
+        ArrayBucketList<String, Doctor> results = ArrayBucketListFactory.createForStringIds(32);
+        
+        // Start with all doctors
+        Iterator<Doctor> doctorIterator = doctors.iterator();
+        while (doctorIterator.hasNext()) {
+            Doctor doctor = doctorIterator.next();
+            boolean matches = true;
+            
+            // Check name criteria
+            if (name != null && !name.trim().isEmpty()) {
+                String doctorName = doctor.getFullName();
+                if (doctorName == null || !doctorName.toLowerCase().contains(name.toLowerCase().trim())) {
+                    matches = false;
+                }
+            }
+            
+            // Check specialty criteria
+            if (matches && specialty != null && !specialty.trim().isEmpty()) {
+                String doctorSpecialty = doctor.getMedicalSpecialty();
+                if (doctorSpecialty == null || !doctorSpecialty.toLowerCase().contains(specialty.toLowerCase().trim())) {
+                    matches = false;
+                }
+            }
+            
+            // Check availability criteria
+            if (matches && doctor.isAvailable() != isAvailable) {
+                matches = false;
+            }
+            
+            // Check experience criteria
+            if (matches && doctor.getExpYears() < minExperience) {
+                matches = false;
+            }
+            
+            if (matches) {
+                results.add(doctor.getDoctorId(), doctor);
+            }
+        }
+        
+        return results;
     }
 
     // Reporting Methods
@@ -771,115 +876,10 @@ public class DoctorManagementControl {
         return report.toString();
     }
 
-    public String generateDoctorWorkloadReport(String sortBy, String sortOrder) {
-        StringBuilder report = new StringBuilder();
-
-        // Header with decorative lines (centered)
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("DOCTOR MANAGEMENT SYSTEM - DOCTOR WORKLOAD REPORT", 120))
-                .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
-
-        // Generation info with weekday
-        report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
-                .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
-
-        // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("WORKLOAD SUMMARY", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
-        report.append(String.format("Total Active Doctors: %d\n", getActiveDoctorsCount()));
-        report.append(String.format("Total Weekly Hours: %.1f hours\n", calculateTotalWeeklyHours()));
-        report.append(String.format("Average Weekly Hours per Doctor: %.1f hours\n", calculateAverageWeeklyHours()));
-
-        report.append("-".repeat(120)).append("\n\n");
-
-        // Detailed workload table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED DOCTOR WORKLOAD", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
-
-        // Add sorting information
-        report.append(String.format("Sorted by: %s (%s order)\n\n",
-                getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
-
-        report.append(String.format("%-12s | %-25s | %-20s | %-15s | %-15s | %-15s\n",
-                "Doctor ID", "Full Name", "Specialty", "Weekly Hours", "Annual Hours", "Consultations"));
-        report.append("-".repeat(120)).append("\n");
-
-        // Convert to array for sorting
-        Doctor[] doctorArray = doctors.toArray(Doctor.class);
-
-        // Sort the doctor array
-        sortDoctorArray(doctorArray, sortBy, sortOrder);
-
-        // Generate sorted table
-        for (Doctor doctor : doctorArray) {
-            String id = doctor.getDoctorId() != null ? doctor.getDoctorId() : "-";
-            String name = doctor.getFullName() != null ? doctor.getFullName() : "-";
-            String specialty = doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "-";
-            double weeklyHours = calculateWeeklyHoursForDoctor(doctor.getDoctorId());
-            double annualHours = weeklyHours * 52.0;
-            int consultations = getConsultationCountForDoctor(doctor.getDoctorId());
-
-            // Truncate long names
-            if (name.length() > 25) name = name.substring(0, 22) + "...";
-            if (specialty.length() > 20) specialty = specialty.substring(0, 17) + "...";
-
-            report.append(String.format("%-12s | %-25s | %-20s | %-15.1f | %-15.1f | %-15d\n",
-                    id, name, specialty, weeklyHours, annualHours, consultations));
-        }
-
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF DOCTOR WORKLOAD REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
-
-        return report.toString();
-    }
 
     // Helper methods for reports
-    private double calculateTotalWeeklyHours() {
-        double total = 0.0;
-        Iterator<Doctor> doctorIterator = doctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor doctor = doctorIterator.next();
-            total += calculateWeeklyHoursForDoctor(doctor.getDoctorId());
-        }
-        return total;
-    }
 
-    private double calculateAverageWeeklyHours() {
-        int activeCount = getActiveDoctorsCount();
-        return activeCount > 0 ? calculateTotalWeeklyHours() / activeCount : 0.0;
-    }
 
-    private double calculateWeeklyHoursForDoctor(String doctorId) {
-        try {
-            ArrayBucketList<String, Schedule> schedules = scheduleDao.findByDoctorId(doctorId);
-            double totalHours = 0.0;
-            Iterator<Schedule> scheduleIterator = schedules.iterator();
-            while (scheduleIterator.hasNext()) {
-                Schedule schedule = scheduleIterator.next();
-                if (schedule.isAvailable()) {
-                    try {
-                        java.time.LocalTime from = java.time.LocalTime.parse(schedule.getFromTime());
-                        java.time.LocalTime to = java.time.LocalTime.parse(schedule.getToTime());
-                        long minutes = java.time.Duration.between(from, to).toMinutes();
-                        if (minutes > 0) {
-                            totalHours += minutes / 60.0;
-                        }
-                    } catch (Exception e) {
-                        // Skip invalid time formats
-                    }
-                }
-            }
-            return totalHours;
-        } catch (Exception e) {
-            return 0.0;
-        }
-    }
 
     private void sortDoctorArray(Doctor[] doctorArray, String sortBy, String sortOrder) {
         if (doctorArray == null || doctorArray.length < 2) return;
@@ -925,129 +925,6 @@ public class DoctorManagementControl {
         return builder.toString();
     }
 
-    /**
-     *
-     * @param sortBy
-     * @param ascending true for ascending order, false for descending.
-     * @return formatted report string
-     */
-    public String generateDoctorInformationReport(String sortBy, boolean ascending) {
-        String field = sortBy == null ? "" : sortBy.trim().toLowerCase();
-        boolean doSort = field.equals("name") || field.equals("specialty") || field.equals("experience");
-
-        StringBuilder report = new StringBuilder();
-        String title = "DOCTOR INFORMATION REPORT";
-        String line = repeatChar('=', REPORT_WIDTH);
-        report.append("\n").append(line).append("\n");
-        report.append(ConsoleUtils.centerText(title, REPORT_WIDTH)).append("\n\n");
-
-        report.append("Generated at: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
-                .append("\n");
-        report.append(line).append("\n");
-
-        String h1 = padRight("Doctor ID", 12);
-        String h2 = padRight("Name", 28);
-        String h3 = padRight("Specialty", 22);
-        String h4 = padRight("License", 22);
-        String h5 = padRight("Consultations", 16);
-        report.append(" ")
-                .append(h1).append(" | ")
-                .append(h2).append(" | ")
-                .append(h3).append(" | ")
-                .append(h4).append(" | ")
-                .append(h5)
-                .append("\n");
-        report.append(line).append("\n");
-
-        if (doSort) {
-            int size = activeDoctors.getSize();
-            Doctor[] doctors = new Doctor[size];
-            int index = 0;
-            Iterator<Doctor> it = activeDoctors.iterator();
-            while (it.hasNext()) {
-                doctors[index++] = it.next();
-            }
-            Comparator<Doctor> comparator = new Comparator<Doctor>() {
-                @Override
-                public int compare(Doctor firstDoctor, Doctor secondDoctor) {
-                    return compareDoctors(firstDoctor, secondDoctor, field, ascending);
-                }
-            };
-            QuickSort.sort(doctors, comparator);
-            for (int doctorIndex = 0; doctorIndex < size; doctorIndex++) {
-                Doctor doctor = doctors[doctorIndex];
-                String doctorIdColumn = padRight(doctor.getDoctorId(), 12);
-                String nameColumn = padRight(doctor.getFullName(), 28);
-                String specialtyColumn = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
-                String licenseColumn = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
-                int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
-                String consultationColumn = padLeft(String.valueOf(consultCount), 16);
-                report.append(" ")
-                        .append(doctorIdColumn).append(" | ")
-                        .append(nameColumn).append(" | ")
-                        .append(specialtyColumn).append(" | ")
-                        .append(licenseColumn).append(" | ")
-                        .append(consultationColumn)
-                        .append("\n");
-            }
-        } else {
-            Iterator<Doctor> doctorIterator = activeDoctors.iterator();
-            while (doctorIterator.hasNext()) {
-                Doctor doctor = doctorIterator.next();
-                String doctorIdColumn = padRight(doctor.getDoctorId(), 12);
-                String nameColumn = padRight(doctor.getFullName(), 28);
-                String specialtyColumn = padRight((doctor.getMedicalSpecialty() == null ? "" : doctor.getMedicalSpecialty()), 22);
-                String licenseColumn = padRight((doctor.getLicenseNumber() == null ? "" : doctor.getLicenseNumber()), 22);
-                int consultCount = getConsultationCountForDoctor(doctor.getDoctorId());
-                String consultationColumn = padLeft(String.valueOf(consultCount), 16);
-                report.append(" ")
-                        .append(doctorIdColumn).append(" | ")
-                        .append(nameColumn).append(" | ")
-                        .append(specialtyColumn).append(" | ")
-                        .append(licenseColumn).append(" | ")
-                        .append(consultationColumn)
-                        .append("\n");
-            }
-        }
-
-        report.append("\n");
-        report.append("Total active doctors : ").append(getTotalActiveDoctors()).append("\n");
-        report.append("Total available      : ").append(getAvailableDoctors().getSize()).append("\n");
-
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
-        report.append(repeatChar('=', REPORT_WIDTH));
-        return report.toString();
-    }
-
-    private int compareDoctors(Doctor firstDoctor, Doctor secondDoctor, String sortBy, boolean ascending) {
-        int result;
-        if ("name".equals(sortBy)) {
-            String firstName = firstDoctor.getFullName() == null ? "" : firstDoctor.getFullName();
-            String secondName = secondDoctor.getFullName() == null ? "" : secondDoctor.getFullName();
-            result = firstName.compareToIgnoreCase(secondName);
-        } else if ("specialty".equals(sortBy)) {
-            String firstSpecialty = firstDoctor.getMedicalSpecialty() == null ? "" : firstDoctor.getMedicalSpecialty();
-            String secondSpecialty = secondDoctor.getMedicalSpecialty() == null ? "" : secondDoctor.getMedicalSpecialty();
-            result = firstSpecialty.compareToIgnoreCase(secondSpecialty);
-        } else {
-            int firstConsultationCount = getConsultationCountForDoctor(firstDoctor.getDoctorId());
-            int secondConsultationCount = getConsultationCountForDoctor(secondDoctor.getDoctorId());
-            result = Integer.compare(firstConsultationCount, secondConsultationCount);
-        }
-        if (!ascending) {
-            result = -result;
-        }
-
-        if (result == 0) {
-            String firstId = firstDoctor.getDoctorId() == null ? "" : firstDoctor.getDoctorId();
-            String secondId = secondDoctor.getDoctorId() == null ? "" : secondDoctor.getDoctorId();
-            result = firstId.compareTo(secondId);
-        }
-        return result;
-    }
-
     private int getConsultationCountForDoctor(String doctorId) {
         try {
             ArrayBucketList<String, Consultation> allConsultations = consultationDao.findAll();
@@ -1064,10 +941,6 @@ public class DoctorManagementControl {
             System.err.println("Error counting consultations for doctor " + doctorId + ": " + e.getMessage());
             return 0;
         }
-    }
-
-    public String generateDoctorWorkloadReport() {
-        return generateDoctorWorkloadReport(null, true);
     }
 
     public String generateDoctorWorkloadReport(String sortBy, boolean ascending) {
@@ -1206,18 +1079,18 @@ public class DoctorManagementControl {
     }
 
     // Quicksort helper for Row[] using comparator
-    private void quickSortRows(Object[] arr, int low, int high, java.util.Comparator comparator) {
+    private <T> void quickSortRows(T[] arr, int low, int high, java.util.Comparator<T> comparator) {
         if (low >= high)
             return;
         int leftIndex = low, rightIndex = high;
-        Object pivot = arr[low + (high - low) / 2];
+        T pivot = arr[low + (high - low) / 2];
         while (leftIndex <= rightIndex) {
             while (comparator.compare(arr[leftIndex], pivot) < 0)
                 leftIndex++;
             while (comparator.compare(arr[rightIndex], pivot) > 0)
                 rightIndex--;
             if (leftIndex <= rightIndex) {
-                Object tmp = arr[leftIndex];
+                T tmp = arr[leftIndex];
                 arr[leftIndex] = arr[rightIndex];
                 arr[rightIndex] = tmp;
                 leftIndex++;
@@ -1230,33 +1103,6 @@ public class DoctorManagementControl {
             quickSortRows(arr, leftIndex, high, comparator);
     }
 
-    private void updateActiveDoctorsList(Doctor updatedDoctor) {
-        boolean found = false;
-        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor doctor = doctorIterator.next();
-            if (doctor.getDoctorId().equals(updatedDoctor.getDoctorId())) {
-                activeDoctors.remove(doctor.getDoctorId());
-                activeDoctors.add(updatedDoctor.getDoctorId(), updatedDoctor);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            activeDoctors.add(updatedDoctor.getDoctorId(), updatedDoctor);
-        }
-    }
-
-    private void removeFromActiveDoctors(Doctor doctor) {
-        Iterator<Doctor> doctorIterator = activeDoctors.iterator();
-        while (doctorIterator.hasNext()) {
-            Doctor currentDoctor = doctorIterator.next();
-            if (currentDoctor.getDoctorId().equals(doctor.getDoctorId())) {
-                activeDoctors.remove(currentDoctor.getDoctorId());
-                break;
-            }
-        }
-    }
 
     /**
      * Generates a comprehensive doctor performance report
@@ -1316,7 +1162,7 @@ public class DoctorManagementControl {
             doctorIndex++;
         }
 
-        report.append(String.format("Total Active Doctors: %d\n", getTotalActiveDoctors()));
+        report.append(String.format("Total Active Doctors: %d\n", getActiveDoctorsCount()));
         report.append(String.format("Average Consultations per Doctor: %.1f\n", 
                 calculateAverage(consultationCounts)));
         report.append(String.format("Average Success Rate: %.1f%%\n", 

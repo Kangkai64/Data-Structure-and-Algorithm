@@ -30,13 +30,15 @@ public class DoctorManagementUI {
             System.out.println("\n=== DOCTOR MANAGEMENT MODULE ===");
             System.out.println("1. Register New Doctor");
             System.out.println("2. Update Doctor Information");
-            System.out.println("3. Manage Doctor Schedule");
-            System.out.println("4. Set Availability");
-            System.out.println("5. Search Doctor");
-            System.out.println("6. Generate Reports");
-            System.out.println("7. Back to Main Menu");
+            System.out.println("3. Set Doctor as Unavailable");
+            System.out.println("4. Manage Doctor Schedule");
+            System.out.println("5. Set Availability");
+            System.out.println("6. Search Doctor");
+            System.out.println("7. View Doctor Statistics");
+            System.out.println("8. Generate Reports");
+            System.out.println("9. Back to Main Menu");
 
-            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 7);
+            int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 9);
 
             switch (choice) {
                 case 1:
@@ -46,18 +48,24 @@ public class DoctorManagementUI {
                     updateDoctorInfo();
                     break;
                 case 3:
-                    manageDoctorSchedule();
+                    deactivateDoctor();
                     break;
                 case 4:
-                    setAvailabilityMenu();
+                    manageDoctorSchedule();
                     break;
                 case 5:
-                    searchDoctor();
+                    setAvailabilityMenu();
                     break;
                 case 6:
-                    generateReportsMenu();
+                    searchDoctor();
                     break;
                 case 7:
+                    viewDoctorStatistics();
+                    break;
+                case 8:
+                    generateReportsMenu();
+                    break;
+                case 9:
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -169,6 +177,102 @@ public class DoctorManagementUI {
         ConsoleUtils.waitMessage();
     }
 
+    private void deactivateDoctor() {
+        System.out.println("\n=== SET DOCTOR AS UNAVAILABLE ===");
+        String doctorId = ConsoleUtils.getStringInput(scanner, "Enter doctor ID to set as unavailable: ");
+
+        // First, find the doctor to display current information
+        Doctor currentDoctor = doctorControl.findDoctorById(doctorId);
+        if (currentDoctor == null) {
+            System.out.println("Doctor not found with ID: " + doctorId);
+            ConsoleUtils.waitMessage();
+            return;
+        }
+
+        // Display current doctor information
+        System.out.println("\nDoctor to be set as unavailable:");
+        displayDoctorDetails(currentDoctor);
+
+        boolean confirm = ConsoleUtils.getBooleanInput(scanner, "\nAre you sure you want to set this doctor as unavailable? (Y/N): ");
+        if (confirm) {
+            boolean success = doctorControl.deactivateDoctor(doctorId);
+            if (success) {
+                System.out.println("Doctor set as unavailable successfully!");
+            } else {
+                System.out.println("Failed to set doctor as unavailable.");
+            }
+        } else {
+            System.out.println("Operation cancelled.");
+        }
+        ConsoleUtils.waitMessage();
+    }
+
+    private void viewDoctorStatistics() {
+        System.out.println("\n=== DOCTOR STATISTICS ===");
+        
+        // Load data first
+        doctorControl.loadDoctorData();
+        
+        System.out.println("DOCTOR STATISTICS OVERVIEW");
+        System.out.println("=" .repeat(50));
+        System.out.println("Total Doctors: " + doctorControl.getTotalDoctors());
+        System.out.println("Available Doctors: " + doctorControl.getAvailableDoctors().getSize());
+        System.out.println("Unavailable Doctors: " + (doctorControl.getTotalDoctors() - doctorControl.getAvailableDoctors().getSize()));
+        
+        System.out.println("\nDOCTOR LISTS");
+        System.out.println("=" .repeat(50));
+        
+        System.out.println("1. View All Doctors");
+        System.out.println("2. View Available Doctors");
+        System.out.println("3. View Unavailable Doctors");
+        System.out.println("4. Back to Main Menu");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 4);
+        
+        switch (choice) {
+            case 1:
+                displayDoctorList("All Doctors", doctorControl.getAllDoctors());
+                break;
+            case 2:
+                displayDoctorList("Available Doctors", doctorControl.getAvailableDoctors());
+                break;
+            case 3:
+                displayDoctorList("Unavailable Doctors", doctorControl.getInactiveDoctors());
+                break;
+            case 4:
+                return;
+            default:
+                System.out.println("Invalid choice.");
+        }
+    }
+
+    private void displayDoctorList(String title, ArrayBucketList<String, Doctor> doctors) {
+        System.out.println("\n=== " + title.toUpperCase() + " ===");
+        
+        if (doctors.isEmpty()) {
+            System.out.println("No doctors found.");
+            ConsoleUtils.waitMessage();
+            return;
+        }
+        
+        System.out.println("Found " + doctors.getSize() + " doctor(s)");
+        System.out.println();
+        
+        System.out.println("Sort results?\n1. Yes\n2. No");
+        int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        if (sortChoice == 1) {
+            String sortBy = getDoctorSortField();
+            System.out.println();
+            String sortOrder = ConsoleUtils.getSortOrder(scanner);
+            System.out.println(doctorControl.displaySortedDoctorSearchResults(doctors, title, sortBy, sortOrder));
+        } else {
+            displayDoctorsList(doctors);
+        }
+        
+        ConsoleUtils.waitMessage();
+    }
+
     private void manageDoctorSchedule() {
         System.out.println("\n=== MANAGE DOCTOR SCHEDULE ===");
         
@@ -210,7 +314,7 @@ public class DoctorManagementUI {
                 s.getDayOfWeek(), 
                 s.getFromTime(), 
                 s.getToTime(), 
-                (s.isAvailable() ? "Available" : "Not Available"));
+                (s.isAvailable() ? "Available" : "Unavailable"));
         }
         System.out.println("-".repeat(80));
         
@@ -270,7 +374,7 @@ public class DoctorManagementUI {
                 s.getDayOfWeek(), 
                 s.getFromTime(), 
                 s.getToTime(), 
-                (s.isAvailable() ? "Available" : "Not Available"));
+                (s.isAvailable() ? "Available" : "Unavailable"));
         }
         System.out.println("-".repeat(80));
         
@@ -311,8 +415,7 @@ public class DoctorManagementUI {
 
         // Show current doctor information
         System.out.println("Doctor: " + doctor.getFullName());
-        System.out.println("Current Status: " + (doctor.isAvailable() ? "Active" : "Inactive"));
-        System.out.println("Current Availability: " + (doctor.isAvailable() ? "Available" : "Not Available"));
+        System.out.println("Current Availability: " + (doctor.isAvailable() ? "Available" : "Unavailable"));
 
         // Load and display schedules for the doctor
         entity.Schedule[] schedulesArray = doctorControl.getDoctorSchedulesOrderedArray(doctorId);
@@ -331,13 +434,13 @@ public class DoctorManagementUI {
                     s.getDayOfWeek(), 
                     s.getFromTime(), 
                     s.getToTime(), 
-                    (s.isAvailable() ? "Available" : "Not Available"));
+                    (s.isAvailable() ? "Available" : "Unavailable"));
             }
             System.out.println("-".repeat(80));
         }
 
         System.out.println("\nManagement Options:");
-        System.out.println("1. Set Doctor Availability");
+        System.out.println("1. Set Doctor Availability (Available/Unavailable)");
         System.out.println("2. Set Schedule Availability");
         System.out.println("3. Back to Main Menu");
         int choice = ConsoleUtils.getIntInput(scanner, "Choose option (1-3): ", 1, 3);
@@ -361,12 +464,12 @@ public class DoctorManagementUI {
         System.out.println("Doctor: " + doctorName);
         System.out.println("Note: This will set the doctor's availability status.");
         
-        boolean isAvailable = ConsoleUtils.getBooleanInput(scanner, "Set doctor availability (Y/N): ");
+        boolean isAvailable = ConsoleUtils.getBooleanInput(scanner, "Set doctor as available? (Y/N): ");
         
         boolean ok = doctorControl.setDoctorAvailability(doctorId, isAvailable);
         if (ok) {
             System.out.println("Doctor availability updated successfully.");
-            System.out.println("Status: " + (isAvailable ? "Available" : "Not Available (Deactivated)"));
+            System.out.println("Status: " + (isAvailable ? "Available" : "Unavailable"));
         } else {
             System.out.println("Failed to update doctor availability.");
         }
@@ -392,7 +495,7 @@ public class DoctorManagementUI {
                 s.getDayOfWeek(), 
                 s.getFromTime(), 
                 s.getToTime(), 
-                (s.isAvailable() ? "Available" : "Not Available"));
+                (s.isAvailable() ? "Available" : "Unavailable"));
         }
         System.out.println("-".repeat(80));
 
@@ -414,10 +517,14 @@ public class DoctorManagementUI {
         System.out.println("2. Search by IC Number");
         System.out.println("3. Search by Full Name");
         System.out.println("4. Search by Email");
-        System.out.println("5. Search by License Number");
-        System.out.println("6. Search by Specialty");
+        System.out.println("5. Search by Phone Number");
+        System.out.println("6. Search by License Number");
+        System.out.println("7. Search by Specialty");
+        System.out.println("8. Search by Experience");
+        System.out.println("9. Search by Availability");
+        System.out.println("10. Advanced Multi-Criteria Search");
 
-        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 6);
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 10);
 
         switch (choice) {
             case 1:
@@ -433,10 +540,22 @@ public class DoctorManagementUI {
                 searchByEmail();
                 break;
             case 5:
-                searchByLicenseNumber();
+                searchByPhoneNumber();
                 break;
             case 6:
+                searchByLicenseNumber();
+                break;
+            case 7:
                 searchBySpecialty();
+                break;
+            case 8:
+                searchByExperience();
+                break;
+            case 9:
+                searchByAvailability();
+                break;
+            case 10:
+                searchByMultipleCriteria();
                 break;
             default:
                 System.out.println("Invalid choice.");
@@ -505,23 +624,14 @@ public class DoctorManagementUI {
 
     private void searchByEmail() {
         String email = ConsoleUtils.getStringInput(scanner, "Enter Email: ");
-        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getActiveDoctors();
-        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
-
-        Iterator<Doctor> iterator = allDoctors.iterator();
-        while (iterator.hasNext()) {
-            Doctor doctor = iterator.next();
-            if (doctor.getEmail() != null && doctor.getEmail().toLowerCase().contains(email.toLowerCase())) {
-                foundDoctors.add(doctor.getDoctorId(), doctor);
-            }
-        }
+        ArrayBucketList<String, Doctor> foundDoctors = doctorControl.findDoctorsByEmail(email);
 
         if (!foundDoctors.isEmpty()) {
             System.out.println("\n=== DOCTORS FOUND ===");
             System.out.println();
             
             if (foundDoctors.getSize() > 1) {
-                System.out.println("Found " + foundDoctors.getSize() + " doctor with email containing: " + email);
+                System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with email containing: " + email);
                 System.out.println();
                 System.out.println("Sort results?\n1. Yes\n2. No");
                 int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
@@ -546,17 +656,7 @@ public class DoctorManagementUI {
 
     private void searchByLicenseNumber() {
         String licenseNumber = ConsoleUtils.getStringInput(scanner, "Enter License Number: ");
-        ArrayBucketList<String, Doctor> allDoctors = doctorControl.getActiveDoctors();
-        ArrayBucketList<String, Doctor> foundDoctors = new ArrayBucketList<String, Doctor>();
-
-        Iterator<Doctor> iterator = allDoctors.iterator();
-        while (iterator.hasNext()) {
-            Doctor doctor = iterator.next();
-            if (doctor.getLicenseNumber() != null
-                    && doctor.getLicenseNumber().toLowerCase().contains(licenseNumber.toLowerCase())) {
-                foundDoctors.add(doctor.getDoctorId(), doctor);
-            }
-        }
+        ArrayBucketList<String, Doctor> foundDoctors = doctorControl.findDoctorsByLicense(licenseNumber);
 
         if (!foundDoctors.isEmpty()) {
             System.out.println("\n=== DOCTORS FOUND ===");
@@ -614,6 +714,198 @@ public class DoctorManagementUI {
             }
         } else {
             System.out.println("No doctors found with specialty containing: " + specialty);
+        }
+        ConsoleUtils.waitMessage();
+    }
+
+    private void searchByPhoneNumber() {
+        String phoneNumber = ConsoleUtils.getStringInput(scanner, "Enter Phone Number: ");
+        ArrayBucketList<String, Doctor> foundDoctors = doctorControl.findDoctorsByPhone(phoneNumber);
+
+        if (!foundDoctors.isEmpty()) {
+            System.out.println("\n=== DOCTORS FOUND ===");
+            System.out.println();
+            
+            if (foundDoctors.getSize() > 1) {
+                System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with phone number containing: " + phoneNumber);
+                System.out.println();
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
+                
+                if (sortChoice == 1) {
+                    String sortBy = getDoctorSortField();
+                    System.out.println();
+                    String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                    System.out.println(doctorControl.displaySortedDoctorSearchResults(foundDoctors, "Phone: " + phoneNumber, sortBy, sortOrder));
+                } else {
+                    displayDoctorsList(foundDoctors);
+                }
+            } else {
+                displayDoctorsList(foundDoctors);
+            }
+        } else {
+            System.out.println("No doctors found with phone number containing: " + phoneNumber);
+        }
+        ConsoleUtils.waitMessage();
+    }
+
+    private void searchByExperience() {
+        System.out.println("\n=== SEARCH BY EXPERIENCE ===");
+        System.out.println("1. Search by Minimum Experience");
+        System.out.println("2. Search by Experience Range");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        
+        if (choice == 1) {
+            int minYears = ConsoleUtils.getIntInput(scanner, "Enter minimum experience years: ", 0, 50);
+            ArrayBucketList<String, Doctor> foundDoctors = doctorControl.findDoctorsByExperience(minYears);
+            
+            if (!foundDoctors.isEmpty()) {
+                System.out.println("\n=== DOCTORS FOUND ===");
+                System.out.println();
+                
+                if (foundDoctors.getSize() > 1) {
+                    System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with " + minYears + "+ years experience");
+                    System.out.println();
+                    System.out.println("Sort results?\n1. Yes\n2. No");
+                    int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                    System.out.println();
+                    
+                    if (sortChoice == 1) {
+                        String sortBy = getDoctorSortField();
+                        System.out.println();
+                        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                        System.out.println(doctorControl.displaySortedDoctorSearchResults(foundDoctors, "Experience: " + minYears + "+ years", sortBy, sortOrder));
+                    } else {
+                        displayDoctorsList(foundDoctors);
+                    }
+                } else {
+                    displayDoctorsList(foundDoctors);
+                }
+            } else {
+                System.out.println("No doctors found with " + minYears + "+ years experience");
+            }
+        } else {
+            int minYears = ConsoleUtils.getIntInput(scanner, "Enter minimum experience years: ", 0, 50);
+            int maxYears = ConsoleUtils.getIntInput(scanner, "Enter maximum experience years: ", minYears, 50);
+            ArrayBucketList<String, Doctor> foundDoctors = doctorControl.findDoctorsByExperienceRange(minYears, maxYears);
+            
+            if (!foundDoctors.isEmpty()) {
+                System.out.println("\n=== DOCTORS FOUND ===");
+                System.out.println();
+                
+                if (foundDoctors.getSize() > 1) {
+                    System.out.println("Found " + foundDoctors.getSize() + " doctor(s) with " + minYears + "-" + maxYears + " years experience");
+                    System.out.println();
+                    System.out.println("Sort results?\n1. Yes\n2. No");
+                    int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                    System.out.println();
+                    
+                    if (sortChoice == 1) {
+                        String sortBy = getDoctorSortField();
+                        System.out.println();
+                        String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                        System.out.println(doctorControl.displaySortedDoctorSearchResults(foundDoctors, "Experience: " + minYears + "-" + maxYears + " years", sortBy, sortOrder));
+                    } else {
+                        displayDoctorsList(foundDoctors);
+                    }
+                } else {
+                    displayDoctorsList(foundDoctors);
+                }
+            } else {
+                System.out.println("No doctors found with " + minYears + "-" + maxYears + " years experience");
+            }
+        }
+        ConsoleUtils.waitMessage();
+    }
+
+    private void searchByAvailability() {
+        System.out.println("\n=== SEARCH BY AVAILABILITY ===");
+        System.out.println("1. Search Available Doctors");
+        System.out.println("2. Search Unavailable Doctors");
+        
+        int choice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+        boolean isAvailable = (choice == 1);
+        
+        ArrayBucketList<String, Doctor> foundDoctors = doctorControl.findDoctorsByAvailability(isAvailable);
+        
+        if (!foundDoctors.isEmpty()) {
+            System.out.println("\n=== DOCTORS FOUND ===");
+            System.out.println();
+            
+            if (foundDoctors.getSize() > 1) {
+                System.out.println("Found " + foundDoctors.getSize() + " " + (isAvailable ? "available" : "unavailable") + " doctor(s)");
+                System.out.println();
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
+                
+                if (sortChoice == 1) {
+                    String sortBy = getDoctorSortField();
+                    System.out.println();
+                    String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                    System.out.println(doctorControl.displaySortedDoctorSearchResults(foundDoctors, "Availability: " + (isAvailable ? "Available" : "Unavailable"), sortBy, sortOrder));
+                } else {
+                    displayDoctorsList(foundDoctors);
+                }
+            } else {
+                displayDoctorsList(foundDoctors);
+            }
+        } else {
+            System.out.println("No " + (isAvailable ? "available" : "unavailable") + " doctors found");
+        }
+        ConsoleUtils.waitMessage();
+    }
+
+    private void searchByMultipleCriteria() {
+        System.out.println("\n=== ADVANCED MULTI-CRITERIA SEARCH ===");
+        System.out.println("Enter search criteria (leave blank to skip):");
+        
+        String name = ConsoleUtils.getStringInput(scanner, "Enter name (or partial name): ", "");
+        String specialty = ConsoleUtils.getStringInput(scanner, "Enter specialty: ", "");
+        
+        System.out.println("Availability:");
+        System.out.println("1. Available doctors only");
+        System.out.println("2. Unavailable doctors only");
+        System.out.println("3. Any availability");
+        int availChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 3);
+        boolean isAvailable = (availChoice == 1);
+        boolean checkAvailability = (availChoice != 3);
+        
+        int minExperience = ConsoleUtils.getIntInput(scanner, "Enter minimum experience years (0 to skip): ", 0, 50);
+        
+        ArrayBucketList<String, Doctor> foundDoctors = doctorControl.findDoctorsByMultipleCriteria(
+            name.isEmpty() ? null : name,
+            specialty.isEmpty() ? null : specialty,
+            checkAvailability ? isAvailable : true,
+            minExperience
+        );
+        
+        if (!foundDoctors.isEmpty()) {
+            System.out.println("\n=== DOCTORS FOUND ===");
+            System.out.println();
+            
+            if (foundDoctors.getSize() > 1) {
+                System.out.println("Found " + foundDoctors.getSize() + " doctor(s) matching criteria");
+                System.out.println();
+                System.out.println("Sort results?\n1. Yes\n2. No");
+                int sortChoice = ConsoleUtils.getIntInput(scanner, "Enter your choice: ", 1, 2);
+                System.out.println();
+                
+                if (sortChoice == 1) {
+                    String sortBy = getDoctorSortField();
+                    System.out.println();
+                    String sortOrder = ConsoleUtils.getSortOrder(scanner);
+                    System.out.println(doctorControl.displaySortedDoctorSearchResults(foundDoctors, "Multi-Criteria Search", sortBy, sortOrder));
+                } else {
+                    displayDoctorsList(foundDoctors);
+                }
+            } else {
+                displayDoctorsList(foundDoctors);
+            }
+        } else {
+            System.out.println("No doctors found matching the specified criteria");
         }
         ConsoleUtils.waitMessage();
     }
@@ -719,8 +1011,7 @@ public class DoctorManagementUI {
 
         String sortOrder = ConsoleUtils.getSortOrder(scanner);
         System.out.println();
-        boolean ascending = sortOrder.equals("asc");
-        System.out.println(doctorControl.generateDoctorInformationReport(sortBy, ascending));
+        System.out.println(doctorControl.generateDoctorInformationReport(sortBy, sortOrder));
         ConsoleUtils.waitMessage();
     }
 

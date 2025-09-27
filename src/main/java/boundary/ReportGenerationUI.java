@@ -40,8 +40,8 @@ public class ReportGenerationUI {
 
         System.out.println("\n" + patientControl.generatePatientRecordSummaryReport("id", "desc"));
         System.out.println("\n" + patientControl.generatePatientDemographicsReport("age", "desc"));
-        System.out.println("\n" + doctorControl.generateDoctorInformationReport());
-        System.out.println("\n" + doctorControl.generateDoctorWorkloadReport());
+        System.out.println("\n" + doctorControl.generateDoctorInformationReport("name", "asc"));
+        System.out.println("\n" + doctorControl.generateDoctorWorkloadReport("name", true));
         System.out.println("\n" + doctorControl.generateDoctorPerformanceReport("consultations", false));
         System.out.println("\n" + consultationControl.generateConsultationReport("date", "desc"));
         System.out.println("\n" + consultationControl.generateConsultationHistoryReport("date", "desc"));
@@ -256,17 +256,17 @@ public class ReportGenerationUI {
 
         switch (choice) {
             case 1:
-                System.out.println(doctorControl.generateDoctorInformationReport());
+                System.out.println(doctorControl.generateDoctorInformationReport("name", "asc"));
                 break;
             case 2:
-                System.out.println(doctorControl.generateDoctorWorkloadReport());
+                System.out.println(doctorControl.generateDoctorWorkloadReport("name", true));
                 break;
             case 3:
                 generateDoctorPerformanceReport();
                 break;
             case 4:
-                System.out.println(doctorControl.generateDoctorInformationReport());
-                System.out.println(doctorControl.generateDoctorWorkloadReport());
+                System.out.println(doctorControl.generateDoctorInformationReport("name", "asc"));
+                System.out.println(doctorControl.generateDoctorWorkloadReport("name", true));
                 generateDoctorPerformanceReport();
                 break;
             default:

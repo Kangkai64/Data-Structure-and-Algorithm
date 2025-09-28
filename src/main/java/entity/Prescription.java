@@ -27,7 +27,7 @@ public class Prescription {
     }
 
     public Prescription(String prescriptionId, Patient patient, Doctor doctor,
-            Consultation consultation, LocalDate prescriptionDate, String instructions, LocalDate expiryDate) {
+                        Consultation consultation, LocalDate prescriptionDate, String instructions, LocalDate expiryDate) {
         this.prescriptionId = prescriptionId;
         this.patient = patient;
         this.doctor = doctor;
@@ -39,6 +39,20 @@ public class Prescription {
         this.status = PrescriptionStatus.ACTIVE;
         this.totalCost = 0.0;
         this.paymentStatus = PaymentStatus.PENDING;
+    }
+
+    public Prescription(Prescription prescription) {
+        this.prescriptionId = prescription.prescriptionId;
+        this.patient = prescription.patient;
+        this.doctor = prescription.doctor;
+        this.consultation = prescription.consultation;
+        this.prescriptionDate = prescription.prescriptionDate;
+        this.instructions = prescription.instructions;
+        this.expiryDate = prescription.expiryDate;
+        this.prescribedMedicines = prescription.prescribedMedicines;
+        this.status = prescription.status;
+        this.totalCost = prescription.totalCost;
+        this.paymentStatus = prescription.paymentStatus;
     }
 
     // Getters and Setters
@@ -159,7 +173,7 @@ public class Prescription {
     }
 
     public boolean updatePrescribedMedicine(PrescribedMedicine prescribedMedicine, Medicine medicine, int quantity,
-            String dosage, String frequency, int duration) {
+                                            String dosage, String frequency, int duration) {
         PrescribedMedicine tempPrescribedMedicine = prescribedMedicines
                 .getValue(prescribedMedicine.getPrescribedMedicineId());
         if (tempPrescribedMedicine != null) {
@@ -227,8 +241,8 @@ public class Prescription {
         private double unitPrice;
 
         public PrescribedMedicine(String prescribedMedicineId, String prescriptionId, Medicine medicine, int quantity,
-                String dosage,
-                String frequency, int duration, double unitPrice) {
+                                  String dosage,
+                                  String frequency, int duration, double unitPrice) {
             this.prescribedMedicineId = prescribedMedicineId;
             this.prescriptionId = prescriptionId;
             this.medicine = medicine;

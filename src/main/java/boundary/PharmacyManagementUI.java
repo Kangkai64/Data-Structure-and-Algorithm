@@ -538,6 +538,8 @@ public class PharmacyManagementUI {
                 prescription.getInstructions());
         LocalDate expiryDate = ConsoleUtils.getDateInput(scanner, "Enter expiry date (DD-MM-YYYY): ",
                 DateType.FUTURE_DATE_ONLY, prescription.getExpiryDate());
+        prescriptionStatus = ConsoleUtils.getStringInput(scanner, "Enter prescription status: ",
+                prescription.getStatus().toString());
 
         // Validate prescription status
         while (true) {

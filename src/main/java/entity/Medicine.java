@@ -24,10 +24,10 @@ public class Medicine {
     }
 
     public Medicine(String medicineId, String medicineName, String genericName,
-            String manufacturer, String description, String dosageForm,
-            String strength, int quantityInStock, int minimumStockLevel,
-            double unitPrice, LocalDate expiryDate, String storageLocation,
-            boolean requiresPrescription) {
+                    String manufacturer, String description, String dosageForm,
+                    String strength, int quantityInStock, int minimumStockLevel,
+                    double unitPrice, LocalDate expiryDate, String storageLocation,
+                    boolean requiresPrescription) {
         this.medicineId = medicineId;
         this.medicineName = medicineName;
         this.genericName = genericName;
@@ -46,10 +46,10 @@ public class Medicine {
 
     // Constructor without medicineId for UI use
     public Medicine(String medicineName, String genericName,
-            String manufacturer, String description, String dosageForm,
-            String strength, int quantityInStock, int minimumStockLevel,
-            double unitPrice, LocalDate expiryDate, String storageLocation,
-            boolean requiresPrescription) {
+                    String manufacturer, String description, String dosageForm,
+                    String strength, int quantityInStock, int minimumStockLevel,
+                    double unitPrice, LocalDate expiryDate, String storageLocation,
+                    boolean requiresPrescription) {
         this.medicineId = null; // Will be set by control layer
         this.medicineName = medicineName;
         this.genericName = genericName;
@@ -64,6 +64,23 @@ public class Medicine {
         this.storageLocation = storageLocation;
         this.requiresPrescription = requiresPrescription;
         updateStatus();
+    }
+
+    public Medicine(Medicine medicine) {
+        this.medicineId = medicine.medicineId;
+        this.medicineName = medicine.medicineName;
+        this.genericName = medicine.genericName;
+        this.manufacturer = medicine.manufacturer;
+        this.description = medicine.description;
+        this.dosageForm = medicine.dosageForm;
+        this.strength = medicine.strength;
+        this.quantityInStock = medicine.quantityInStock;
+        this.minimumStockLevel = medicine.minimumStockLevel;
+        this.unitPrice = medicine.unitPrice;
+        this.expiryDate = medicine.expiryDate;
+        this.storageLocation = medicine.storageLocation;
+        this.requiresPrescription = medicine.requiresPrescription;
+        this.status = medicine.status;
     }
 
     // Getters and Setters

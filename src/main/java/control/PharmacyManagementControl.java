@@ -293,8 +293,9 @@ public class PharmacyManagementControl {
     public boolean updateMedicineStock(String medicineId, int quantity) {
         try {
             Medicine medicine = findMedicineById(medicineId);
+            Medicine oldMedicine = new Medicine(medicine);
             medicine.setQuantityInStock(quantity);
-            reindexMedicine(medicine, medicine);
+            reindexMedicine(oldMedicine, medicine);
             medicineDao.updateStock(medicineId, quantity);
             return true;
         } catch (Exception exception) {
@@ -331,8 +332,9 @@ public class PharmacyManagementControl {
     public boolean discontinueMedicine(String medicineId) {
         try {
             Medicine medicine = findMedicineById(medicineId);
+            Medicine oldMedicine = new Medicine(medicine);
             medicine.setStatus(Medicine.MedicineStatus.DISCONTINUED);
-            reindexMedicine(medicine, medicine);
+            reindexMedicine(oldMedicine, medicine);
             medicineDao.updateStatus(medicineId, Medicine.MedicineStatus.DISCONTINUED);
             return true;
         } catch (Exception exception) {
@@ -343,7 +345,7 @@ public class PharmacyManagementControl {
 
     // Prescription Management Methods
     public boolean createPrescription(String patientId, String doctorId, String consultationId,
-            String instructions, LocalDate expiryDate) {
+                                      String instructions, LocalDate expiryDate) {
         try {
             Patient patient = patientDao.findById(patientId);
             Doctor doctor = doctorDao.findById(doctorId);
@@ -356,7 +358,7 @@ public class PharmacyManagementControl {
             // Add to prescriptions list
             prescriptionDao.insertAndReturnId(prescription);
             indexPrescription(prescription);
-            
+
 
             return true;
         } catch (Exception exception) {
@@ -392,7 +394,8 @@ public class PharmacyManagementControl {
 
             if (prescription != null && prescribedMedicine != null) {
                 boolean removed = prescription.removePrescribedMedicine(prescribedMedicine);
-                reindexPrescription(prescription, prescription);
+                Prescription oldPrescription = new Prescription(prescription);
+                reindexPrescription(oldPrescription, prescription);
                 prescriptionDao.deletePrescribedMedicine(prescriptionId, prescribedMedicineId);
                 return removed;
             }
@@ -406,7 +409,6 @@ public class PharmacyManagementControl {
     public boolean updatePrescription(Prescription prescription) {
         try {
             Prescription oldPrescription = findPrescriptionById(prescription.getPrescriptionId());
-
             reindexPrescription(oldPrescription, prescription);
             prescriptionDao.update(prescription);
 
@@ -429,7 +431,7 @@ public class PharmacyManagementControl {
                             prescribedMedicine.getDosage(), prescribedMedicine.getFrequency(),
                             prescribedMedicine.getDuration());
                     prescriptionDao.updatePrescribedMedicine(prescription, prescribedMedicine);
-                    reindexPrescription(prescription, prescription);
+                    indexPrescription(prescription);
                     reindexMedicine(medicine, medicine);
                     return updated;
                 }
@@ -467,17 +469,19 @@ public class PharmacyManagementControl {
                     Medicine medicine = prescribedMedicine.getMedicine();
 
                     // Update stock quantity in memory and database
+                    Medicine oldMedicine = new Medicine(medicine);
                     medicine.setQuantityInStock(medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
-                    reindexMedicine(medicine, medicine);
+                    reindexMedicine(oldMedicine, medicine);
                     medicineDao.updateStock(medicine.getMedicineId(), medicine.getQuantityInStock());
                 }
 
+                Prescription oldPrescription = new Prescription(prescription);
                 // Update prescription status
                 prescription.setStatus(Prescription.PrescriptionStatus.DISPENSED);
                 // Mark as paid on successful dispensing
                 prescription.setPaymentStatus(Prescription.PaymentStatus.PAID);
                 prescriptionDao.update(prescription);
-                reindexPrescription(prescription, prescription);
+                reindexPrescription(oldPrescription, prescription);
                 return true;
             }
             return false;
@@ -692,7 +696,7 @@ public class PharmacyManagementControl {
 
     // Sorted display for search results (Medicines)
     public String displaySortedMedicineSearchResults(ArrayBucketList<String, Medicine> list, String searchCriteria,
-            String sortBy, String sortOrder) {
+                                                     String sortBy, String sortOrder) {
         if (list == null || list.isEmpty()) {
             return "No medicines found.";
         }
@@ -738,7 +742,7 @@ public class PharmacyManagementControl {
 
     // Sorted display for search results (Prescriptions)
     public String displaySortedPrescriptionSearchResults(ArrayBucketList<String, Prescription> list,
-            String searchCriteria, String sortBy, String sortOrder) {
+                                                         String searchCriteria, String sortBy, String sortOrder) {
         if (list == null || list.isEmpty()) {
             return "No prescriptions found.";
         }
@@ -1202,7 +1206,7 @@ public class PharmacyManagementControl {
     /**
      * Generates a medicine usage report analyzing prescription patterns, most
      * prescribed medicines, and usage trends
-     * 
+     *
      * @param sortBy    field to sort by
      * @param sortOrder sort order (asc/desc)
      * @return formatted report string
@@ -1524,19 +1528,19 @@ public class PharmacyManagementControl {
     private Comparator<Medicine> getMedicineComparator(String sortBy) {
         return switch (sortBy.toLowerCase()) {
             case "name" ->
-                Comparator.comparing(medicine -> medicine.getMedicineName() != null ? medicine.getMedicineName() : "");
+                    Comparator.comparing(medicine -> medicine.getMedicineName() != null ? medicine.getMedicineName() : "");
             case "generic" ->
-                Comparator.comparing(medicine -> medicine.getGenericName() != null ? medicine.getGenericName() : "");
+                    Comparator.comparing(medicine -> medicine.getGenericName() != null ? medicine.getGenericName() : "");
             case "stock" -> Comparator.comparing(Medicine::getQuantityInStock);
             case "price" -> Comparator.comparing(Medicine::getUnitPrice);
             case "expiry" -> Comparator
                     .comparing(medicine -> medicine.getExpiryDate() != null ? medicine.getExpiryDate() : LocalDate.MAX);
             case "status" ->
-                Comparator.comparing(medicine -> medicine.getStatus() != null ? medicine.getStatus().toString() : "");
+                    Comparator.comparing(medicine -> medicine.getStatus() != null ? medicine.getStatus().toString() : "");
             case "id" ->
-                Comparator.comparing(medicine -> medicine.getMedicineId() != null ? medicine.getMedicineId() : "");
+                    Comparator.comparing(medicine -> medicine.getMedicineId() != null ? medicine.getMedicineId() : "");
             default ->
-                Comparator.comparing(medicine -> medicine.getMedicineName() != null ? medicine.getMedicineName() : "");
+                    Comparator.comparing(medicine -> medicine.getMedicineName() != null ? medicine.getMedicineName() : "");
         };
     }
 
@@ -1701,19 +1705,19 @@ public class PharmacyManagementControl {
     private Comparator<Medicine> getMedicineUsageComparator(String sortBy) {
         return switch (sortBy.toLowerCase()) {
             case "name" ->
-                Comparator.comparing(medicine -> medicine.getMedicineName() != null ? medicine.getMedicineName() : "");
+                    Comparator.comparing(medicine -> medicine.getMedicineName() != null ? medicine.getMedicineName() : "");
             case "generic" ->
-                Comparator.comparing(medicine -> medicine.getGenericName() != null ? medicine.getGenericName() : "");
+                    Comparator.comparing(medicine -> medicine.getGenericName() != null ? medicine.getGenericName() : "");
             case "category" -> Comparator.comparing(medicine -> getMedicineCategory(medicine.getGenericName()));
             case "stock" -> Comparator.comparing(Medicine::getQuantityInStock);
             case "prescriptions" ->
-                Comparator.comparing(medicine -> getPrescriptionCountForMedicine(medicine.getMedicineId()));
+                    Comparator.comparing(medicine -> getPrescriptionCountForMedicine(medicine.getMedicineId()));
             case "revenue" -> Comparator.comparing(
                     medicine -> getPrescriptionCountForMedicine(medicine.getMedicineId()) * medicine.getUnitPrice());
             case "id" ->
-                Comparator.comparing(medicine -> medicine.getMedicineId() != null ? medicine.getMedicineId() : "");
+                    Comparator.comparing(medicine -> medicine.getMedicineId() != null ? medicine.getMedicineId() : "");
             default ->
-                Comparator.comparing(medicine -> medicine.getMedicineName() != null ? medicine.getMedicineName() : "");
+                    Comparator.comparing(medicine -> medicine.getMedicineName() != null ? medicine.getMedicineName() : "");
         };
     }
 }

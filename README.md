@@ -167,24 +167,29 @@ database_schema.sql  # Complete database schema with triggers
 Each module includes at least 2 summary reports:
 
 ### Patient Management Reports
-1. **Patient Registration Report** - Active patients and queue status
-2. **Queue Status Report** - Current queue information
+1. **Patient Record Summary Report** - Detailed Patient records
+2. **Patient Demographics Report** - Patient distribution by age
+3. **Patient Visit History Report** - Recent Patient Visits
 
 ### Doctor Management Reports
 1. **Doctor Information Report** - Doctor details and availability
-2. **Schedule Report** - Doctor duty schedules
+2. **Doctor Workload Report** - Doctor workload and utilization
+3. **Doctor Performance Report** - Doctor review by Patients 
 
 ### Consultation Management Reports
 1. **Consultation Report** - All consultations with status
-2. **Scheduled Consultations Report** - Upcoming consultations
+2. **Consultation History Report** - Recent consultations
+3. **Consultation Efficiency Report** - Consultation time and efficiency
 
 ### Medical Treatment Reports
-1. **Treatment Report** - All treatments with status
-2. **Treatment History Report** - Patient treatment history
+1. **Treatment Analysis Report** - Detailed medical treatment analysis
+2. **Treatment Status Report** - All treatments with status
+3. **Treatment Outcome Report** - Patient treatment outcome and follow-up
 
 ### Pharmacy Management Reports
 1. **Medicine Stock Report** - Inventory status and stock levels
 2. **Prescription Report** - Prescription details and status
+3. **Medicine Usage Report** - Medicine utilization and tracking
 
 ## Installation and Setup
 

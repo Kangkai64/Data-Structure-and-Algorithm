@@ -40,6 +40,7 @@ public class ReportGenerationUI {
 
         System.out.println("\n" + patientControl.generatePatientRecordSummaryReport("id", "desc"));
         System.out.println("\n" + patientControl.generatePatientDemographicsReport("age", "desc"));
+        System.out.println("\n" + patientControl.generatePatientVisitHistoryReport("name", "asc"));
         System.out.println("\n" + doctorControl.generateDoctorInformationReport("name", "asc"));
         System.out.println("\n" + doctorControl.generateDoctorWorkloadReport("name", true));
         System.out.println("\n" + doctorControl.generateDoctorPerformanceReport("consultations", false));

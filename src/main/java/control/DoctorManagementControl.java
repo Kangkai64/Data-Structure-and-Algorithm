@@ -489,9 +489,9 @@ public class DoctorManagementControl {
         result.append("Criteria: ").append(searchCriteria).append("\n");
         result.append(String.format("Sorted by: %s (%s)\n\n", getSortFieldDisplayName(sortBy),
                 (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) ? "DESC" : "ASC"));
-        result.append(String.format("%-12s | %-25s | %-20s | %-15s | %-12s | %-25s | %-15s\n",
+        result.append(String.format("%-15s | %-28s | %-22s | %-18s | %-15s | %-28s | %-18s\n",
                 "Doctor ID", "Full Name", "Specialty", "Experience", "License", "Email", "Phone"));
-        result.append("-".repeat(130)).append("\n");
+        result.append("-".repeat(150)).append("\n");
 
         for (Doctor doctor : doctorArray) {
             if (doctor == null) continue;
@@ -505,16 +505,16 @@ public class DoctorManagementControl {
             String phone = doctor.getPhoneNumber() != null ? doctor.getPhoneNumber() : "N/A";
 
             // Truncate long names and emails
-            if (name.length() > 25) name = name.substring(0, 22) + "...";
-            if (specialty.length() > 20) specialty = specialty.substring(0, 17) + "...";
-            if (email.length() > 25) email = email.substring(0, 22) + "...";
-            if (phone.length() > 15) phone = phone.substring(0, 12) + "...";
+            if (name.length() > 28) name = name.substring(0, 25) + "...";
+            if (specialty.length() > 22) specialty = specialty.substring(0, 19) + "...";
+            if (email.length() > 28) email = email.substring(0, 25) + "...";
+            if (phone.length() > 18) phone = phone.substring(0, 15) + "...";
 
-            result.append(String.format("%-12s | %-25s | %-20s | %-15s | %-12s | %-25s | %-15s\n",
+            result.append(String.format("%-15s | %-28s | %-22s | %-18s | %-15s | %-28s | %-18s\n",
                     id, name, specialty, experience, license, email, phone));
         }
 
-        result.append("-".repeat(130)).append("\n");
+        result.append("-".repeat(150)).append("\n");
         result.append("Total Results: ").append(doctors.getSize()).append(" doctor(s) found\n");
         return result.toString();
     }
@@ -773,21 +773,21 @@ public class DoctorManagementControl {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("DOCTOR MANAGEMENT SYSTEM - DOCTOR INFORMATION REPORT", 120))
+        report.append("=".repeat(160)).append("\n");
+        report.append(ConsoleUtils.centerText("DOCTOR MANAGEMENT SYSTEM - DOCTOR INFORMATION REPORT", 160))
                 .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
+        report.append("=".repeat(160)).append("\n\n");
 
         // Generation info with weekday
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
                 .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
+        report.append("*".repeat(160)).append("\n\n");
 
         // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("SUMMARY STATISTICS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(160)).append("\n");
+        report.append(ConsoleUtils.centerText("SUMMARY STATISTICS", 160)).append("\n");
+        report.append("-".repeat(160)).append("\n");
         report.append(String.format("Total Doctors: %d\n", getTotalDoctors()));
         report.append(String.format("Active Doctors: %d\n", getActiveDoctorsCount()));
         report.append(String.format("Inactive Doctors: %d\n", getInactiveDoctorsCount()));
@@ -828,19 +828,19 @@ public class DoctorManagementControl {
             report.append(String.format("%-20s: %d doctors\n", specialties[index], specialtyCounts[index]));
         }
 
-        report.append("-".repeat(120)).append("\n\n");
+        report.append("-".repeat(160)).append("\n\n");
 
         // Detailed doctor table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED DOCTOR INFORMATION", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DETAILED DOCTOR INFORMATION", 160)).append("\n");
+        report.append("-".repeat(160)).append("\n");
 
         // Add sorting information
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-12s | %-25s | %-20s | %-15s | %-12s | %-25s | %-15s\n",
+        report.append(String.format("%-15s | %-28s | %-22s | %-18s | %-15s | %-28s | %-18s\n",
                 "Doctor ID", "Full Name", "Specialty", "Experience", "License", "Email", "Phone"));
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(160)).append("\n");
 
         // Convert to array for sorting
         Doctor[] doctorArray = doctors.toArray(Doctor.class);
@@ -859,19 +859,19 @@ public class DoctorManagementControl {
             String phone = doctor.getPhoneNumber() != null ? doctor.getPhoneNumber() : "-";
 
             // Truncate long names and emails
-            if (name.length() > 25) name = name.substring(0, 22) + "...";
-            if (specialty.length() > 20) specialty = specialty.substring(0, 17) + "...";
-            if (email.length() > 25) email = email.substring(0, 22) + "...";
-            if (phone.length() > 15) phone = phone.substring(0, 12) + "...";
+            if (name.length() > 28) name = name.substring(0, 25) + "...";
+            if (specialty.length() > 22) specialty = specialty.substring(0, 19) + "...";
+            if (email.length() > 28) email = email.substring(0, 25) + "...";
+            if (phone.length() > 18) phone = phone.substring(0, 15) + "...";
 
-            report.append(String.format("%-12s | %-25s | %-20s | %-15s | %-12s | %-25s | %-15s\n",
+            report.append(String.format("%-15s | %-28s | %-22s | %-18s | %-15s | %-28s | %-18s\n",
                     id, name, specialty, experience, license, email, phone));
         }
 
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF DOCTOR INFORMATION REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
+        report.append("-".repeat(160)).append("\n");
+        report.append("*".repeat(160)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF DOCTOR INFORMATION REPORT", 160)).append("\n");
+        report.append("=".repeat(160)).append("\n");
 
         return report.toString();
     }
@@ -893,7 +893,6 @@ public class DoctorManagementControl {
     }
 
     // Reporting Methods
-    private static final int REPORT_WIDTH = 120;
 
     private String repeatChar(char ch, int count) {
         StringBuilder builder = new StringBuilder();
@@ -946,14 +945,14 @@ public class DoctorManagementControl {
     public String generateDoctorWorkloadReport(String sortBy, boolean ascending) {
         StringBuilder report = new StringBuilder();
         String title = "DOCTOR WORKLOAD REPORT (Estimated Annual Hours)";
-        String line = repeatChar('=', REPORT_WIDTH);
-        report.append(ConsoleUtils.centerText(title, REPORT_WIDTH)).append("\n");
+        String line = repeatChar('=', 150);
+        report.append(ConsoleUtils.centerText(title, 150)).append("\n");
         report.append(line).append("\n\n");
 
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
                 .append("\n");
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n\n");
+        report.append(repeatChar('=', 150)).append("\n\n");
 
         // Aggregate weekly hours per doctor from schedules in database
         adt.ArrayBucketList<String, Schedule> allSchedules;
@@ -1047,11 +1046,11 @@ public class DoctorManagementControl {
             quickSortRows(rows, 0, position - 1, comparator);
         }
 
-        String doctorIdHeader = padRight("Doctor ID", 12);
-        String nameHeader = padRight("Name", 28);
-        String specialtyHeader = padRight("Specialty", 22);
-        String weeklyHeader = padRight("Weekly Hours", 14);
-        String annualHeader = padRight("Annual Hours", 14);
+        String doctorIdHeader = padRight("Doctor ID", 15);
+        String nameHeader = padRight("Name", 32);
+        String specialtyHeader = padRight("Specialty", 25);
+        String weeklyHeader = padRight("Weekly Hours", 16);
+        String annualHeader = padRight("Annual Hours", 16);
         report.append(" ").append(doctorIdHeader).append(" | ").append(nameHeader).append(" | ")
                 .append(specialtyHeader).append(" | ").append(weeklyHeader).append(" | ").append(annualHeader).append("\n");
         report.append(line).append("\n");
@@ -1059,11 +1058,11 @@ public class DoctorManagementControl {
         double totalAnnual = 0.0;
         for (int doctorIndex = 0; doctorIndex < position; doctorIndex++) {
             Row row = rows[doctorIndex];
-            String doctorIdColumn = padRight(row.doctorId, 12);
-            String nameColumn = padRight(row.name == null ? "" : row.name, 28);
-            String specialtyColumn = padRight(row.specialty == null ? "" : row.specialty, 22);
-            String weeklyColumn = padLeft(String.format(java.util.Locale.US, "%.2f", row.weekly), 14);
-            String annualColumn = padLeft(String.format(java.util.Locale.US, "%.2f", row.annual), 14);
+            String doctorIdColumn = padRight(row.doctorId, 15);
+            String nameColumn = padRight(row.name == null ? "" : row.name, 32);
+            String specialtyColumn = padRight(row.specialty == null ? "" : row.specialty, 25);
+            String weeklyColumn = padLeft(String.format(java.util.Locale.US, "%.2f", row.weekly), 16);
+            String annualColumn = padLeft(String.format(java.util.Locale.US, "%.2f", row.annual), 16);
             report.append(" ").append(doctorIdColumn).append(" | ").append(nameColumn).append(" | ")
                     .append(specialtyColumn).append(" | ").append(weeklyColumn).append(" | ").append(annualColumn).append("\n");
             totalAnnual += row.annual;
@@ -1072,9 +1071,9 @@ public class DoctorManagementControl {
         report.append("\nTotal doctors : ").append(docCount).append("\n");
         report.append("Total annual hours (all doctors) : ")
                 .append(String.format(java.util.Locale.US, "%.2f", totalAnnual)).append("\n\n");
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF THE REPORT", REPORT_WIDTH)).append("\n");
-        report.append(repeatChar('=', REPORT_WIDTH)).append("\n");
+        report.append(repeatChar('=', 150)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF THE REPORT", 150)).append("\n");
+        report.append(repeatChar('=', 150)).append("\n");
         return report.toString();
     }
 
@@ -1111,7 +1110,7 @@ public class DoctorManagementControl {
      * @return formatted report string
      */
     public String generateDoctorPerformanceReport(String sortBy, boolean ascending) {
-        final int TABLEWIDTH = 138;
+        final int TABLEWIDTH = 160;
         StringBuilder report = new StringBuilder();
         String title = "DOCTOR PERFORMANCE ANALYSIS REPORT";
         String line = repeatChar('=', TABLEWIDTH);
@@ -1246,13 +1245,13 @@ public class DoctorManagementControl {
         String sortOrder = ascending ? "ASCENDING" : "DESCENDING";
         report.append(String.format("Sorted by: %s (%s order)\n\n", sortField, sortOrder));
 
-        String doctorIdHeader = padRight("Doctor ID", 12);
-        String nameHeader = padRight("Name", 25);
-        String specialtyHeader = padRight("Specialty", 20);
-        String consultationHeader = padRight("Consultations", 15);
-        String successRateHeader = padRight("Success Rate", 15);
-        String satisfactionHeader = padRight("Satisfaction", 15);
-        String revenueHeader = padRight("Revenue", 15);
+        String doctorIdHeader = padRight("Doctor ID", 15);
+        String nameHeader = padRight("Name", 28);
+        String specialtyHeader = padRight("Specialty", 22);
+        String consultationHeader = padRight("Consultations", 18);
+        String successRateHeader = padRight("Success Rate", 18);
+        String satisfactionHeader = padRight("Satisfaction", 18);
+        String revenueHeader = padRight("Revenue", 18);
         report.append(" ")
                 .append(doctorIdHeader).append(" | ")
                 .append(nameHeader).append(" | ")
@@ -1290,13 +1289,13 @@ public class DoctorManagementControl {
 
             if (doctorIdx == -1) continue;
 
-            String doctorIdColumn = padRight(doctor.getDoctorId(), 12);
-            String nameColumn = padRight(doctor.getFullName(), 25);
-            String specialtyColumn = padRight(doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "General", 20);
-            String consultationColumn = padLeft(String.valueOf(consultationCounts[doctorIdx]), 15);
-            String successRateColumn = padLeft(String.format("%.1f%%", successRates[doctorIdx]), 15);
-            String satisfactionColumn = padLeft(String.format("%.1f/5.0", averagePatientSatisfaction[doctorIdx]), 15);
-            String revenueColumn = padLeft(String.format("RM %.2f", totalRevenue[doctorIdx]), 15);
+            String doctorIdColumn = padRight(doctor.getDoctorId(), 15);
+            String nameColumn = padRight(doctor.getFullName(), 28);
+            String specialtyColumn = padRight(doctor.getMedicalSpecialty() != null ? doctor.getMedicalSpecialty() : "General", 22);
+            String consultationColumn = padLeft(String.valueOf(consultationCounts[doctorIdx]), 18);
+            String successRateColumn = padLeft(String.format("%.1f%%", successRates[doctorIdx]), 18);
+            String satisfactionColumn = padLeft(String.format("%.1f/5.0", averagePatientSatisfaction[doctorIdx]), 18);
+            String revenueColumn = padLeft(String.format("RM %.2f", totalRevenue[doctorIdx]), 18);
 
             report.append(" ")
                     .append(doctorIdColumn).append(" | ")

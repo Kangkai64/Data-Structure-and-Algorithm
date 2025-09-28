@@ -532,21 +532,21 @@ public class ConsultationManagementControl {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION ANALYSIS REPORT", 120))
+        report.append("=".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION ANALYSIS REPORT", 150))
                 .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
+        report.append("=".repeat(150)).append("\n\n");
 
         // Generation info with weekday
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
                 .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
+        report.append("*".repeat(150)).append("\n\n");
 
         // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("SUMMARY STATISTICS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("SUMMARY STATISTICS", 150)).append("\n");
+        report.append("-".repeat(150)).append("\n");
         report.append(String.format("Total Consultations: %d\n", getTotalConsultations()));
         report.append(String.format("Scheduled Consultations: %d\n", getScheduledConsultations().getSize()));
         report.append(String.format("Completed Consultations: %d\n", getCompletedConsultations().getSize()));
@@ -618,19 +618,19 @@ public class ConsultationManagementControl {
             }
         }
 
-        report.append("-".repeat(120)).append("\n\n");
+        report.append("-".repeat(150)).append("\n\n");
 
         // Detailed consultation table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED CONSULTATION RECORDS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DETAILED CONSULTATION RECORDS", 150)).append("\n");
+        report.append("-".repeat(150)).append("\n");
 
         // Add sorting information
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-30s | %14s\n",
+        report.append(String.format("%-12s | %-25s | %-25s | %-15s | %-35s | %-15s\n",
                 "ID", "Patient", "Doctor", "Date", "Diagnosis", "Fee"));
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(150)).append("\n");
 
         // Convert to array for sorting
         Consultation[] consultationArray = consultations.toArray(Consultation.class);
@@ -649,21 +649,21 @@ public class ConsultationManagementControl {
             String diagnosis = consultation.getDiagnosis() == null ? "-" : consultation.getDiagnosis();
 
             // Truncate long names and diagnosis
-            if (patientName.length() > 22)
-                patientName = patientName.substring(0, 21) + "…";
-            if (doctorName.length() > 22)
-                doctorName = doctorName.substring(0, 21) + "…";
-            if (diagnosis.length() > 27)
-                diagnosis = diagnosis.substring(0, 26) + "…";
+            if (patientName.length() > 25)
+                patientName = patientName.substring(0, 24) + "…";
+            if (doctorName.length() > 25)
+                doctorName = doctorName.substring(0, 24) + "…";
+            if (diagnosis.length() > 35)
+                diagnosis = diagnosis.substring(0, 34) + "…";
 
-            report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-27s | RM %,10.2f\n",
+            report.append(String.format("%-12s | %-25s | %-25s | %-15s | %-35s | RM %,12.2f\n",
                     id, patientName, doctorName, date, diagnosis, consultation.getConsultationFee()));
         }
 
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF CONSULTATION REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
+        report.append("-".repeat(150)).append("\n");
+        report.append("*".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF CONSULTATION REPORT", 150)).append("\n");
+        report.append("=".repeat(150)).append("\n");
 
         return report.toString();
     }
@@ -676,21 +676,21 @@ public class ConsultationManagementControl {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
-        report.append("=".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION HISTORY REPORT", 120))
+        report.append("=".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION HISTORY REPORT", 150))
                 .append("\n");
-        report.append("=".repeat(120)).append("\n\n");
+        report.append("=".repeat(150)).append("\n\n");
 
         // Generation info with weekday
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
                 .append("\n");
-        report.append("*".repeat(120)).append("\n\n");
+        report.append("*".repeat(150)).append("\n\n");
 
         // Summary statistics
-        report.append("-".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("COMPLETED CONSULTATIONS SUMMARY", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("COMPLETED CONSULTATIONS SUMMARY", 150)).append("\n");
+        report.append("-".repeat(150)).append("\n");
         report.append(String.format("Total Consultations: %d\n", getTotalConsultations()));
         int completed = getCompletedConsultations().getSize();
         report.append(String.format("Completed Consultations: %d\n", completed));
@@ -763,19 +763,19 @@ public class ConsultationManagementControl {
                     completedYears[index], completedByYear[index], revenueByYear[index]));
         }
 
-        report.append("-".repeat(120)).append("\n\n");
+        report.append("-".repeat(150)).append("\n\n");
 
         // Detailed completed consultation table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED COMPLETED CONSULTATION RECORDS", 120)).append("\n");
-        report.append("-".repeat(120)).append("\n");
+        report.append(ConsoleUtils.centerText("DETAILED COMPLETED CONSULTATION RECORDS", 150)).append("\n");
+        report.append("-".repeat(150)).append("\n");
 
         // Add sorting information
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getSortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-30s | %14s\n",
+        report.append(String.format("%-12s | %-25s | %-25s | %-15s | %-35s | %-15s\n",
                 "ID", "Patient", "Doctor", "Date", "Diagnosis", "Fee"));
-        report.append("-".repeat(120)).append("\n");
+        report.append("-".repeat(150)).append("\n");
 
         // Convert to array for sorting
         Consultation[] consultationArray = completedConsultations.toArray(Consultation.class);
@@ -794,21 +794,21 @@ public class ConsultationManagementControl {
             String diagnosis = consultation.getDiagnosis() == null ? "-" : consultation.getDiagnosis();
 
             // Truncate long names and diagnosis
-            if (patientName.length() > 22)
-                patientName = patientName.substring(0, 21) + "…";
-            if (doctorName.length() > 22)
-                doctorName = doctorName.substring(0, 21) + "…";
-            if (diagnosis.length() > 27)
-                diagnosis = diagnosis.substring(0, 26) + "…";
+            if (patientName.length() > 25)
+                patientName = patientName.substring(0, 24) + "…";
+            if (doctorName.length() > 25)
+                doctorName = doctorName.substring(0, 24) + "…";
+            if (diagnosis.length() > 35)
+                diagnosis = diagnosis.substring(0, 34) + "…";
 
-            report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-27s | RM %,10.2f\n",
+            report.append(String.format("%-12s | %-25s | %-25s | %-15s | %-35s | RM %,12.2f\n",
                     id, patientName, doctorName, date, diagnosis, consultation.getConsultationFee()));
         }
 
-        report.append("-".repeat(120)).append("\n");
-        report.append("*".repeat(120)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF CONSULTATION HISTORY REPORT", 120)).append("\n");
-        report.append("=".repeat(120)).append("\n");
+        report.append("-".repeat(150)).append("\n");
+        report.append("*".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF CONSULTATION HISTORY REPORT", 150)).append("\n");
+        report.append("=".repeat(150)).append("\n");
 
         return report.toString();
     }
@@ -823,21 +823,21 @@ public class ConsultationManagementControl {
         StringBuilder report = new StringBuilder();
 
         // Header with decorative lines (centered)
-        report.append("=".repeat(135)).append("\n");
-        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION EFFICIENCY REPORT", 135))
+        report.append("=".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("CONSULTATION MANAGEMENT SYSTEM - CONSULTATION EFFICIENCY REPORT", 150))
                 .append("\n");
-        report.append("=".repeat(135)).append("\n\n");
+        report.append("=".repeat(150)).append("\n\n");
 
         // Generation info with weekday
         report.append("Generated at: ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/uuuu HH:mm")))
                 .append("\n");
-        report.append("*".repeat(135)).append("\n\n");
+        report.append("*".repeat(150)).append("\n\n");
 
         // Summary statistics
-        report.append("-".repeat(135)).append("\n");
-        report.append(ConsoleUtils.centerText("EFFICIENCY METRICS SUMMARY", 135)).append("\n");
-        report.append("-".repeat(135)).append("\n");
+        report.append("-".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("EFFICIENCY METRICS SUMMARY", 150)).append("\n");
+        report.append("-".repeat(150)).append("\n");
         report.append(String.format("Total Consultations: %d\n", getTotalConsultations()));
         report.append(String.format("Completed Consultations: %d\n", getCompletedConsultations().getSize()));
         report.append(String.format("Average Consultation Duration: %.1f minutes\n", calculateAverageDuration()));
@@ -978,19 +978,19 @@ public class ConsultationManagementControl {
             report.append(String.format("%-10s: %3d patients (%.1f%%)\n", waitTimeLabels[i], waitTimeCounts[i], percentage));
         }
 
-        report.append("-".repeat(135)).append("\n\n");
+        report.append("-".repeat(150)).append("\n\n");
 
         // Detailed efficiency table with sorting
-        report.append(ConsoleUtils.centerText("DETAILED CONSULTATION EFFICIENCY", 135)).append("\n");
-        report.append("-".repeat(135)).append("\n");
+        report.append(ConsoleUtils.centerText("DETAILED CONSULTATION EFFICIENCY", 150)).append("\n");
+        report.append("-".repeat(150)).append("\n");
 
         // Add sorting information
         report.append(String.format("Sorted by: %s (%s order)\n\n",
                 getEfficiencySortFieldDisplayName(sortBy), sortOrder.toUpperCase()));
 
-        report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | %-12s | %-12s | %-12s\n",
+        report.append(String.format("%-12s | %-25s | %-25s | %-15s | %-12s | %-15s | %-15s | %-15s\n",
                 "ID", "Patient", "Doctor", "Date", "Status", "Wait Time", "Duration", "Efficiency"));
-        report.append("-".repeat(135)).append("\n");
+        report.append("-".repeat(150)).append("\n");
 
         // Convert to array for sorting
         Consultation[] consultationArray = consultations.toArray(Consultation.class);
@@ -1016,22 +1016,22 @@ public class ConsultationManagementControl {
             double efficiency = getEfficiencyForConsultation(consultation);
 
             // Truncate long names
-            if (patientName.length() > 22)
-                patientName = patientName.substring(0, 21) + "…";
-            if (doctorName.length() > 22)
-                doctorName = doctorName.substring(0, 21) + "…";
+            if (patientName.length() > 25)
+                patientName = patientName.substring(0, 24) + "…";
+            if (doctorName.length() > 25)
+                doctorName = doctorName.substring(0, 24) + "…";
 
-            report.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | %-12s | %-12s | %-12s\n",
+            report.append(String.format("%-12s | %-25s | %-25s | %-15s | %-12s | %-15s | %-15s | %-15s\n",
                     id, patientName, doctorName, date, status, 
                     String.format("%.1f min", waitTime),
                     String.format("%.1f min", duration),
                     String.format("%.1f%%", efficiency)));
         }
 
-        report.append("-".repeat(135)).append("\n");
-        report.append("*".repeat(135)).append("\n");
-        report.append(ConsoleUtils.centerText("END OF CONSULTATION EFFICIENCY REPORT", 135)).append("\n");
-        report.append("=".repeat(135)).append("\n");
+        report.append("-".repeat(150)).append("\n");
+        report.append("*".repeat(150)).append("\n");
+        report.append(ConsoleUtils.centerText("END OF CONSULTATION EFFICIENCY REPORT", 150)).append("\n");
+        report.append("=".repeat(150)).append("\n");
 
         return report.toString();
     }
@@ -1346,9 +1346,9 @@ public class ConsultationManagementControl {
         sb.append("Criteria: ").append(searchCriteria).append("\n");
         sb.append(String.format("Sorted by: %s (%s)\n\n", getSortFieldDisplayName(sortBy),
                 (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) ? "DESC" : "ASC"));
-        sb.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | %14s\n",
+        sb.append(String.format("%-12s | %-25s | %-25s | %-15s | %-12s | %-15s\n",
                 "ID", "Patient", "Doctor", "Date", "Status", "Fee"));
-        sb.append("-".repeat(110)).append("\n");
+        sb.append("-".repeat(130)).append("\n");
 
         for (Consultation c : items) {
             if (c == null)
@@ -1359,15 +1359,15 @@ public class ConsultationManagementControl {
             String date = c.getConsultationDate() == null ? "-"
                     : c.getConsultationDate().format(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
             String status = c.getStatus() == null ? "-" : c.getStatus().toString();
-            if (patientName.length() > 22)
-                patientName = patientName.substring(0, 21) + "…";
-            if (doctorName.length() > 22)
-                doctorName = doctorName.substring(0, 21) + "…";
-            sb.append(String.format("%-10s | %-22s | %-22s | %-12s | %-10s | RM %,8.2f\n", id, patientName,
+            if (patientName.length() > 25)
+                patientName = patientName.substring(0, 24) + "…";
+            if (doctorName.length() > 25)
+                doctorName = doctorName.substring(0, 24) + "…";
+            sb.append(String.format("%-12s | %-25s | %-25s | %-15s | %-12s | RM %,10.2f\n", id, patientName,
                     doctorName, date, status, c.getConsultationFee()));
         }
 
-        sb.append("-".repeat(110)).append("\n");
+        sb.append("-".repeat(130)).append("\n");
         return sb.toString();
     }
 

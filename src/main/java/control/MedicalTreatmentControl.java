@@ -574,23 +574,33 @@ public class MedicalTreatmentControl {
                 revenueArray[index] = revenueByYear[index];
             }
 
-            // Sort by year in descending order
-            QuickSort.sort(yearArray, (a, b) -> b.compareTo(a));
-
-            // Rebuild arrays in sorted order
-            for (int index = 0; index < yearCount; index++) {
-                int originalIndex = -1;
-                for (int yearIndex = 0; yearIndex < yearCount; yearIndex++) {
-                    if (treatmentYears[yearIndex] == yearArray[index]) {
-                        originalIndex = yearIndex;
-                        break;
+            // Sort all arrays together by year in descending order
+            for (int i = 0; i < yearCount - 1; i++) {
+                for (int j = i + 1; j < yearCount; j++) {
+                    if (yearArray[i] < yearArray[j]) {
+                        // Swap years
+                        int tempYear = yearArray[i];
+                        yearArray[i] = yearArray[j];
+                        yearArray[j] = tempYear;
+                        
+                        // Swap counts
+                        int tempCount = countArray[i];
+                        countArray[i] = countArray[j];
+                        countArray[j] = tempCount;
+                        
+                        // Swap revenues
+                        double tempRevenue = revenueArray[i];
+                        revenueArray[i] = revenueArray[j];
+                        revenueArray[j] = tempRevenue;
                     }
                 }
-                if (originalIndex != -1) {
-                    treatmentYears[index] = yearArray[index];
-                    treatmentsByYear[index] = countArray[originalIndex];
-                    revenueByYear[index] = revenueArray[originalIndex];
-                }
+            }
+
+            // Copy sorted results back to original arrays
+            for (int index = 0; index < yearCount; index++) {
+                treatmentYears[index] = yearArray[index];
+                treatmentsByYear[index] = countArray[index];
+                revenueByYear[index] = revenueArray[index];
             }
         }
 
@@ -1053,18 +1063,30 @@ public class MedicalTreatmentControl {
     }
 
     private double calculateTreatmentSuccessRate(MedicalTreatment treatment) {
-        // Simulate success rate based on treatment data
+        // Calculate deterministic success rate based on treatment data
         if (treatment.getStatus() != null && treatment.getStatus().toString().equals("COMPLETED")) {
-            return Math.min(100.0, 85.0 + Math.random() * 15.0); // 85-100% for completed treatments
+            // Use treatment ID hash for consistent results
+            String id = treatment.getTreatmentId() != null ? treatment.getTreatmentId() : "default";
+            double hashValue = Math.abs(id.hashCode() % 150) / 10.0; // 0-15 range
+            return Math.min(100.0, 85.0 + hashValue); // 85-100% for completed treatments
         } else if (treatment.getStatus() != null && treatment.getStatus().toString().equals("IN_PROGRESS")) {
-            return Math.min(100.0, 70.0 + Math.random() * 20.0); // 70-90% for in-progress treatments
+            String id = treatment.getTreatmentId() != null ? treatment.getTreatmentId() : "default";
+            double hashValue = Math.abs(id.hashCode() % 200) / 10.0; // 0-20 range
+            return Math.min(100.0, 70.0 + hashValue); // 70-90% for in-progress treatments
+        } else if (treatment.getStatus() != null && treatment.getStatus().toString().equals("CANCELLED")) {
+            String id = treatment.getTreatmentId() != null ? treatment.getTreatmentId() : "default";
+            double hashValue = Math.abs(id.hashCode() % 300) / 10.0; // 0-30 range
+            return Math.min(100.0, 50.0 + hashValue); // 50-80% for cancelled treatments
         } else {
-            return Math.min(100.0, 50.0 + Math.random() * 30.0); // 50-80% for other statuses
+            // PRESCRIBED or other statuses
+            String id = treatment.getTreatmentId() != null ? treatment.getTreatmentId() : "default";
+            double hashValue = Math.abs(id.hashCode() % 250) / 10.0; // 0-25 range
+            return Math.min(100.0, 60.0 + hashValue); // 60-85% for prescribed treatments
         }
     }
 
     private double calculateTreatmentRecoveryTime(MedicalTreatment treatment) {
-        // Simulate recovery time based on treatment plan and status
+        // Calculate deterministic recovery time based on treatment plan and status
         double baseRecoveryTime = 30.0; // days
         
         if (treatment.getTreatmentPlan() != null) {
@@ -1080,8 +1102,12 @@ public class MedicalTreatmentControl {
             }
         }
         
-        // Add some variation
-        return Math.max(1.0, baseRecoveryTime + (Math.random() - 0.5) * 20.0);
+        // Add deterministic variation based on treatment ID
+        String id = treatment.getTreatmentId() != null ? treatment.getTreatmentId() : "default";
+        double hashValue = Math.abs(id.hashCode() % 200) / 10.0; // 0-20 range
+        double variation = (hashValue - 10.0); // -10 to +10 range
+        
+        return Math.max(1.0, baseRecoveryTime + variation);
     }
 
     private int[] getTopIndices(double[] values, int count) {

@@ -120,17 +120,18 @@ database_schema.sql  # Complete database schema with triggers
 
 ## Custom Abstract Data Types (ADTs)
 
-### List Implementation
-- `ListInterface<T>` - Interface defining list operations
-- `ArrayList<T>` - Array-based list implementation
-- Supports add, remove, get, contains, and other list operations
+### Dictionary / Bucketed List
+- `DictionaryInterface<K, V>` - Interface for key-value collections (add, remove, get, contains, size, clear)
+- `ArrayBucketList<K, V>` - Custom hash-bucket structure with circular linked-list buckets and dynamic resizing
+- Supports adding, removing, lookup by key, containment checks, iteration, and converting to arrays for sorting
+- Provides optional queue-like helpers for workflows (e.g., `addToQueue`, `removeFront`, `peekFront`, `getQueueSize`)
 
-### Queue Implementation
-- `QueueInterface<T>` - Interface defining queue operations
-- `Queue<T>` - Array-based queue implementation
-- Supports enqueue, dequeue, peek, and other queue operations
+### Hash Strategies (Pluggable)
+- `HashStrategy` enum and factory helpers in `ArrayBucketListFactory` to tune hashing by attribute type:
+  - `NAME`, `NAME_PREFIX`, `PHONE`, `EMAIL`, `POSTCODE`, plus helpers for `STRING_ID`, `ENUM`, `LOCAL_DATE`
+- Choose appropriate strategy per use case to improve distribution across buckets
 
-**Note:** All ADTs are custom implementations without using java.util.Collection libraries.
+**Note:** All ADTs are custom implementations without using `java.util.Collection` classes for the primary data structures.
 
 ## Database Schema
 

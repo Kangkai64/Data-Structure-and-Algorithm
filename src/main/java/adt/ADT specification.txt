@@ -1,141 +1,141 @@
-ADT List
-A list is a linear collection of entries of a type T which allows duplicate elements. An entry may be added at a specified position or at the end of the list. The list position starts from 1.
-
-add(T newEntry)
-Description : Adds newEntry to the end of the list.
-Postcondition : newEntry has been added to the end of the list.
-
-boolean add(int newPosition, T newEntry)
-Description : Adds newEntry at position newPosition within the list. Position 1 indicates the first entry in the list.
-Precondition : newPosition must be between 1 to total entries + 1.
-Postcondition : newEntry has been added to the indicated position of the list.
-Returns : true if newEntry was successfully added to the list; false otherwise.
-
-T remove(int givenPosition)
-Description : Removes the entry at position givenPosition within the list.
-Precondition : givenPosition must be between 1 to total entries.
-Postcondition : The entry at position givenPosition has been removed from the list.
-Returns : The entry that was removed from the list.
-
-clear()
-Description : Removes all entries from the list.
-Postcondition : The list is now empty.
-
-boolean replace(int givenPosition, T newEntry)
-Description : Replaces the entry at position givenPosition with newEntry.
-Precondition : newPosition must be between1 to total entries.
-Postcondition : The entry at givenPosition has been replaced with newEntry.
-Returns : true if the entry at givenPosition was successfully replaced in the list; false otherwise.
-
-T getEntry(int givenPosition)
-Description : Retrieves the entry at position givenPosition in the list.
-Precondition : newPosition must be between1 to total entries.
-Postcondition : The list remains unchanged.
-Returns : The entry at position givenPosition.
-
-boolean contains(T anEntry)
-Description : Determines whether the list contains anEntry.
-Postcondition : The list remains unchanged.
-Returns : true if anEntry is in the list, or false if not.
-
-int getNumberOfEntries()
-Description : Gets the number of entries currently in the list.
-Postcondition : The list remains unchanged.
-Returns : The number of entries currently in the list.
-
-boolean isEmpty()
-Description : Determines whether the list is empty.
-Postcondition : The list remains unchanged.
-Returns : true if the list is empty, or false if not.
-
-boolean isFull()
-Description : Determines whether the list is full.
-Postcondition : The list remains unchanged.
-Returns : true if the list is full, or false if not.
-
-
 ADT ArrayBucketList
-An ArrayBucketList is a hash table-based collection of entries of type T that uses separate chaining for collision resolution. Each entry is stored in a bucket (implemented as a circular doubly-linked list) based on its hash code. The data structure automatically resizes when the load factor exceeds a threshold.
+An ArrayBucketList is a hash table-based collection of key-value pairs that implements DictionaryInterface<K, V>. It uses separate chaining for collision resolution, where each entry is stored in a bucket (implemented as a circular doubly-linked list) based on its hash code. The data structure automatically resizes when the load factor exceeds a threshold of 0.75. It supports both dictionary operations and queue functionality.
 
-boolean add(int hashCode, T newEntry)
-Description: Adds newEntry to the bucket list using the provided hash code to determine the appropriate bucket.
-Precondition: newEntry must not be null.
-Postcondition: newEntry has been added to the bucket determined by the hash code. If this is the first entry, its hash code is stored as the first hash code. The bucket array may be resized if the load factor exceeds 0.75.
-Returns: true if newEntry was successfully added; false if newEntry is null.
+Constructors:
+ArrayBucketList()
+Description: Creates an ArrayBucketList with default bucket count (16).
+Postcondition: An empty ArrayBucketList is created with 16 buckets.
 
-T remove(T entry)
-Description: Removes the first occurrence of the specified entry from the bucket list.
+ArrayBucketList(int bucketCount)
+Description: Creates an ArrayBucketList with specified bucket count.
+Precondition: bucketCount > 0.
+Postcondition: An empty ArrayBucketList is created with the specified number of buckets.
+
+ArrayBucketList(int bucketCount, HashFunction<K> hashFunction)
+Description: Creates an ArrayBucketList with specified bucket count and custom hash function.
+Precondition: bucketCount > 0.
+Postcondition: An empty ArrayBucketList is created with the specified number of buckets and custom hash function.
+
+DictionaryInterface Methods:
+V add(K key, V value)
+Description: Adds a new key-value pair to the ArrayBucketList. If the key already exists, replaces the value.
+Precondition: key and value must not be null.
+Postcondition: The key-value pair has been added to the appropriate bucket. If the key existed, the old value is replaced. The bucket array may be resized if the load factor exceeds 0.75.
+Returns: The old value if the key existed; null if this is a new entry.
+
+V remove(K key)
+Description: Removes the entry with the specified key from the ArrayBucketList.
 Precondition: None.
-Postcondition: If the entry exists, it has been removed from its bucket and the total number of entries is decremented by 1.
-Returns: The removed entry if found; null if the entry was not found.
+Postcondition: If the key exists, the entry has been removed from its bucket and the total number of entries is decremented by 1.
+Returns: The value associated with the key if found; null if the key was not found.
 
-T removeByHash(int hashCode)
-Description: Removes an entry from the bucket list using its hash code to locate the appropriate bucket.
+V getValue(K key)
+Description: Retrieves the value associated with the specified key.
 Precondition: None.
-Postcondition: If an entry with the matching hash code exists, it has been removed from its bucket and the total number of entries is decremented by 1.
-Returns: The removed entry if found; null if no entry with the specified hash code was found.
+Postcondition: The ArrayBucketList remains unchanged.
+Returns: The value associated with the key if found; null otherwise.
 
-void clear()
-Description: Removes all entries from the bucket list.
+boolean contains(K key)
+Description: Checks whether the specified key exists in the ArrayBucketList.
 Precondition: None.
-Postcondition: All buckets are empty and the total number of entries is 0.
-
-boolean replace(T oldEntry, T newEntry)
-Description: Replaces the first occurrence of oldEntry with newEntry in the bucket list.
-Precondition: None.
-Postcondition: If oldEntry exists, it has been replaced with newEntry in the same bucket position.
-Returns: true if the replacement was successful; false if oldEntry was not found.
-
-T getEntryByHash(int hashCode)
-Description: Retrieves an entry from the bucket list using its hash code.
-Precondition: None.
-Postcondition: The bucket list remains unchanged.
-Returns: The entry with the matching hash code if found; null otherwise.
-
-T getFirstEntry()
-Description: Retrieves the first entry that was added to the bucket list.
-Precondition: None.
-Postcondition: The bucket list remains unchanged.
-Returns: The first entry added to the list if it still exists; null if the list is empty or the first entry has been removed.
-
-boolean contains(T anEntry)
-Description: Checks whether the specified entry exists in the bucket list.
-Precondition: None.
-Postcondition: The bucket list remains unchanged.
-Returns: true if anEntry is found in the list; false otherwise.
-
-int getNumberOfEntries()
-Description: Gets the total number of entries in the bucket list.
-Precondition: None.
-Postcondition: The bucket list remains unchanged.
-Returns: The total number of entries across all buckets.
+Postcondition: The ArrayBucketList remains unchanged.
+Returns: true if the key is found; false otherwise.
 
 boolean isEmpty()
-Description: Checks whether the bucket list contains any entries.
+Description: Checks whether the ArrayBucketList contains any entries.
 Precondition: None.
-Postcondition: The bucket list remains unchanged.
+Postcondition: The ArrayBucketList remains unchanged.
 Returns: true if the list contains no entries; false otherwise.
 
 boolean isFull()
-Description: Checks whether the bucket list is full.
+Description: Checks whether the ArrayBucketList needs to be resized.
 Precondition: None.
-Postcondition: The bucket list remains unchanged.
-Returns: Always returns false, as the bucket list can dynamically resize.
+Postcondition: The ArrayBucketList remains unchanged.
+Returns: true if the load factor exceeds 0.75; false otherwise.
 
-double getLoadFactor()
-Description: Calculates the current load factor of the bucket list.
+int getSize()
+Description: Gets the total number of entries in the ArrayBucketList.
 Precondition: None.
-Postcondition: The bucket list remains unchanged.
+Postcondition: The ArrayBucketList remains unchanged.
+Returns: The total number of key-value pairs across all buckets.
+
+void clear()
+Description: Removes all entries from the ArrayBucketList.
+Precondition: None.
+Postcondition: All buckets are empty and the total number of entries is 0.
+
+Queue Methods:
+void addToQueue(K key, V value)
+Description: Adds a key-value pair to the internal queue if it is valid and not already present.
+Precondition: key and value must not be null.
+Postcondition: The key-value pair has been added to the queue if it doesn't already exist.
+
+V removeFront()
+Description: Removes and returns the first element from the queue.
+Precondition: None.
+Postcondition: The first element has been removed from the queue.
+Returns: The value of the first element if the queue is not empty; null if the queue is empty.
+
+V peekFront()
+Description: Returns the first element from the queue without removing it.
+Precondition: None.
+Postcondition: The queue remains unchanged.
+Returns: The value of the first element if the queue is not empty; null if the queue is empty.
+
+boolean queueContains(K key)
+Description: Checks whether the specified key exists in the queue.
+Precondition: None.
+Postcondition: The queue remains unchanged.
+Returns: true if the key is found in the queue; false otherwise.
+
+int getQueueSize()
+Description: Gets the number of elements in the queue.
+Precondition: None.
+Postcondition: The queue remains unchanged.
+Returns: The number of elements currently in the queue.
+
+Search Methods:
+ArrayBucketList<K, V> getByStringKeyPrefix(String prefix)
+Description: Returns a new ArrayBucketList containing all entries whose String keys start with the given prefix (case-insensitive).
+Precondition: None.
+Postcondition: The original ArrayBucketList remains unchanged.
+Returns: A new ArrayBucketList containing matching entries; empty list if prefix is null or no matches found.
+
+Utility Methods:
+double getLoadFactor()
+Description: Calculates the current load factor of the ArrayBucketList.
+Precondition: None.
+Postcondition: The ArrayBucketList remains unchanged.
 Returns: The load factor as a double value (total entries divided by bucket count).
 
-int getBucketCount()
-Description: Gets the current number of buckets in the array.
-Precondition: None.
-Postcondition: The bucket list remains unchanged.
-Returns: The current number of buckets in the array.
+V[] toArray(Class<V> arrayClass)
+Description: Converts the ArrayBucketList to an array for sorting purposes.
+Precondition: arrayClass must not be null.
+Postcondition: The ArrayBucketList remains unchanged.
+Returns: An array containing all values from the ArrayBucketList.
 
-Iterator<T> iterator()
-Description: Returns an iterator that provides sequential access to all entries in the bucket list.
+Iterator<V> iterator()
+Description: Returns an iterator that provides sequential access to all values in the ArrayBucketList.
 Precondition: None.
-Postcondition: The bucket list remains unchanged.
-Returns: An iterator over all entries in the bucket list, visiting each bucket in order.
+Postcondition: The ArrayBucketList remains unchanged.
+Returns: An iterator over all values in the ArrayBucketList, visiting each bucket in order.
+
+String toString()
+Description: Returns a string representation of the ArrayBucketList showing all buckets and their contents.
+Precondition: None.
+Postcondition: The ArrayBucketList remains unchanged.
+Returns: A formatted string showing the structure and contents of the ArrayBucketList.
+
+String parseElementsToString()
+Description: Returns a string representation of all values in the ArrayBucketList.
+Precondition: None.
+Postcondition: The ArrayBucketList remains unchanged.
+Returns: A string containing the string representation of each value, one per line.
+
+HashFunction Interface:
+@FunctionalInterface
+HashFunction<T>
+Description: Functional interface for custom hash functions.
+Method: int hash(T key, int bucketCount)
+Description: Computes the hash code for the given key and bucket count.
+Returns: The bucket index for the given key.

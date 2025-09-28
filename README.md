@@ -168,7 +168,7 @@ Each module includes at least 2 summary reports:
 
 ### Patient Management Reports
 1. **Patient Record Summary Report** - Detailed Patient records
-2. **Patient Demographics Report** - Patient distribution by age
+2. **Patient Demographics Report** - Patient distribution by age, gender and blood type
 3. **Patient Visit History Report** - Recent Patient Visits
 
 ### Doctor Management Reports

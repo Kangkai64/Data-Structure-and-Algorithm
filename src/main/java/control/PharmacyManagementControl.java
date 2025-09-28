@@ -29,12 +29,8 @@ import java.time.format.DateTimeFormatter;
  */
 
 public class PharmacyManagementControl {
-
-    private ArrayBucketList<String, Medicine> medicineIndexById;
-    private ArrayBucketList<String, Prescription> prescriptionIndexById;
-    private ArrayBucketList<String, Prescription> dispensedPrescriptions;
-
     // Medicine indices
+    private ArrayBucketList<String, Medicine> medicineIndexById;
     private ArrayBucketList<String, ArrayBucketList<String, Medicine>> medicineIndexByName;
     private ArrayBucketList<String, ArrayBucketList<String, Medicine>> medicineIndexByGenericName;
     private ArrayBucketList<String, ArrayBucketList<String, Medicine>> medicineIndexByManufacturer;
@@ -47,8 +43,11 @@ public class PharmacyManagementControl {
     private final MedicineDao medicineDao;
 
     // Prescription indices
+    private ArrayBucketList<String, Prescription> prescriptionIndexById;
     private ArrayBucketList<String, ArrayBucketList<String, Prescription>> prescriptionIndexByPatientId;
     private ArrayBucketList<String, ArrayBucketList<String, Prescription>> prescriptionIndexByDoctorId;
+    private ArrayBucketList<String, ArrayBucketList<String, Prescription>> prescriptionIndexByPatientIC;
+    private ArrayBucketList<String, ArrayBucketList<String, Prescription>> prescriptionIndexByDoctorIC;
     private ArrayBucketList<String, ArrayBucketList<String, Prescription>> prescriptionIndexByPatientName;
     private ArrayBucketList<String, ArrayBucketList<String, Prescription>> prescriptionIndexByDoctorName;
     // Split by prescription status into separate lists
@@ -68,10 +67,6 @@ public class PharmacyManagementControl {
     private final ConsultationDao consultationDao;
 
     public PharmacyManagementControl() {
-        this.medicineIndexById = new ArrayBucketList<>();
-        this.prescriptionIndexById = new ArrayBucketList<>();
-        this.dispensedPrescriptions = new ArrayBucketList<>();
-        this.prescriptionIndexById = ArrayBucketListFactory.createForStringIds(256);
         // Initialize indices with suitable strategies
         this.medicineIndexById = ArrayBucketListFactory.createForStringIds(256);
         this.medicineIndexByName = ArrayBucketListFactory.createForNamePrefix(26);
@@ -82,8 +77,11 @@ public class PharmacyManagementControl {
         this.medicinesOutOfStock = ArrayBucketListFactory.createForStringIds(64);
         this.medicinesDiscontinued = ArrayBucketListFactory.createForStringIds(64);
         this.medicinesExpired = ArrayBucketListFactory.createForStringIds(64);
+        this.prescriptionIndexById = ArrayBucketListFactory.createForStringIds(256);
         this.prescriptionIndexByPatientId = ArrayBucketListFactory.createForStringIds(128);
         this.prescriptionIndexByDoctorId = ArrayBucketListFactory.createForStringIds(128);
+        this.prescriptionIndexByPatientIC = ArrayBucketListFactory.createForStringIds(128);
+        this.prescriptionIndexByDoctorIC = ArrayBucketListFactory.createForStringIds(128);
         this.prescriptionIndexByPatientName = ArrayBucketListFactory.createForNamePrefix(26);
         this.prescriptionIndexByDoctorName = ArrayBucketListFactory.createForNamePrefix(26);
         this.prescriptionsActive = ArrayBucketListFactory.createForStringIds(128);
@@ -106,10 +104,20 @@ public class PharmacyManagementControl {
         if (medicine == null) {
             return;
         }
+        medicineIndexById.add(medicine.getMedicineId(), medicine);
         IndexingUtility.addToIndexGroup(medicineIndexByName, medicine.getMedicineName(), medicine.getMedicineId(), medicine);
         IndexingUtility.addToIndexGroup(medicineIndexByGenericName, medicine.getGenericName(), medicine.getMedicineId(), medicine);
         IndexingUtility.addToIndexGroup(medicineIndexByManufacturer, medicine.getManufacturer(), medicine.getMedicineId(), medicine);
         addMedicineToStatusList(medicine);
+    }
+
+    private void removeFromOldIndexGroups(Medicine oldMedicine) {
+        if (oldMedicine != null) {
+            IndexingUtility.removeFromIndexGroup(medicineIndexByName, oldMedicine.getMedicineName(), oldMedicine.getMedicineId());
+            IndexingUtility.removeFromIndexGroup(medicineIndexByGenericName, oldMedicine.getGenericName(), oldMedicine.getMedicineId());
+            IndexingUtility.removeFromIndexGroup(medicineIndexByManufacturer, oldMedicine.getManufacturer(), oldMedicine.getMedicineId());
+            removeMedicineFromStatusList(oldMedicine);
+        }
     }
 
     private void reindexMedicine(Medicine oldMedicine, Medicine newMedicine) {
@@ -117,21 +125,25 @@ public class PharmacyManagementControl {
             return;
         }
         if (oldMedicine != null) {
-            IndexingUtility.removeFromIndexGroup(medicineIndexByName, oldMedicine.getMedicineName(), oldMedicine.getMedicineId());
-            IndexingUtility.removeFromIndexGroup(medicineIndexByGenericName, oldMedicine.getGenericName(), oldMedicine.getMedicineId());
-            IndexingUtility.removeFromIndexGroup(medicineIndexByManufacturer, oldMedicine.getManufacturer(), oldMedicine.getMedicineId());
-            removeMedicineFromStatusList(oldMedicine);
+            removeFromOldIndexGroups(oldMedicine);
         }
         indexMedicine(newMedicine);
     }
+
+    // You can use this method when the old entry doesn't need to be removed
     private void indexPrescription(Prescription prescription) {
         if (prescription == null) {
             return;
         }
+        prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
         // By patient ID
         IndexingUtility.addToIndexGroup(prescriptionIndexByPatientId, prescription.getPatient().getPatientId(), prescription.getPrescriptionId(), prescription);
         // By doctor ID
         IndexingUtility.addToIndexGroup(prescriptionIndexByDoctorId, prescription.getDoctor().getDoctorId(), prescription.getPrescriptionId(), prescription);
+        // By patient IC
+        IndexingUtility.addToIndexGroup(prescriptionIndexByPatientIC, prescription.getPatient().getICNumber(), prescription.getPrescriptionId(), prescription);
+        // By doctor IC
+        IndexingUtility.addToIndexGroup(prescriptionIndexByDoctorIC, prescription.getDoctor().getICNumber(), prescription.getPrescriptionId(), prescription);
         // By patient name (prefix strategy)
         IndexingUtility.addToIndexGroup(prescriptionIndexByPatientName, prescription.getPatient().getFullName(), prescription.getPrescriptionId(), prescription);
         // By doctor name (prefix strategy)
@@ -144,22 +156,28 @@ public class PharmacyManagementControl {
         IndexingUtility.addToIndexGroup(prescriptionIndexByDate, prescription.getPrescriptionDate(), prescription.getPrescriptionId(), prescription);
     }
 
-    private void reindexPrescription(Prescription oldPrescription,
-                                     Prescription newPrescription,
-                                     Prescription.PrescriptionStatus oldStatus,
-                                     Prescription.PaymentStatus oldPaymentStatus) {
+    private void removeFromOldIndexGroups(Prescription oldPrescription) {
+        if (oldPrescription != null) {
+            IndexingUtility.removeFromIndexGroup(prescriptionIndexByPatientId, oldPrescription.getPatient().getPatientId(), oldPrescription.getPrescriptionId());
+            IndexingUtility.removeFromIndexGroup(prescriptionIndexByDoctorId, oldPrescription.getDoctor().getDoctorId(), oldPrescription.getPrescriptionId());
+            IndexingUtility.removeFromIndexGroup(prescriptionIndexByPatientIC, oldPrescription.getPatient().getICNumber(), oldPrescription.getPrescriptionId());
+            IndexingUtility.removeFromIndexGroup(prescriptionIndexByDoctorIC, oldPrescription.getDoctor().getICNumber(), oldPrescription.getPrescriptionId());
+            IndexingUtility.removeFromIndexGroup(prescriptionIndexByPatientName, oldPrescription.getPatient().getFullName(), oldPrescription.getPrescriptionId());
+            IndexingUtility.removeFromIndexGroup(prescriptionIndexByDoctorName, oldPrescription.getDoctor().getFullName(), oldPrescription.getPrescriptionId());
+            removePrescriptionFromStatusList(oldPrescription, oldPrescription.getStatus());
+            removePrescriptionFromPaymentList(oldPrescription, oldPrescription.getPaymentStatus());
+            IndexingUtility.removeFromIndexGroup(prescriptionIndexByDate, oldPrescription.getPrescriptionDate(), oldPrescription.getPrescriptionId());
+        }
+    }
+
+    // You can use this method when the old entry needs to be removed
+    private void reindexPrescription(Prescription oldPrescription, Prescription newPrescription) {
         if (newPrescription == null) {
             return;
         }
         // Remove from old groups if keys changed
         if (oldPrescription != null) {
-            IndexingUtility.removeFromIndexGroup(prescriptionIndexByPatientId, oldPrescription.getPatient().getPatientId(), oldPrescription.getPrescriptionId());
-            IndexingUtility.removeFromIndexGroup(prescriptionIndexByDoctorId, oldPrescription.getDoctor().getDoctorId(), oldPrescription.getPrescriptionId());
-            IndexingUtility.removeFromIndexGroup(prescriptionIndexByPatientName, oldPrescription.getPatient().getFullName(), oldPrescription.getPrescriptionId());
-            IndexingUtility.removeFromIndexGroup(prescriptionIndexByDoctorName, oldPrescription.getDoctor().getFullName(), oldPrescription.getPrescriptionId());
-            removePrescriptionFromStatusList(oldPrescription, oldStatus);
-            removePrescriptionFromPaymentList(oldPrescription, oldPaymentStatus);
-            IndexingUtility.removeFromIndexGroup(prescriptionIndexByDate, oldPrescription.getPrescriptionDate(), oldPrescription.getPrescriptionId());
+            removeFromOldIndexGroups(oldPrescription);
         }
         // Add to new groups
         indexPrescription(newPrescription);
@@ -171,18 +189,12 @@ public class PharmacyManagementControl {
         if (list != null) {
             list.add(medicine.getMedicineId(), medicine);
         }
-        if (medicine.getStatus() == Medicine.MedicineStatus.EXPIRED || medicine.isExpired()) {
-            medicinesExpired.add(medicine.getMedicineId(), medicine);
-        }
     }
 
     private void removeMedicineFromStatusList(Medicine medicine) {
         ArrayBucketList<String, Medicine> list = getMedicineStatusList(medicine.getStatus());
         if (list != null) {
             list.remove(medicine.getMedicineId());
-        }
-        if (medicine.getStatus() == Medicine.MedicineStatus.EXPIRED || medicine.isExpired()) {
-            medicinesExpired.remove(medicine.getMedicineId());
         }
     }
 
@@ -202,19 +214,12 @@ public class PharmacyManagementControl {
         if (list != null) {
             list.add(prescription.getPrescriptionId(), prescription);
         }
-        if (prescription.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
-            // keep legacy list in sync
-            dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
-        }
     }
 
     private void removePrescriptionFromStatusList(Prescription prescription, Prescription.PrescriptionStatus status) {
         ArrayBucketList<String, Prescription> list = getPrescriptionStatusList(status);
         if (list != null) {
             list.remove(prescription.getPrescriptionId());
-        }
-        if (status == Prescription.PrescriptionStatus.DISPENSED) {
-            dispensedPrescriptions.remove(prescription.getPrescriptionId());
         }
     }
 
@@ -256,18 +261,15 @@ public class PharmacyManagementControl {
             medicineIndexById = medicineDao.findAll();
             prescriptionIndexById = prescriptionDao.findAll();
             // Index medicines
-            Iterator<Medicine> medIterator = medicineIndexById.iterator();
-            while (medIterator.hasNext()) {
-                Medicine medicine = medIterator.next();
+            Iterator<Medicine> medicineIterator = medicineIndexById.iterator();
+            while (medicineIterator.hasNext()) {
+                Medicine medicine = medicineIterator.next();
                 indexMedicine(medicine);
-                medicineIndexById.add(medicine.getMedicineId(), medicine);
             }
             Iterator<Prescription> prescriptionIterator = prescriptionIndexById.iterator();
             while (prescriptionIterator.hasNext()) {
                 Prescription prescription = prescriptionIterator.next();
                 indexPrescription(prescription);
-                // Also index by ID for fast lookups
-                prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
             }
         } catch (Exception exception) {
             System.err.println("Error loading medicine data: " + exception.getMessage());
@@ -279,12 +281,8 @@ public class PharmacyManagementControl {
         try {
             // Create new medicine
             medicineDao.insertAndReturnId(medicine);
-
             // Add to medicines list
-            medicineIndexById.add(medicine.getMedicineId(), medicine);
             indexMedicine(medicine);
-            medicineIndexById.add(medicine.getMedicineId(), medicine);
-
             return true;
         } catch (Exception exception) {
             System.err.println("Error adding medicine: " + exception.getMessage());
@@ -295,13 +293,10 @@ public class PharmacyManagementControl {
     public boolean updateMedicineStock(String medicineId, int quantity) {
         try {
             Medicine medicine = findMedicineById(medicineId);
-            if (medicine != null) {
-                medicine.setQuantityInStock(quantity);
-                medicineDao.updateStock(medicineId, quantity);
-                // no index keys changed
-                return true;
-            }
-            return false;
+            medicine.setQuantityInStock(quantity);
+            reindexMedicine(medicine, medicine);
+            medicineDao.updateStock(medicineId, quantity);
+            return true;
         } catch (Exception exception) {
             System.err.println("Error updating medicine stock: " + exception.getMessage());
             return false;
@@ -311,13 +306,10 @@ public class PharmacyManagementControl {
     public boolean updateMedicinePrice(String medicineId, double newPrice) {
         try {
             Medicine medicine = findMedicineById(medicineId);
-            if (medicine != null) {
-                medicine.setUnitPrice(newPrice);
-                medicineDao.updatePrice(medicineId, newPrice);
-                // no index keys changed
-                return true;
-            }
-            return false;
+            medicine.setUnitPrice(newPrice);
+            indexMedicine(medicine);
+            medicineDao.updatePrice(medicineId, newPrice);
+            return true;
         } catch (Exception exception) {
             System.err.println("Error updating medicine price: " + exception.getMessage());
             return false;
@@ -327,9 +319,8 @@ public class PharmacyManagementControl {
     public boolean updateMedicineDetails(Medicine medicine) {
         try {
             Medicine old = findMedicineById(medicine.getMedicineId());
-            medicineDao.update(medicine);
-            medicineIndexById.add(medicine.getMedicineId(), medicine);
             reindexMedicine(old, medicine);
+            medicineDao.update(medicine);
             return true;
         } catch (Exception exception) {
             System.err.println("Error updating medicine details: " + exception.getMessage());
@@ -340,14 +331,10 @@ public class PharmacyManagementControl {
     public boolean discontinueMedicine(String medicineId) {
         try {
             Medicine medicine = findMedicineById(medicineId);
-            if (medicine != null) {
-                medicine.setStatus(Medicine.MedicineStatus.DISCONTINUED);
-                medicineDao.updateStatus(medicineId, Medicine.MedicineStatus.DISCONTINUED);
-                medicineIndexById.add(medicine.getMedicineId(), medicine);
-                reindexMedicine(medicine, medicine);
-                return true;
-            }
-            return false;
+            medicine.setStatus(Medicine.MedicineStatus.DISCONTINUED);
+            reindexMedicine(medicine, medicine);
+            medicineDao.updateStatus(medicineId, Medicine.MedicineStatus.DISCONTINUED);
+            return true;
         } catch (Exception exception) {
             System.err.println("Error discontinuing medicine: " + exception.getMessage());
             return false;
@@ -368,9 +355,8 @@ public class PharmacyManagementControl {
 
             // Add to prescriptions list
             prescriptionDao.insertAndReturnId(prescription);
-            prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
             indexPrescription(prescription);
-            prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
+            
 
             return true;
         } catch (Exception exception) {
@@ -387,8 +373,7 @@ public class PharmacyManagementControl {
             if (prescription != null && medicine != null) {
                 prescriptionDao.insertPrescribedMedicineAndReturnId(prescribedMedicine);
                 prescription.addPrescribedMedicine(prescribedMedicine);
-                prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
-                // No need to re-index by patient/doctor; prescription identity unchanged
+                indexPrescription(prescription);
                 return true;
             }
             return false;
@@ -403,20 +388,12 @@ public class PharmacyManagementControl {
             Prescription prescription = findPrescriptionById(prescriptionId);
             ArrayBucketList<String, Prescription.PrescribedMedicine> prescribedMedicines = prescription
                     .getPrescribedMedicines();
-            Prescription.PrescribedMedicine prescribedMedicine = null;
-            Iterator<Prescription.PrescribedMedicine> prescribedMedicineIterator = prescribedMedicines.iterator();
-            while (prescribedMedicineIterator.hasNext()) {
-                Prescription.PrescribedMedicine tempPrescribedMedicine = prescribedMedicineIterator.next();
-                if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicineId)) {
-                    prescribedMedicine = tempPrescribedMedicine;
-                }
-            }
+            Prescription.PrescribedMedicine prescribedMedicine = prescribedMedicines.getValue(prescribedMedicineId);
 
             if (prescription != null && prescribedMedicine != null) {
                 boolean removed = prescription.removePrescribedMedicine(prescribedMedicine);
+                reindexPrescription(prescription, prescription);
                 prescriptionDao.deletePrescribedMedicine(prescriptionId, prescribedMedicineId);
-                prescription.removePrescribedMedicine(prescribedMedicine);
-                prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
                 return removed;
             }
             return false;
@@ -427,26 +404,11 @@ public class PharmacyManagementControl {
     }
 
     public boolean updatePrescription(Prescription prescription) {
-        Prescription.PrescriptionStatus oldStatus = null;
         try {
             Prescription oldPrescription = findPrescriptionById(prescription.getPrescriptionId());
-            if (oldPrescription != null) {
-                oldStatus = oldPrescription.getStatus();
-            }
 
+            reindexPrescription(oldPrescription, prescription);
             prescriptionDao.update(prescription);
-            prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
-            if (prescription.getStatus() == Prescription.PrescriptionStatus.DISPENSED) {
-                dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
-            }
-
-            if (oldStatus == Prescription.PrescriptionStatus.DISPENSED
-                    && prescription.getStatus() != Prescription.PrescriptionStatus.DISPENSED) {
-                dispensedPrescriptions.remove(prescription.getPrescriptionId());
-            }
-
-            Prescription.PaymentStatus oldPaymentStatus = oldPrescription != null ? oldPrescription.getPaymentStatus() : null;
-            reindexPrescription(oldPrescription, prescription, oldStatus, oldPaymentStatus);
 
             return true;
         } catch (Exception exception) {
@@ -459,6 +421,7 @@ public class PharmacyManagementControl {
         try {
             Prescription prescription = findPrescriptionById(prescribedMedicine.getPrescriptionId());
             if (prescription != null && prescribedMedicine != null) {
+                // Check if stock is enough for the medicine
                 Medicine medicine = prescribedMedicine.getMedicine();
                 if (medicine != null) {
                     boolean updated = prescription.updatePrescribedMedicine(prescribedMedicine, medicine,
@@ -466,8 +429,8 @@ public class PharmacyManagementControl {
                             prescribedMedicine.getDosage(), prescribedMedicine.getFrequency(),
                             prescribedMedicine.getDuration());
                     prescriptionDao.updatePrescribedMedicine(prescription, prescribedMedicine);
-                    prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
-                    medicineIndexById.add(medicine.getMedicineId(), medicine);
+                    reindexPrescription(prescription, prescription);
+                    reindexMedicine(medicine, medicine);
                     return updated;
                 }
                 return false;
@@ -503,8 +466,10 @@ public class PharmacyManagementControl {
                     Prescription.PrescribedMedicine prescribedMedicine = dispenseMedicineIterator.next();
                     Medicine medicine = prescribedMedicine.getMedicine();
 
-                    medicineDao.updateStock(medicine.getMedicineId(),
-                            medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
+                    // Update stock quantity in memory and database
+                    medicine.setQuantityInStock(medicine.getQuantityInStock() - prescribedMedicine.getQuantity());
+                    reindexMedicine(medicine, medicine);
+                    medicineDao.updateStock(medicine.getMedicineId(), medicine.getQuantityInStock());
                 }
 
                 // Update prescription status
@@ -512,8 +477,7 @@ public class PharmacyManagementControl {
                 // Mark as paid on successful dispensing
                 prescription.setPaymentStatus(Prescription.PaymentStatus.PAID);
                 prescriptionDao.update(prescription);
-                dispensedPrescriptions.add(prescription.getPrescriptionId(), prescription);
-                prescriptionIndexById.add(prescription.getPrescriptionId(), prescription);
+                reindexPrescription(prescription, prescription);
                 return true;
             }
             return false;
@@ -525,7 +489,7 @@ public class PharmacyManagementControl {
 
     // Search and Retrieval Methods
     public Medicine findMedicineById(String medicineId) {
-        Medicine byIndex = medicineIndexById.getValue(medicineId);
+        Medicine byIndex = medicineIndexById.getValue(medicineId.trim());
         return byIndex != null ? byIndex : medicineIndexById.getValue(medicineId);
     }
 
@@ -623,16 +587,26 @@ public class PharmacyManagementControl {
     }
 
     public Prescription findPrescriptionById(String prescriptionId) {
-        return prescriptionIndexById.getValue(prescriptionId);
+        return prescriptionIndexById.getValue(prescriptionId.trim());
     }
 
     public ArrayBucketList<String, Prescription> findPrescriptionsByPatient(String patientId) {
-        ArrayBucketList<String, Prescription> group = prescriptionIndexByPatientId.getValue(patientId);
+        ArrayBucketList<String, Prescription> group = prescriptionIndexByPatientId.getValue(patientId.trim());
         return group != null ? group : new ArrayBucketList<>();
     }
 
     public ArrayBucketList<String, Prescription> findPrescriptionsByDoctor(String doctorId) {
-        ArrayBucketList<String, Prescription> group = prescriptionIndexByDoctorId.getValue(doctorId);
+        ArrayBucketList<String, Prescription> group = prescriptionIndexByDoctorId.getValue(doctorId.trim());
+        return group != null ? group : new ArrayBucketList<>();
+    }
+
+    public ArrayBucketList<String, Prescription> findPrescriptionsByPatientIC(String patientIC) {
+        ArrayBucketList<String, Prescription> group = prescriptionIndexByPatientIC.getValue(patientIC.trim());
+        return group != null ? group : new ArrayBucketList<>();
+    }
+
+    public ArrayBucketList<String, Prescription> findPrescriptionsByDoctorIC(String doctorIC) {
+        ArrayBucketList<String, Prescription> group = prescriptionIndexByDoctorIC.getValue(doctorIC.trim());
         return group != null ? group : new ArrayBucketList<>();
     }
 
@@ -1048,9 +1022,9 @@ public class PharmacyManagementControl {
         report.append("-".repeat(120)).append("\n");
         report.append(String.format("Total Prescriptions: %d\n", getTotalPrescriptions()));
         report.append(String.format("Active Prescriptions: %d\n", getActivePrescriptions().getSize()));
-        report.append(String.format("Dispensed Prescriptions: %d\n", dispensedPrescriptions.getSize()));
+        report.append(String.format("Dispensed Prescriptions: %d\n", prescriptionsDispensed.getSize()));
         report.append(String.format("Completion Rate: %.1f%%\n",
-                (double) dispensedPrescriptions.getSize() / getTotalPrescriptions() * 100));
+                (double) prescriptionsDispensed.getSize() / getTotalPrescriptions() * 100));
 
         // Prescriptions by year analysis using arrays
         int[] prescriptionYears = new int[20];
@@ -1253,7 +1227,7 @@ public class PharmacyManagementControl {
         report.append(ConsoleUtils.centerText("USAGE METRICS SUMMARY", 125)).append("\n");
         report.append("-".repeat(125)).append("\n");
         report.append(String.format("Total Prescriptions: %d\n", getTotalPrescriptions()));
-        report.append(String.format("Dispensed Prescriptions: %d\n", dispensedPrescriptions.getSize()));
+        report.append(String.format("Dispensed Prescriptions: %d\n", prescriptionsDispensed.getSize()));
         report.append(String.format("Total Medicines in Inventory: %d\n", getTotalMedicines()));
         report.append(String.format("Average Medicines per Prescription: %.1f\n",
                 calculateAverageMedicinesPerPrescription()));
@@ -1613,7 +1587,7 @@ public class PharmacyManagementControl {
     private double calculateTotalDispensingRevenue() {
         double totalRevenue = 0.0;
 
-        Iterator<Prescription> prescriptionIterator = dispensedPrescriptions.iterator();
+        Iterator<Prescription> prescriptionIterator = prescriptionsDispensed.iterator();
         while (prescriptionIterator.hasNext()) {
             Prescription prescription = prescriptionIterator.next();
             if (prescription != null) {

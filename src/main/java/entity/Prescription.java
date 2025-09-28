@@ -148,14 +148,12 @@ public class Prescription {
     }
 
     public boolean removePrescribedMedicine(PrescribedMedicine prescribedMedicine) {
-        Iterator<PrescribedMedicine> iterator = prescribedMedicines.iterator();
-        while (iterator.hasNext()) {
-            PrescribedMedicine tempPrescribedMedicine = iterator.next();
-            if (tempPrescribedMedicine.getPrescribedMedicineId().equals(prescribedMedicine.getPrescribedMedicineId())) {
-                prescribedMedicines.remove(tempPrescribedMedicine.getPrescribedMedicineId());
+        if (prescribedMedicine != null) {
+            boolean removed = prescribedMedicines.remove(prescribedMedicine.getPrescribedMedicineId()) != null;
+            if (removed) {
                 calculateTotalCost();
-                return true;
             }
+            return removed;
         }
         return false;
     }
@@ -170,7 +168,12 @@ public class Prescription {
             tempPrescribedMedicine.setDosage(dosage);
             tempPrescribedMedicine.setFrequency(frequency);
             tempPrescribedMedicine.setDuration(duration);
-            return true;
+            boolean updated = prescribedMedicines.add(tempPrescribedMedicine.getPrescribedMedicineId(),
+                    tempPrescribedMedicine) != null;
+            if (updated) {
+                calculateTotalCost();
+            }
+            return updated;
         }
         return false;
     }
@@ -191,8 +194,8 @@ public class Prescription {
         totalCost = 0.0;
         Iterator<PrescribedMedicine> iterator = prescribedMedicines.iterator();
         while (iterator.hasNext()) {
-            PrescribedMedicine pm = iterator.next();
-            totalCost += pm.getTotalCost();
+            PrescribedMedicine prescribedMedicine = iterator.next();
+            totalCost += prescribedMedicine.getTotalCost();
         }
     }
 
